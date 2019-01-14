@@ -3,11 +3,8 @@
     "moduleResolution": "node",
     "module": "esnext",
     "target": "es5",
-    "lib": [
-      "dom",
-      "es2018"
-    ],
-    "strict": true,
+    "lib": ["dom", "es2018"],
+    //"strict": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
@@ -21,8 +18,8 @@
     "resolveJsonModule": true,
     "importHelpers": true
   },
-  "include": [
-    "./src"
-  ],
-  "compileOnSave": false
+  "include": ["./src"],
+  "compileOnSave": false,
+  // Remove this and uncomment the strict property
+  "noImplicitAny": false
 }

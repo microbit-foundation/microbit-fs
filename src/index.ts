@@ -1,1 +1,1 @@
-export { fib } from './fib';
+export * from './upyhex';

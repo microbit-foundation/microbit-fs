@@ -15,7 +15,8 @@
       "options": ["no-public"]
     },
     "object-literal-sort-keys": false,
-    "interface-over-type-literal": false
+    "interface-over-type-literal": false,
+    "no-bitwise": false
   },
   "jsRules": true
 }
