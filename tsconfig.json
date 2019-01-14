@@ -4,7 +4,7 @@
     "module": "esnext",
     "target": "es5",
     "lib": ["dom", "es2018"],
-    //"strict": true,
+    "strict": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
@@ -19,7 +19,5 @@
     "importHelpers": true
   },
   "include": ["./src"],
-  "compileOnSave": false,
-  // Remove this and uncomment the strict property
-  "noImplicitAny": false
+  "compileOnSave": false
 }
