@@ -1,20 +1,20 @@
 {
-  "name": "@microbit/typescript-library-starter",
+  "name": "@microbit/micropython-fs",
   "version": "0.0.0",
-  "description": "TypeScript library starter",
-  "keywords": [],
+  "description": "Manipulate files in a micro:bit MicroPython Intel Hex file.",
+  "keywords": ["microbit", "micropython", "filesystem", "fs"],
   "main": "./dist/bundles/index.umd.js",
   "module": "./dist/esm5/index.js",
   "typings": "./dist/types/index.d.ts",
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/microbit-foundation/typescript-library-starter"
+    "url": "https://github.com/microbit-foundation/js-microbit-micropython-fs"
   },
   "config": {
-    "umdName": "TypescriptLibraryStarter"
+    "umdName": "MicropythonFs"
   },
-  "author": "Matt Hillsdon <matt.hillsdon@microbit.org>",
+  "author": "Micro:bit Educational Foundation <support@microbit.org>",
   "license": "MIT",
   "engines": {
     "node": ">=8.5",
