@@ -1,7 +1,7 @@
 /**
  * Module to add and remove Python scripts into and from a MicroPython hex.
  */
-import * as MemoryMap from 'nrf-intel-hex';
+import MemoryMap from 'nrf-intel-hex';
 
 const enum UserCodeBlock {
   /** User script located at specific flash address. */
@@ -31,7 +31,7 @@ const HEX_INSERTION_POINT = ':::::::::::::::::::::::::::::::::::::::::::\n';
  * Converts a string into a byte array of characters.
  * TODO: Update to encode to UTF-8 correctly.
  * @param str - String to convert to bytes.
- * @return A byte array with the encoded data.
+ * @returns A byte array with the encoded data.
  */
 function strToBytes(str: string): Uint8Array {
   const data: Uint8Array = new Uint8Array(str.length);
@@ -47,7 +47,7 @@ function strToBytes(str: string): Uint8Array {
  * TODO: This currently only deals with single byte characters, so needs to
  *       be expanded to support UTF-8 characters longer than 1 byte.
  * @param byteArray - Array of bytes to convert.
- * @return String output from the conversion.
+ * @returns String output from the conversion.
  */
 function bytesToStr(byteArray: Uint8Array): string {
   const result: string[] = [];
@@ -63,7 +63,7 @@ function bytesToStr(byteArray: Uint8Array): string {
 /**
  * Removes the old insertion line the input Intel Hex string contains it.
  * @param intelHexStr String with the intel hex lines.
- * @return The Intel Hex string without insertion line.
+ * @returns The Intel Hex string without insertion line.
  */
 function cleanseOldHexFormat(intelHexStr: string): string {
   return intelHexStr.replace(HEX_INSERTION_POINT, '');
@@ -75,7 +75,7 @@ function cleanseOldHexFormat(intelHexStr: string): string {
  * @param intelHexStr - Intel Hex block to scan for the code.
  * @return Python code.
  */
-function extractPyStrFromIntelHex(intelHexStr: string): string {
+function getPyCodeFromIntelHex(intelHexStr: string): string {
   let pyCodeStr: string = '';
   const hexFileMemMap = MemoryMap.fromHex(intelHexStr);
   // Check that the known flash location has user code
@@ -100,32 +100,44 @@ function extractPyStrFromIntelHex(intelHexStr: string): string {
 }
 
 /**
- * Converts the Python code into the Intel Hex format expected by
- * MicroPython and injects it into a Intel Hex string containing a marker.
- * @param intelHexStr - Intel Hex block to inject the code.
- * @param pyStr - Python code string.
- * @return Intel Hex string with the Python code injected.
+ * When the user code is inserted into the flash known location it needs to be
+ * packed with a header. This function outputs a byte array with a fully formed
+ * User Code Block.
+ * @param dataBytes Array of bytes to include in the User Code block.
+ * @returns Byte array with the full User Code Block.
  */
-function injectPyStrIntoIntelHex(intelHexStr: string, pyStr: string): string {
-  const codeBytes: Uint8Array = strToBytes(pyStr);
-  const blockLength: number = UserCodeBlock.HeaderLength + codeBytes.length;
-  // Check the data block fits in the allocated flash area
-  if (blockLength > UserCodeBlock.Length) {
-    throw new RangeError('Too long');
-  }
+function createUserCodeBlock(dataBytes: Uint8Array): Uint8Array {
   // The user script block has to start with "MP" marker + script length
-  const blockBytes: Uint8Array = new Uint8Array(blockLength);
+  const blockBytes: Uint8Array = new Uint8Array(
+    dataBytes.length + UserCodeBlock.HeaderLength
+  );
   blockBytes[0] = UserCodeBlock.HeaderStartByte0;
   blockBytes[1] = UserCodeBlock.HeaderStartByte1;
-  blockBytes[2] = codeBytes.length & 0xff;
-  blockBytes[3] = (codeBytes.length >> 8) & 0xff;
-  blockBytes.set(codeBytes, UserCodeBlock.HeaderLength);
+  blockBytes[2] = dataBytes.length & 0xff;
+  blockBytes[3] = (dataBytes.length >> 8) & 0xff;
+  blockBytes.set(dataBytes, UserCodeBlock.HeaderLength);
+  return blockBytes;
+}
+
+/**
+ * Converts the Python code into the Intel Hex format expected by
+ * MicroPython and injects it into a Intel Hex string containing a marker.
+ * @param intelHex - Single string of Intel Hex records to inject the code.
+ * @param pyStr - Python code string.
+ * @returns Intel Hex string with the Python code injected.
+ */
+function addPyCodeToIntelHex(intelHex: string, pyCode: string): string {
+  const codeBytes: Uint8Array = strToBytes(pyCode);
+  const blockBytes: Uint8Array = createUserCodeBlock(codeBytes);
+  if (blockBytes.length > UserCodeBlock.Length) {
+    throw new RangeError('Too long');
+  }
   // Convert to Intel Hex format
-  intelHexStr = cleanseOldHexFormat(intelHexStr);
-  const intelHexMap = MemoryMap.fromHex(intelHexStr);
+  const intelHexClean = cleanseOldHexFormat(intelHex);
+  const intelHexMap = MemoryMap.fromHex(intelHexClean);
   intelHexMap.set(UserCodeBlock.StartAdd, blockBytes);
   // Older versions of DAPLink need the file to end in a new line
   return intelHexMap.asHexString() + '\n';
 }
 
-export { extractPyStrFromIntelHex, injectPyStrIntoIntelHex };
+export { addPyCodeToIntelHex, getPyCodeFromIntelHex };
