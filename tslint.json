@@ -1,0 +1,21 @@
+{
+  "extends": [
+    "tslint:recommended",
+    "tslint-config-standard",
+    "tslint-etc",
+    "tslint-config-prettier"
+  ],
+  "rules": {
+    "interface-name": {
+      "options": "never-prefix"
+    },
+    // tslint:recommended overrides
+    "no-any": true,
+    "member-access": {
+      "options": ["no-public"]
+    },
+    "object-literal-sort-keys": false,
+    "interface-over-type-literal": false
+  },
+  "jsRules": true
+}

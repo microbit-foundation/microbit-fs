@@ -1,0 +1,67 @@
+{
+  "name": "@microbit/typescript-library-starter",
+  "version": "0.0.0",
+  "description": "TypeScript library starter",
+  "keywords": [],
+  "main": "./dist/bundles/index.umd.js",
+  "module": "./dist/esm5/index.js",
+  "typings": "./dist/types/index.d.ts",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microbit-foundation/typescript-library-starter"
+  },
+  "config": {
+    "umdName": "TypescriptLibraryStarter"
+  },
+  "author": "Matt Hillsdon <matt.hillsdon@microbit.org>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=8.5",
+    "npm": ">=6.0",
+    "yarn": "^1.0"
+  },
+  "scripts": {
+    "cleanup": "shx rm -rf dist",
+    "prebuild": "npm run cleanup && npm run verify",
+    "build": "tsc && rollup -c config/rollup.config.js",
+    "test": "jest -c ./config/jest.config.js",
+    "test:watch": "npm t -- --watch",
+    "test:coverage": "npm t -- --coverage",
+    "test:ci": "npm t -- --ci",
+    "validate-js": "tsc -p ./config",
+    "verify": "npm run validate-js && npm run style && npm run test:ci",
+    "style": "npm run format -- --list-different && npm run lint",
+    "style:fix": "npm run format:fix && npm run lint:fix",
+    "format": "prettier --config prettier.config.js \"**/*.{ts,tsx,js,jsx,css,scss,sass,less,md}\"",
+    "format:fix": "npm run format -- --write",
+    "lint": "tslint --project tsconfig.json --format codeFrame",
+    "lint:fix": "npm run lint -- --fix"
+  },
+  "peerDependencies": {
+    "tslib": ">=1.9.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/jest": "23.3.10",
+    "@types/node": "8.10.*",
+    "@types/prettier": "1.15.2",
+    "cross-var": "1.1.0",
+    "jest": "23.6.0",
+    "jest-watch-typeahead": "0.2.0",
+    "prettier": "1.15.3",
+    "rollup": "0.68.2",
+    "rollup-plugin-commonjs": "9.2.0",
+    "rollup-plugin-json": "3.1.0",
+    "rollup-plugin-node-resolve": "4.0.0",
+    "rollup-plugin-sourcemaps": "0.4.2",
+    "shx": "0.3.2",
+    "ts-jest": "23.10.5",
+    "tslib": "1.9.3",
+    "tslint": "5.12.0",
+    "tslint-config-prettier": "1.17.0",
+    "tslint-config-standard": "8.0.1",
+    "tslint-etc": "1.2.12",
+    "typescript": "3.2.2"
+  }
+}
