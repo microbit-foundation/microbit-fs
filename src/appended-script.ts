@@ -2,6 +2,7 @@
  * Module to add and remove Python scripts into and from a MicroPython hex.
  */
 import MemoryMap from 'nrf-intel-hex';
+
 import { bytesToStr, strToBytes } from './common';
 
 const enum UserCodeBlock {
