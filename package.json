@@ -1,6 +1,6 @@
 {
   "name": "@microbit/micropython-fs",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Manipulate files in a micro:bit MicroPython Intel Hex file.",
   "keywords": [
     "microbit",
