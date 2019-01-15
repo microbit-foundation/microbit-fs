@@ -51,33 +51,28 @@ function strToBytes(str: string): Uint8Array {
  */
 function bytesToStr(byteArray: Uint8Array): string {
   const result: string[] = [];
-  // for (let i: number = 0; i < byteArray.length; i++) {
-  //  result.push(String.fromCharCode(byteArray[i]));
-  // }
-  byteArray.forEach((element, index, array) =>
-    result.push(String.fromCharCode(element))
-  );
+  byteArray.forEach((element) => result.push(String.fromCharCode(element)));
   return result.join('');
 }
 
 /**
  * Removes the old insertion line the input Intel Hex string contains it.
- * @param intelHexStr String with the intel hex lines.
+ * @param intelHex String with the intel hex lines.
  * @returns The Intel Hex string without insertion line.
  */
-function cleanseOldHexFormat(intelHexStr: string): string {
-  return intelHexStr.replace(HEX_INSERTION_POINT, '');
+function cleanseOldHexFormat(intelHex: string): string {
+  return intelHex.replace(HEX_INSERTION_POINT, '');
 }
 
 /**
  * Parses through an Intel Hex string to find the Python code at the
  * allocated address and extracts it.
- * @param intelHexStr - Intel Hex block to scan for the code.
+ * @param intelHex - Intel Hex block to scan for the code.
  * @return Python code.
  */
-function getScriptFromIntelHex(intelHexStr: string): string {
-  let pyCodeStr: string = '';
-  const hexFileMemMap = MemoryMap.fromHex(intelHexStr);
+function getScriptFromIntelHex(intelHex: string): string {
+  let pyCode: string = '';
+  const hexFileMemMap = MemoryMap.fromHex(intelHex);
   // Check that the known flash location has user code
   if (hexFileMemMap.has(UserCodeBlock.StartAdd)) {
     const pyCodeMemMap = hexFileMemMap.slice(
@@ -91,12 +86,12 @@ function getScriptFromIntelHex(intelHexStr: string): string {
       codeBytes[UserCodeBlock.HeaderStartByte1Index] ===
         UserCodeBlock.HeaderStartByte1
     ) {
-      pyCodeStr = bytesToStr(codeBytes.slice(UserCodeBlock.HeaderLength));
+      pyCode = bytesToStr(codeBytes.slice(UserCodeBlock.HeaderLength));
       // Clean null terminators at the end
-      pyCodeStr = pyCodeStr.replace(/\0/g, '');
+      pyCode = pyCode.replace(/\0/g, '');
     }
   }
-  return pyCodeStr;
+  return pyCode;
 }
 
 /**
