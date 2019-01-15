@@ -6,18 +6,21 @@ defaults: &defaults
     - image: circleci/node:10.15.0
 
 jobs:
-  test:
-    <<: *defaults  
+  test_and_build:
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "package-lock.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+            - v1-dependencies-{{ checksum "package-lock.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
       - run: npm ci
       - run:
-          name: Run tests
+          name: Run coverage tests
+          command: npm run test:coverage
+      - run:
+          name: Build
           command: npm run build
       - save_cache:
           paths:
@@ -26,32 +29,9 @@ jobs:
       - persist_to_workspace:
           root: ~/repo
           paths: .
-  deploy:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: ~/repo
-      - run:
-          name: Configure registry auth
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" >> ~/repo/.npmrc
-      - run:
-          name: Publish package
-          # We should look at --tag next etc. if we start publishing more often.
-          command: npm publish
-            
+
 workflows:
   version: 2
-  test-deploy:
+  test:
     jobs:
-      - test:
-          filters:
-            tags:
-              only: /^v.*/
-      - deploy:
-          requires:
-            - test
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+      - test_and_build
