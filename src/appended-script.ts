@@ -75,7 +75,7 @@ function cleanseOldHexFormat(intelHexStr: string): string {
  * @param intelHexStr - Intel Hex block to scan for the code.
  * @return Python code.
  */
-function getPyCodeFromIntelHex(intelHexStr: string): string {
+function getScriptFromIntelHex(intelHexStr: string): string {
   let pyCodeStr: string = '';
   const hexFileMemMap = MemoryMap.fromHex(intelHexStr);
   // Check that the known flash location has user code
@@ -126,7 +126,7 @@ function createUserCodeBlock(dataBytes: Uint8Array): Uint8Array {
  * @param pyStr - Python code string.
  * @returns Intel Hex string with the Python code injected.
  */
-function addPyCodeToIntelHex(intelHex: string, pyCode: string): string {
+function appendScriptToIntelHex(intelHex: string, pyCode: string): string {
   const codeBytes: Uint8Array = strToBytes(pyCode);
   const blockBytes: Uint8Array = createUserCodeBlock(codeBytes);
   if (blockBytes.length > UserCodeBlock.Length) {
@@ -140,4 +140,4 @@ function addPyCodeToIntelHex(intelHex: string, pyCode: string): string {
   return intelHexMap.asHexString() + '\n';
 }
 
-export { addPyCodeToIntelHex, getPyCodeFromIntelHex };
+export { appendScriptToIntelHex, getScriptFromIntelHex };

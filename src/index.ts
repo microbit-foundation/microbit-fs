@@ -1,1 +1,1 @@
-export * from './upyhex';
+export * from './appended-script';
