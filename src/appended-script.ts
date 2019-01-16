@@ -28,6 +28,7 @@ const enum UserCodeBlock {
  * paste the Python Code
  */
 const HEX_INSERTION_POINT = ':::::::::::::::::::::::::::::::::::::::::::\n';
+const HEX_RECORD_DATA_LEN = 16;
 
 /**
  * Removes the old insertion line the input Intel Hex string contains it.
@@ -76,10 +77,11 @@ function getScriptFromIntelHex(intelHex: string): string {
  * @returns Byte array with the full User Code Block.
  */
 function createUserCodeBlock(dataBytes: Uint8Array): Uint8Array {
+  let blockLength = dataBytes.length + UserCodeBlock.HeaderLength;
+  // Old DAPLink versions need padding on the last record to fill the line
+  blockLength += HEX_RECORD_DATA_LEN - (blockLength % HEX_RECORD_DATA_LEN);
+  const blockBytes: Uint8Array = new Uint8Array(blockLength).fill(0x00);
   // The user script block has to start with "MP" marker + script length
-  const blockBytes: Uint8Array = new Uint8Array(
-    dataBytes.length + UserCodeBlock.HeaderLength
-  );
   blockBytes[0] = UserCodeBlock.HeaderStartByte0;
   blockBytes[1] = UserCodeBlock.HeaderStartByte1;
   blockBytes[2] = dataBytes.length & 0xff;
