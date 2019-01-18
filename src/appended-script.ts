@@ -3,7 +3,7 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { bytesToStr, strToBytes } from './common';
+import { bytesToStr, cleanseOldHexFormat, strToBytes } from './common';
 
 const enum UserCodeBlock {
   /** User script located at specific flash address. */
@@ -23,21 +23,8 @@ const enum UserCodeBlock {
   HeaderStartByte1 = 80, // 'P'
 }
 
-/**
- * String placed inside the MicroPython hex string to indicate where to
- * paste the Python Code
- */
-const HEX_INSERTION_POINT = ':::::::::::::::::::::::::::::::::::::::::::\n';
+/** How many bytes per Intel Hex record line. */
 const HEX_RECORD_DATA_LEN = 16;
-
-/**
- * Removes the old insertion line the input Intel Hex string contains it.
- * @param intelHex String with the intel hex lines.
- * @returns The Intel Hex string without insertion line.
- */
-function cleanseOldHexFormat(intelHex: string): string {
-  return intelHex.replace(HEX_INSERTION_POINT, '');
-}
 
 /**
  * Parses through an Intel Hex string to find the Python code at the
@@ -111,4 +98,22 @@ function appendScriptToIntelHex(intelHex: string, pyCode: string): string {
   return intelHexMap.asHexString() + '\n';
 }
 
-export { appendScriptToIntelHex, getScriptFromIntelHex };
+/**
+ * Checks the Intel Hex memory map to see if there is an appended script.
+ *
+ * TODO: Actually implement this.
+ * At the moment this is only used in the fs-builder and we are not yet
+ * implementing this feature.
+ * @param intelHex
+ * @returns True if present.
+ */
+function isAppendedScriptPresent(intelHexMap: object): boolean {
+  return false;
+}
+
+export {
+  UserCodeBlock,
+  appendScriptToIntelHex,
+  getScriptFromIntelHex,
+  isAppendedScriptPresent,
+};
