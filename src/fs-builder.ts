@@ -37,11 +37,19 @@ const CALIBRATION_PAGE_SIZE = FLASH_PAGE_SIZE;
 // Temporary maintained state pointing to the next available chunk.
 // TODO: Remove once nextAvailableChunk() is updated.
 // Chosen by fair dice roll, guaranteed to be random.
-const FS_START_CHUNK = 0x2b;
+const FS_START_CHUNK = 0x01;
 let FS_NEXT_AVAILABLE_CHUNK = FS_START_CHUNK;
 
 function fsIncreaseChunkIndex(numberOfChunks: number): void {
   FS_NEXT_AVAILABLE_CHUNK += numberOfChunks;
+  const unusedMap = new MemoryMap();
+  // Check if we are over the filesystem area
+  if (
+    chuckIndexAddress(unusedMap, FS_NEXT_AVAILABLE_CHUNK) >=
+    getEndAddress(unusedMap)
+  ) {
+    throw new Error('There is no more space in the file system.');
+  }
 }
 
 function resetFileSystem(): void {
@@ -64,6 +72,7 @@ export function testResetFileSystem(): void {
  * @returns Next available filesystem chunk.
  */
 function nextAvailableChunk(intelHexMap: object): number {
+  // TODO: Check if we have run out of memory.
   return FS_NEXT_AVAILABLE_CHUNK;
 }
 
@@ -128,10 +137,7 @@ function getPersistentPageAddress(intelHexMap: object): number {
  * @param chunkIndex - Index for the chunk to calculate.
  * @returns Address in flash for the chunk.
  */
-function addressFromChunkIndexNew(
-  intelHexMap: object,
-  chunkIndex: number
-): number {
+function chuckIndexAddress(intelHexMap: object, chunkIndex: number): number {
   // Chunk index starts at 1, so we need to account for that in the calculation
   return getStartAddress(intelHexMap) + (chunkIndex - 1) * ChunkSizes.All;
 }
@@ -245,7 +251,7 @@ function addFileToIntelHex(
 
   // Find next available chunk and its flash address
   const chunkIndex = nextAvailableChunk(intelHexMap);
-  const startAddress = addressFromChunkIndexNew(intelHexMap, chunkIndex);
+  const startAddress = chuckIndexAddress(intelHexMap, chunkIndex);
   // Store in an array each file converted to file system chunks
   const fsFile = new FsFile(filename, data);
   const fileFsBytes = fsFile.getFsBytes(chunkIndex);

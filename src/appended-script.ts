@@ -102,13 +102,13 @@ function appendScriptToIntelHex(intelHex: string, pyCode: string): string {
  * Checks the Intel Hex memory map to see if there is an appended script.
  *
  * TODO: Actually implement this.
- * At the moment this is only used in the fs-builder and we are not yet
- * implementing this feature.
- * @param intelHex
- * @returns True if present.
+ * At the moment the test version of the Python Editor also appends the script
+ * so that it is still readable by the editor.
+ * @param intelHexMap - Memory map for the MicroPython Intel Hex.
+ * @returns True if script is present, false otherwise.
  */
 function isAppendedScriptPresent(intelHexMap: object): boolean {
-  return false;
+  return true;
 }
 
 export {

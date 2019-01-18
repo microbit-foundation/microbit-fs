@@ -17,6 +17,9 @@
     "outDir": "dist/esm5",
     "resolveJsonModule": true,
     "importHelpers": true
+    // Uncomment to temporarily reduce strictness
+    // "strict": false,
+    // "noImplicitAny": false
   },
   "include": ["./src"],
   "compileOnSave": false
