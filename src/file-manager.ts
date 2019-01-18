@@ -1,37 +1,39 @@
 import { bytesToStr, strToBytes } from './common';
+import { addFileToIntelHex } from './fs-builder';
 
 interface FsInterface {
-  create(filename: string, content?: string): void;
   write(filename: string, content: string): void;
   append(filename: string, content: string): void;
   read(filename: string): string;
   readBytes(filename: string): Uint8Array;
   remove(filename: string): void;
+  exists(filename: string): boolean;
   ls(): string[];
 }
 
 class SimpleFile {
   filename: string;
-  data: Uint8Array;
+  private _dataBytes: Uint8Array;
 
   constructor(filename: string, data: string | Uint8Array) {
     this.filename = filename;
     if (typeof data === 'string') {
-      this.data = strToBytes(data);
+      this._dataBytes = strToBytes(data);
     } else {
-      this.data = data;
+      this._dataBytes = data;
     }
   }
 
   getText(): string {
-    return bytesToStr(this.data);
+    return bytesToStr(this._dataBytes);
   }
 
   getBytes(): Uint8Array {
-    return this.data;
+    return this._dataBytes;
   }
 }
 
+// TODO: Max filename size
 // tslint:disable-next-line:max-classes-per-file
 class FileSystem implements FsInterface {
   private _intelHex: string;
@@ -39,13 +41,8 @@ class FileSystem implements FsInterface {
 
   constructor(intelHex: string) {
     this._intelHex = intelHex;
-  }
 
-  create(filename: string, content?: string): void {
-    // TODO: Create an empty file, with optional content
-    // TODO: Throw error if file already exists
-    // tslint:disable-next-line:no-console
-    console.log('create() method unimplemented.');
+    // TODO: Read present file system in Intel Hex and populate files here
   }
 
   write(filename: string, content: string | Uint8Array): void {
@@ -54,7 +51,7 @@ class FileSystem implements FsInterface {
 
   append(filename: string, content: string): void {
     // TODO: Append content to existing file
-    // TODO: Throw error if file does not exists
+    // TODO: Do we throw error if file does not exists, or create it?
     // tslint:disable-next-line:no-console
     console.log('append() method unimplemented.');
   }
@@ -74,6 +71,10 @@ class FileSystem implements FsInterface {
     delete this._files[filename];
   }
 
+  exists(filename: string): boolean {
+    return this._files.hasOwnProperty(filename);
+  }
+
   ls(): string[] {
     const files: string[] = [];
     Object.values(this._files).forEach((value) => files.push(value.filename));
@@ -81,8 +82,11 @@ class FileSystem implements FsInterface {
   }
 
   getIntelHex(): string {
-    // TODO: Generate filesystem and inject into Intel Hex string
-    return this._intelHex;
+    let finalHex = this._intelHex;
+    Object.values(this._files).forEach((file) => {
+      finalHex = addFileToIntelHex(finalHex, file.filename, file.getBytes());
+    });
+    return finalHex;
   }
 }
 
