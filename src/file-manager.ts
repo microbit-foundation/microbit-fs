@@ -19,8 +19,10 @@ class SimpleFile {
     this.filename = filename;
     if (typeof data === 'string') {
       this._dataBytes = strToBytes(data);
-    } else {
+    } else if (data instanceof Uint8Array) {
       this._dataBytes = data;
+    } else {
+      throw new Error('File data type must be a string or Uint8Array.');
     }
   }
 
