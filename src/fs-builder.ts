@@ -68,6 +68,7 @@ export function testResetFileSystem(): void {
  * and finding the next available chunk.
  *
  * TODO: Update to scan input hex.
+ *
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @returns Next available filesystem chunk.
  */
@@ -81,6 +82,7 @@ function nextAvailableChunk(intelHexMap: object): number {
  * return that as the start of the filesystem area.
  *
  * TODO: Actually calculate this.
+ *
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @returns Filesystem start address
  */
@@ -97,6 +99,7 @@ function getStartAddress(intelHexMap: object): number {
  * one is included in the Intel Hex data.
  * Then one page is used at the end of this space for the magnetometer
  * calibration data, and one page by the filesystem as the persistent page.
+ *
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @returns End address for the filesystem.
  */
@@ -111,6 +114,7 @@ function getEndAddress(intelHexMap: object): number {
 
 /**
  * Calculates the address for the last page available to the filesystem.
+ *
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @returns Memory address where the last filesystem page starts.
  */
@@ -122,6 +126,7 @@ function getLastPageAddress(intelHexMap: object): number {
  * Get the start address for the persistent page in flash.
  *
  * This page is located right below the end of the filesystem space.
+ *
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @returns Start address for the filesystem persistent page.
  */
@@ -133,6 +138,7 @@ function getPersistentPageAddress(intelHexMap: object): number {
 
 /**
  * Calculate the flash memory address from the chunk index.
+ *
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @param chunkIndex - Index for the chunk to calculate.
  * @returns Address in flash for the chunk.
@@ -163,6 +169,7 @@ class FsFile {
   /**
    * Generates a byte array for the file header as expected by the MicroPython
    * file system.
+   *
    * @return Byte array with the header data.
    */
   generateFileHeaderBytes(): Uint8Array {
@@ -185,8 +192,9 @@ class FsFile {
   /**
    * Takes a file name and a byte array of data to add to the file system, and
    * converts it into an array of file system chunks, each a byte array.
+   *
    * @param chunkIndex - Index of the first chunk where this data will be
-   *         stored.
+   *     store.
    * @returns An array of byte arrays, one item per chunk.
    */
   getFsChunks(chunkIndex: number): Uint8Array[] {
@@ -236,28 +244,32 @@ class FsFile {
   }
 }
 
+/**
+ * Adds a byte array as a file in the MicroPython filesystem.
+ *
+ * @param intelHex - MicroPython Intel Hex string.
+ * @param filename - Name for the file.
+ * @param data - Byte array for the file data.
+ * @returns MicroPython Intel Hex string with the file in the filesystem.
+ */
 function addFileToIntelHex(
   intelHex: string,
   filename: string,
   data: Uint8Array
 ): string {
-  // Do nothing if there is no files to add
-  if (!filename || !data.length) {
-    // TODO: Throw error
-    return intelHex;
-  }
+  if (!filename) throw new Error('File has to have a file name.');
+  if (!data.length) throw new Error('File has to contain data.');
+
   const intelHexClean = cleanseOldHexFormat(intelHex);
   const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
-
   // Find next available chunk and its flash address
   const chunkIndex = nextAvailableChunk(intelHexMap);
   const startAddress = chuckIndexAddress(intelHexMap, chunkIndex);
-  // Store in an array each file converted to file system chunks
+  // Create a file, generate and inject filesystem data.
   const fsFile = new FsFile(filename, data);
   const fileFsBytes = fsFile.getFsBytes(chunkIndex);
-
-  // Add files to Intel Hex, including the persistent page marker.
   intelHexMap.set(startAddress, fileFsBytes);
+  // Ensure persistent page marker is present
   intelHexMap.set(
     getPersistentPageAddress(intelHexMap),
     new Uint8Array([ChunkMarker.PersistentData])

@@ -3,7 +3,11 @@ import * as fs from 'fs';
 import MemoryMap from 'nrf-intel-hex';
 
 import { strToBytes } from '../common';
-import { addFileToIntelHex, testResetFileSystem } from '../fs-builder';
+import {
+  addFileToIntelHex,
+  resetFileSystem,
+  testResetFileSystem,
+} from '../fs-builder';
 
 describe('Filesystem Builder', () => {
   const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -158,4 +162,72 @@ describe('Filesystem Builder', () => {
     expect(opShortData).toEqual(shortData);
     expect(opLargeData).toEqual(largeData);
   });
+
+  it('Empty file name throws an error.', () => {
+    const failCase = () => {
+      resetFileSystem();
+      const hexWithFs = addFileToIntelHex(
+        uPyHexFile,
+        '',
+        strToBytes('Some content.')
+      );
+    };
+    expect(failCase).toThrow(Error);
+  });
+
+  it('Empty file throw an error.', () => {
+    const failCase = () => {
+      resetFileSystem();
+      const hexWithFs = addFileToIntelHex(
+        uPyHexFile,
+        'my_file.txt',
+        new Uint8Array(0)
+      );
+    };
+    expect(failCase).toThrow(Error);
+  });
+
+  it('Large file that does not fit throws error.', () => {
+    const failCase = () => {
+      resetFileSystem();
+      const hexWithFs = addFileToIntelHex(
+        uPyHexFile,
+        'my_file.txt',
+        new Uint8Array(50 * 1024).fill(0x55)
+      );
+    };
+    expect(failCase).toThrow(Error);
+  });
+
+  it('Large file that does not fit throws error.', () => {
+    const failCase = () => {
+      resetFileSystem();
+      const hexWithFs = addFileToIntelHex(
+        uPyHexFile,
+        'my_file.txt',
+        new Uint8Array(50 * 1024).fill(0x55)
+      );
+    };
+    expect(failCase).toThrow(Error);
+  });
+
+  it('Add files until no more fit.', () => {
+    // The MicroPython hex has about 29 KBs
+    const failCase = () => {
+      resetFileSystem();
+      let hexWithFs = uPyHexFile;
+      // Use 2 KB blocks per file (each chunk is 128 B)
+      const fakeFileData = new Uint8Array(1900).fill(0x55);
+      for (let i = 0; i < 15; i++) {
+        hexWithFs = addFileToIntelHex(
+          hexWithFs,
+          'my_file_' + i + '.txt',
+          fakeFileData
+        );
+      }
+    };
+    expect(failCase).toThrow(Error);
+  });
+
+  // TODO: Hex file with persistent page marker doesn't get two markers
 });
