@@ -42,7 +42,7 @@ let FS_NEXT_AVAILABLE_CHUNK = FS_START_CHUNK;
 
 function fsIncreaseChunkIndex(numberOfChunks: number): void {
   FS_NEXT_AVAILABLE_CHUNK += numberOfChunks;
-  const unusedMap = new MemoryMap();
+  const unusedMap: MemoryMap = new MemoryMap();
   // Check if we are over the filesystem area
   if (
     chuckIndexAddress(unusedMap, FS_NEXT_AVAILABLE_CHUNK) >=
@@ -56,7 +56,7 @@ function resetFileSystem(): void {
   FS_NEXT_AVAILABLE_CHUNK = FS_START_CHUNK;
 }
 
-// Huge hack! Use temporarily for predictable start point for tests.
+// Massive hack! Use temporarily for predictable start point for tests.
 // Will need to regenerate test data for other initial chunks
 export function testResetFileSystem(): void {
   FS_NEXT_AVAILABLE_CHUNK = 0x2b;
@@ -68,7 +68,7 @@ export function testResetFileSystem(): void {
  * and finding the next available chunk.
  *
  * TODO: Update to scan input hex.
- * @param intelHexMap
+ * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @returns Next available filesystem chunk.
  */
 function nextAvailableChunk(intelHexMap: object): number {
@@ -81,7 +81,7 @@ function nextAvailableChunk(intelHexMap: object): number {
  * return that as the start of the filesystem area.
  *
  * TODO: Actually calculate this.
- * @param intelHexMap
+ * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @returns Filesystem start address
  */
 function getStartAddress(intelHexMap: object): number {
@@ -247,7 +247,7 @@ function addFileToIntelHex(
     return intelHex;
   }
   const intelHexClean = cleanseOldHexFormat(intelHex);
-  const intelHexMap = MemoryMap.fromHex(intelHexClean);
+  const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
 
   // Find next available chunk and its flash address
   const chunkIndex = nextAvailableChunk(intelHexMap);

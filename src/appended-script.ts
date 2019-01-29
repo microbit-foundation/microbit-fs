@@ -34,7 +34,7 @@ const HEX_RECORD_DATA_LEN = 16;
  */
 function getScriptFromIntelHex(intelHex: string): string {
   let pyCode: string = '';
-  const hexFileMemMap = MemoryMap.fromHex(intelHex);
+  const hexFileMemMap: MemoryMap = MemoryMap.fromHex(intelHex);
   // Check that the known flash location has user code
   if (hexFileMemMap.has(UserCodeBlock.StartAdd)) {
     const pyCodeMemMap = hexFileMemMap.slice(
@@ -60,7 +60,7 @@ function getScriptFromIntelHex(intelHex: string): string {
  * When the user code is inserted into the flash known location it needs to be
  * packed with a header. This function outputs a byte array with a fully formed
  * User Code Block.
- * @param dataBytes Array of bytes to include in the User Code block.
+ * @param dataBytes - Array of bytes to include in the User Code block.
  * @returns Byte array with the full User Code Block.
  */
 function createUserCodeBlock(dataBytes: Uint8Array): Uint8Array {
@@ -92,7 +92,7 @@ function appendScriptToIntelHex(intelHex: string, pyCode: string): string {
   }
   // Convert to Intel Hex format
   const intelHexClean = cleanseOldHexFormat(intelHex);
-  const intelHexMap = MemoryMap.fromHex(intelHexClean);
+  const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
   intelHexMap.set(UserCodeBlock.StartAdd, blockBytes);
   // Older versions of DAPLink need the file to end in a new line
   return intelHexMap.asHexString() + '\n';
