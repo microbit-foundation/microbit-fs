@@ -1,43 +1,9 @@
-import { bytesToStr, strToBytes } from './common';
 import { addFileToIntelHex } from './fs-builder';
-
-interface FsInterface {
-  write(filename: string, content: string): void;
-  append(filename: string, content: string): void;
-  read(filename: string): string;
-  readBytes(filename: string): Uint8Array;
-  remove(filename: string): void;
-  exists(filename: string): boolean;
-  ls(): string[];
-}
-
-class SimpleFile {
-  filename: string;
-  private _dataBytes: Uint8Array;
-
-  constructor(filename: string, data: string | Uint8Array) {
-    this.filename = filename;
-    if (typeof data === 'string') {
-      this._dataBytes = strToBytes(data);
-    } else if (data instanceof Uint8Array) {
-      this._dataBytes = data;
-    } else {
-      throw new Error('File data type must be a string or Uint8Array.');
-    }
-  }
-
-  getText(): string {
-    return bytesToStr(this._dataBytes);
-  }
-
-  getBytes(): Uint8Array {
-    return this._dataBytes;
-  }
-}
+import { FsInterface } from './fs-interface';
+import { SimpleFile } from './simple-file';
 
 // TODO: Max filename size
-// tslint:disable-next-line:max-classes-per-file
-class FileSystem implements FsInterface {
+export class FileSystem implements FsInterface {
   private _intelHex: string;
   private _files: { [id: string]: SimpleFile } = {};
 
@@ -91,5 +57,3 @@ class FileSystem implements FsInterface {
     return finalHex;
   }
 }
-
-export { FileSystem };
