@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 
-import { getUicrDataFromIntelHex } from '../uicr-hex';
+import { getIntelHexUicrData } from '../uicr-hex';
 
 describe('Read MicroPython UICR data.', () => {
   it('Read MicroPython v1.0.1 hex file UICR', () => {
@@ -19,7 +19,7 @@ describe('Read MicroPython UICR data.', () => {
       'micro:bit v1.0.1+b0bf4a9 on 2018-12-13; ' +
       'MicroPython v1.9.2-34-gd64154c73 on 2017-09-01';
 
-    const result = getUicrDataFromIntelHex(uPyHexFile);
+    const result = getIntelHexUicrData(uPyHexFile);
 
     expect(result.FlashPageSize).toEqual(expectedPageSize);
     expect(result.RuntimeStartPage).toEqual(expectedRuntimeStartPage);
@@ -41,18 +41,15 @@ describe('Read MicroPython UICR data.', () => {
       ':040000050003C0C173\n' +
       ':00000001FF\n';
     const failCase = () => {
-      const result = getUicrDataFromIntelHex(makeCodeUicr);
+      const result = getIntelHexUicrData(makeCodeUicr);
     };
     expect(failCase).toThrow(Error);
   });
 
-  it('UICR data without enough MicroPython data.', () => {
-    // TODO: Write this test
-  });
-  it('UICR MicroPython version address is not in Intel Hex.', () => {
-    // TODO: Write this test
-  });
-  it('UICR MicroPython version address data does not have a null terminator.', () => {
-    // TODO: Write this test
-  });
+  // TODO: Write these tests
+  /*
+  it('UICR data without enough MicroPython data.', () => {});
+  it('UICR MicroPython version address is not in Intel Hex.', () => {});
+  it('UICR MicroPython version address data does not have a null terminator.', () => {});
+  */
 });

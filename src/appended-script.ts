@@ -29,10 +29,11 @@ const HEX_RECORD_DATA_LEN = 16;
 /**
  * Parses through an Intel Hex string to find the Python code at the
  * allocated address and extracts it.
+ *
  * @param intelHex - Intel Hex block to scan for the code.
  * @return Python code.
  */
-function getScriptFromIntelHex(intelHex: string): string {
+function getIntelHexAppendedScript(intelHex: string): string {
   let pyCode: string = '';
   const hexFileMemMap: MemoryMap = MemoryMap.fromHex(intelHex);
   // Check that the known flash location has user code
@@ -60,6 +61,7 @@ function getScriptFromIntelHex(intelHex: string): string {
  * When the user code is inserted into the flash known location it needs to be
  * packed with a header. This function outputs a byte array with a fully formed
  * User Code Block.
+ *
  * @param dataBytes - Array of bytes to include in the User Code block.
  * @returns Byte array with the full User Code Block.
  */
@@ -80,11 +82,12 @@ function createUserCodeBlock(dataBytes: Uint8Array): Uint8Array {
 /**
  * Converts the Python code into the Intel Hex format expected by
  * MicroPython and injects it into a Intel Hex string containing a marker.
+ *
  * @param intelHex - Single string of Intel Hex records to inject the code.
  * @param pyStr - Python code string.
  * @returns Intel Hex string with the Python code injected.
  */
-function appendScriptToIntelHex(intelHex: string, pyCode: string): string {
+function addIntelHexAppendedScript(intelHex: string, pyCode: string): string {
   const codeBytes: Uint8Array = strToBytes(pyCode);
   const blockBytes: Uint8Array = createUserCodeBlock(codeBytes);
   if (blockBytes.length > UserCodeBlock.Length) {
@@ -104,6 +107,7 @@ function appendScriptToIntelHex(intelHex: string, pyCode: string): string {
  * TODO: Actually implement this.
  * At the moment the test version of the Python Editor also appends the script
  * so that it is still readable by the editor.
+ *
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @returns True if script is present, false otherwise.
  */
@@ -113,7 +117,7 @@ function isAppendedScriptPresent(intelHexMap: object): boolean {
 
 export {
   UserCodeBlock,
-  appendScriptToIntelHex,
-  getScriptFromIntelHex,
+  addIntelHexAppendedScript,
+  getIntelHexAppendedScript,
   isAppendedScriptPresent,
 };

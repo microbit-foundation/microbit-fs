@@ -2,7 +2,7 @@ import MemoryMap from 'nrf-intel-hex';
 
 import { isAppendedScriptPresent, UserCodeBlock } from './appended-script';
 import { cleanseOldHexFormat, strToBytes } from './common';
-import { getUicrDataFromHexMap } from './uicr-hex';
+import { getHexMapUicrData } from './uicr-hex';
 
 const enum ChunkMarker {
   Freed = 0,
@@ -77,7 +77,7 @@ function getFreeChunks(intelHexMap: MemoryMap): number[] {
  * @returns Filesystem start address
  */
 function getStartAddress(intelHexMap: MemoryMap): number {
-  const uicrData = getUicrDataFromHexMap(intelHexMap);
+  const uicrData = getHexMapUicrData(intelHexMap);
   const startAddress = uicrData.RuntimeEndAddress;
   // Ensure the start address aligns with the page size
   if (startAddress % FLASH_PAGE_SIZE) {

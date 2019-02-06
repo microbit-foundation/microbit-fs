@@ -183,7 +183,7 @@ function getVersionLocation(intelHexMap: MemoryMap): number {
  * @param intelHexMap - Memory map of the Intel Hex data.
  * @returns Object with the decoded UICR MicroPython data.
  */
-function getUicrDataFromHexMap(intelHexMap: MemoryMap): MicropythonUicrData {
+function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
   if (!confirmMagicValue(intelHexMap)) {
     throw new Error('Could not find valid UICR data in Intel Hex.');
   }
@@ -213,8 +213,8 @@ function getUicrDataFromHexMap(intelHexMap: MemoryMap): MicropythonUicrData {
  * @param intelHex - MicroPython Intel Hex string.
  * @returns Object with the decoded UICR MicroPython data.
  */
-function getUicrDataFromIntelHex(intelHex: string): MicropythonUicrData {
-  return getUicrDataFromHexMap(MemoryMap.fromHex(intelHex));
+function getIntelHexUicrData(intelHex: string): MicropythonUicrData {
+  return getHexMapUicrData(MemoryMap.fromHex(intelHex));
 }
 
-export { MicropythonUicrData, getUicrDataFromHexMap, getUicrDataFromIntelHex };
+export { MicropythonUicrData, getHexMapUicrData, getIntelHexUicrData };
