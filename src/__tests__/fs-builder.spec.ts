@@ -3,11 +3,7 @@ import * as fs from 'fs';
 import MemoryMap from 'nrf-intel-hex';
 
 import { strToBytes } from '../common';
-import {
-  addFileToIntelHex,
-  resetFileSystem,
-  testResetFileSystem,
-} from '../fs-builder';
+import { addFileToIntelHex, testResetFileSystem } from '../fs-builder';
 
 describe('Filesystem Builder', () => {
   const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -165,7 +161,6 @@ describe('Filesystem Builder', () => {
 
   it('Empty file name throws an error.', () => {
     const failCase = () => {
-      resetFileSystem();
       const hexWithFs = addFileToIntelHex(
         uPyHexFile,
         '',
@@ -177,7 +172,6 @@ describe('Filesystem Builder', () => {
 
   it('Empty file throw an error.', () => {
     const failCase = () => {
-      resetFileSystem();
       const hexWithFs = addFileToIntelHex(
         uPyHexFile,
         'my_file.txt',
@@ -189,7 +183,6 @@ describe('Filesystem Builder', () => {
 
   it('Large file that does not fit throws error.', () => {
     const failCase = () => {
-      resetFileSystem();
       const hexWithFs = addFileToIntelHex(
         uPyHexFile,
         'my_file.txt',
@@ -201,7 +194,6 @@ describe('Filesystem Builder', () => {
 
   it('Large file that does not fit throws error.', () => {
     const failCase = () => {
-      resetFileSystem();
       const hexWithFs = addFileToIntelHex(
         uPyHexFile,
         'my_file.txt',
@@ -214,7 +206,6 @@ describe('Filesystem Builder', () => {
   it('Add files until no more fit.', () => {
     // The MicroPython hex has about 29 KBs
     const failCase = () => {
-      resetFileSystem();
       let hexWithFs = uPyHexFile;
       // Use 2 KB blocks per file (each chunk is 128 B)
       const fakeFileData = new Uint8Array(1900).fill(0x55);
@@ -230,4 +221,5 @@ describe('Filesystem Builder', () => {
   });
 
   // TODO: Hex file with persistent page marker doesn't get two markers
+  // TODO: Hex file with injection string (:::...) still works
 });
