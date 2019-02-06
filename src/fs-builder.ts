@@ -26,6 +26,8 @@ const CHUNK_DATA_LEN = CHUNK_LEN - CHUNK_MARKER_LEN - CHUNK_TAIL_LEN;
 const CHUNK_HEADER_END_OFFSET_LEN = 1;
 const CHUNK_HEADER_NAME_LEN = 1;
 
+const MAX_FILENAME_LENGTH = 120;
+
 /** Flash values for the micro:bit nRF microcontroller. */
 const FLASH_PAGE_SIZE = 1024;
 const FLASH_END = 0x40000;
@@ -150,7 +152,7 @@ function chuckIndexAddress(intelHexMap: MemoryMap, chunkIndex: number): number {
  * representation.
  */
 class FsFile {
-  private _filename: string;
+  private _filenameBytes: Uint8Array;
   private _dataBytes: Uint8Array;
   private _fsDataBytes: Uint8Array;
 
@@ -161,7 +163,13 @@ class FsFile {
    * @param data - Byte array with the file data.
    */
   constructor(filename: string, data: Uint8Array) {
-    this._filename = filename;
+    this._filenameBytes = strToBytes(filename);
+    if (this._filenameBytes.length > MAX_FILENAME_LENGTH) {
+      throw new Error(
+        `File name "${filename}" is too long ` +
+          `(max ${MAX_FILENAME_LENGTH} characters).`
+      );
+    }
     this._dataBytes = data;
     // Generate a single byte array with the filesystem data bytes.
     const fileHeader = this.generateFileHeaderBytes();
@@ -182,16 +190,15 @@ class FsFile {
     const headerSize =
       CHUNK_HEADER_END_OFFSET_LEN +
       CHUNK_HEADER_NAME_LEN +
-      this._filename.length;
+      this._filenameBytes.length;
     const endOffset = (headerSize + this._dataBytes.length) % CHUNK_DATA_LEN;
-    const fileNameOffset: number = headerSize - this._filename.length;
+    const fileNameOffset: number = headerSize - this._filenameBytes.length;
     // Format header byte array
     const headerBytes: Uint8Array = new Uint8Array(headerSize);
     headerBytes[ChunkFormatIndex.EndOffset - 1] = endOffset;
-    headerBytes[ChunkFormatIndex.NameLength - 1] = this._filename.length;
+    headerBytes[ChunkFormatIndex.NameLength - 1] = this._filenameBytes.length;
     for (let i = fileNameOffset; i < headerSize; ++i) {
-      // TODO: use strToBytes instead
-      headerBytes[i] = this._filename.charCodeAt(i - fileNameOffset);
+      headerBytes[i] = this._filenameBytes[i - fileNameOffset];
     }
     return headerBytes;
   }

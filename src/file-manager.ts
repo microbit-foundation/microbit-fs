@@ -2,7 +2,6 @@ import { addFileToIntelHex } from './fs-builder';
 import { FsInterface } from './fs-interface';
 import { SimpleFile } from './simple-file';
 
-// TODO: Max filename size
 export class FileSystem implements FsInterface {
   private _intelHex: string;
   private _files: { [id: string]: SimpleFile } = {};

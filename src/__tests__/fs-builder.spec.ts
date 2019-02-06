@@ -220,6 +220,24 @@ describe('Filesystem Builder', () => {
     expect(failCase).toThrow(Error);
   });
 
+  it('Max filename works.', () => {
+    const workingCase = () => {
+      const maxLength = 120;
+      const largeName = 'a'.repeat(maxLength);
+      addFileToIntelHex(uPyHexFile, largeName, strToBytes('Some content.'));
+    };
+    expect(workingCase).not.toThrow(Error);
+  });
+
+  it('Too large filename throws error.', () => {
+    const failCase = () => {
+      const maxLength = 120;
+      const largeName = 'a'.repeat(maxLength + 1);
+      addFileToIntelHex(uPyHexFile, largeName, strToBytes('Some content.'));
+    };
+    expect(failCase).toThrow(Error);
+  });
+
   // TODO: Hex file with persistent page marker doesn't get two markers
   // TODO: Hex file with injection string (:::...) still works
 });
