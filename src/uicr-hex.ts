@@ -184,13 +184,14 @@ function getVersionLocation(intelHexMap: MemoryMap): number {
  * @returns Object with the decoded UICR MicroPython data.
  */
 function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
-  if (!confirmMagicValue(intelHexMap)) {
-    throw new Error('Could not find valid UICR data in Intel Hex.');
+  const uicrMap = intelHexMap.slice(UICR_UPY_START);
+  if (!confirmMagicValue(uicrMap)) {
+    throw new Error('Could not find valid UICR data in Intel Hex data.');
   }
-  const pageSize: number = getPageSize(intelHexMap);
-  const startPage: number = getStartPage(intelHexMap);
-  const pagesUsed: number = getPagesUsed(intelHexMap);
-  const versionAddress: number = getVersionLocation(intelHexMap);
+  const pageSize: number = getPageSize(uicrMap);
+  const startPage: number = getStartPage(uicrMap);
+  const pagesUsed: number = getPagesUsed(uicrMap);
+  const versionAddress: number = getVersionLocation(uicrMap);
   const version: string = getStringFromIntelHexMap(intelHexMap, versionAddress);
 
   return {
