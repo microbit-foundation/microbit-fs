@@ -152,6 +152,7 @@ function chuckIndexAddress(intelHexMap: MemoryMap, chunkIndex: number): number {
  * representation.
  */
 class FsFile {
+  private _filename: string;
   private _filenameBytes: Uint8Array;
   private _dataBytes: Uint8Array;
   private _fsDataBytes: Uint8Array;
@@ -163,6 +164,7 @@ class FsFile {
    * @param data - Byte array with the file data.
    */
   constructor(filename: string, data: Uint8Array) {
+    this._filename = filename;
     this._filenameBytes = strToBytes(filename);
     if (this._filenameBytes.length > MAX_FILENAME_LENGTH) {
       throw new Error(
@@ -206,6 +208,8 @@ class FsFile {
   /**
    * Generate an array of file system chunks for all this file content.
    *
+   * @throws {Error} When there are not enough chunks available.
+   *
    * @param freeChunks - List of available chunks to use.
    * @returns An array of byte arrays, one item per chunk.
    */
@@ -226,6 +230,9 @@ class FsFile {
     // The rest of the chunks follow the same pattern
     while (dataIndex < this._fsDataBytes.length) {
       freeChunksIndex++;
+      if (freeChunksIndex >= freeChunks.length) {
+        throw new Error(`Not enough space for the ${this._filename} file.`);
+      }
       // The previous chunk has to be followed by this one, so add this index
       const previousChunk = chunks[chunks.length - 1];
       previousChunk[ChunkFormatIndex.Tail] = freeChunks[freeChunksIndex];
@@ -266,6 +273,7 @@ class FsFile {
  * @throws {Error} When the invalid file name is given.
  * @throws {Error} When the the file doesn't have any data.
  * @throws {Error} When there are issues calculating the file system boundaries.
+ * @throws {Error} When there is no space left for the file.
  *
  * @param intelHex - MicroPython Intel Hex string.
  * @param filename - Name for the file.
@@ -278,11 +286,14 @@ function addFileToIntelHex(
   data: Uint8Array
 ): string {
   if (!filename) throw new Error('File has to have a file name.');
-  if (!data.length) throw new Error('File has to contain data.');
+  if (!data.length) throw new Error(`File ${filename} has to contain data.`);
 
   const intelHexClean = cleanseOldHexFormat(intelHex);
   const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
   const freeChunks = getFreeChunks(intelHexMap);
+  if (freeChunks.length === 0) {
+    throw new Error('There is no storage space left.');
+  }
   const chunksStartAddress = chuckIndexAddress(intelHexMap, freeChunks[0]);
   // Create a file, generate and inject filesystem data.
   const fsFile = new FsFile(filename, data);

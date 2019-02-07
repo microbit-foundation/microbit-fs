@@ -192,17 +192,6 @@ describe('Filesystem Builder', () => {
     expect(failCase).toThrow(Error);
   });
 
-  it('Large file that does not fit throws error.', () => {
-    const failCase = () => {
-      const hexWithFs = addFileToIntelHex(
-        uPyHexFile,
-        'my_file.txt',
-        new Uint8Array(50 * 1024).fill(0x55)
-      );
-    };
-    expect(failCase).toThrow(Error);
-  });
-
   it('Add files until no more fit.', () => {
     // The MicroPython hex has about 29 KBs
     const failCase = () => {
