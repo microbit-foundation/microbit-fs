@@ -1,14 +1,17 @@
+import MemoryMap from 'nrf-intel-hex';
+
 import {
   addIntelHexAppendedScript,
   getIntelHexAppendedScript,
+  isAppendedScriptPresent,
 } from '../appended-script';
 
-describe('Inject Python code into Intel Hex string', () => {
-  const simpleIntelHex: string =
-    ':020000040000FA\n' +
-    ':1000000000400020ED530100295401002B54010051\n' +
-    ':00000001FF\n';
+const simpleIntelHex: string =
+  ':020000040000FA\n' +
+  ':1000000000400020ED530100295401002B54010051\n' +
+  ':00000001FF\n';
 
+describe('Inject Python code into Intel Hex string', () => {
   it('Inject Python code into an Intel Hex string', () => {
     const pyCode =
       'from microbit import *\n' + "display.scroll('Hello, World!')";
@@ -129,5 +132,39 @@ describe('Extract Python code from Intel Hex string', () => {
     const result: string = getIntelHexAppendedScript(intelHex);
 
     expect(result).toEqual('');
+  });
+});
+
+describe('Detect appended script.', () => {
+  it('Appended script can be detected.', () => {
+    const outputHex: string = addIntelHexAppendedScript(simpleIntelHex, 'code');
+    const outputMap: MemoryMap = MemoryMap.fromHex(outputHex);
+
+    const resultStr = isAppendedScriptPresent(outputHex);
+    const resultMap = isAppendedScriptPresent(outputMap);
+
+    expect(resultStr).toBe(true);
+    expect(resultMap).toBe(true);
+  });
+
+  it('Missing appended script can be detected.', () => {
+    const simpleMap: MemoryMap = MemoryMap.fromHex(simpleIntelHex);
+
+    const resultStr = isAppendedScriptPresent(simpleIntelHex);
+    const resultMap = isAppendedScriptPresent(simpleMap);
+
+    expect(resultStr).toBe(false);
+    expect(resultMap).toBe(false);
+  });
+
+  it('Appended script area with rubbish is not detected as code.', () => {
+    // There is 8 Kbs at the end of flash for the appended script
+    const appendedAddress = (256 - 8) * 1024;
+    const simpleMap: MemoryMap = MemoryMap.fromHex(simpleIntelHex);
+    simpleMap.set(appendedAddress, new Uint8Array([1, 2, 3, 4, 5, 6, 7, 9, 0]));
+
+    const result = isAppendedScriptPresent(simpleMap);
+
+    expect(result).toBe(false);
   });
 });

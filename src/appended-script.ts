@@ -83,6 +83,8 @@ function createUserCodeBlock(dataBytes: Uint8Array): Uint8Array {
  * Converts the Python code into the Intel Hex format expected by
  * MicroPython and injects it into a Intel Hex string containing a marker.
  *
+ * TODO: Throw error if filesystem is using the penultimate page already.
+ *
  * @param intelHex - Single string of Intel Hex records to inject the code.
  * @param pyStr - Python code string.
  * @returns Intel Hex string with the Python code injected.
@@ -104,15 +106,22 @@ function addIntelHexAppendedScript(intelHex: string, pyCode: string): string {
 /**
  * Checks the Intel Hex memory map to see if there is an appended script.
  *
- * TODO: Actually implement this.
- * At the moment the test version of the Python Editor also appends the script
- * so that it is still readable by the editor.
- *
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
- * @returns True if script is present, false otherwise.
+ * @returns True if appended script is present, false otherwise.
  */
-function isAppendedScriptPresent(intelHexMap: object): boolean {
-  return true;
+function isAppendedScriptPresent(intelHex: MemoryMap | string): boolean {
+  let intelHexMap: MemoryMap;
+  if (typeof intelHex === 'string') {
+    const intelHexClean = cleanseOldHexFormat(intelHex);
+    intelHexMap = MemoryMap.fromHex(intelHexClean);
+  } else {
+    intelHexMap = intelHex;
+  }
+  const headerMagic = intelHexMap.slicePad(UserCodeBlock.StartAdd, 2, 0xff);
+  return (
+    headerMagic[0] === UserCodeBlock.HeaderStartByte0 &&
+    headerMagic[1] === UserCodeBlock.HeaderStartByte1
+  );
 }
 
 export {
