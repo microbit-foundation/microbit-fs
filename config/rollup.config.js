@@ -3,6 +3,7 @@ import sourceMaps from 'rollup-plugin-sourcemaps';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import json from 'rollup-plugin-json';
 import commonjs from 'rollup-plugin-commonjs';
+import babel from 'rollup-plugin-babel';
 
 import pkg from '../package.json';
 
@@ -34,6 +35,16 @@ const plugins = /** @type {Plugin[]} */ ([
   // https://github.com/rollup/rollup-plugin-node-resolve#usage
   nodeResolve(),
   sourceMaps(),
+  babel({
+    presets: [
+      [
+        '@babel/preset-env',
+        {
+          modules: false,
+        },
+      ],
+    ],
+  }),
 ]);
 
 /**
