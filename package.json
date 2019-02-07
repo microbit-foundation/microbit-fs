@@ -51,7 +51,6 @@
     "@types/jest": "23.3.10",
     "@types/node": "8.10.*",
     "@types/prettier": "1.15.2",
-    "cross-var": "1.1.0",
     "jest": "23.6.0",
     "prettier": "1.15.3",
     "rollup": "0.68.2",
