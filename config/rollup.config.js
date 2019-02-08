@@ -40,7 +40,11 @@ const plugins = /** @type {Plugin[]} */ ([
       [
         '@babel/preset-env',
         {
+          // Transformation of ES6 module syntax to another module type
           modules: false,
+          targets: {
+            ie: '10',
+          },
         },
       ],
     ],

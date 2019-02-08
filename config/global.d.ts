@@ -50,6 +50,13 @@ declare module 'rollup-plugin-terser' {
   const terser: RollupPluginImpl;
   export { terser };
 }
+declare module 'rollup-plugin-babel' {
+  export interface Options {
+    presets?: string | (string | object)[][];
+  }
+  const plugin: RollupPluginImpl<Options>;
+  export default plugin;
+}
 
 // =====================∫
 // missing library types

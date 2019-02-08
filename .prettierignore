@@ -1,2 +1,5 @@
 dist
 coverage
+
+# This is just for personal use
+ignore/
