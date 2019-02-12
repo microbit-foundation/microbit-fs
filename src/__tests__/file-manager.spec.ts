@@ -346,22 +346,21 @@ describe('Other checks.', () => {
 */
 
 // Matt's playground -----------------------------------------------------------
+import { mocked } from 'ts-jest/utils';
 import { addFileToIntelHex } from '../fs-builder';
-const a = jest.fn((a, b, c) => 'hi');
-jest.mock('../fs-builder', () => {
-  return {
-    addFileToIntelHex: a,
-  };
-});
+jest.mock('../fs-builder');
 
 describe('Test Hex generation.', () => {
   it('Get Intel Hex', () => {
     const microbitFs = new FileSystem(uPyHexFile);
     microbitFs.write('a.txt', 'content');
+    mocked(addFileToIntelHex).mockImplementation(
+      (a: any, b: any, c: any) => 'hi'
+    );
 
     const returnedIntelHex = microbitFs.getIntelHex();
 
-    expect(a.mock.calls).toEqual(1);
+    expect(mocked(addFileToIntelHex).mock.calls.length).toEqual(1);
     expect(returnedIntelHex).toEqual(uPyHexFile);
   });
 });
