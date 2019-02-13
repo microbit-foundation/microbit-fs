@@ -1,2 +1,2 @@
 export * from './appended-script';
-export * from './file-manager';
+export * from './micropython-fs-hex';

@@ -3,7 +3,7 @@ import { addFileToIntelHex } from './fs-builder';
 import { FsInterface } from './fs-interface';
 import { SimpleFile } from './simple-file';
 
-export class FileSystem implements FsInterface {
+export class MicropythonFsHex implements FsInterface {
   private _intelHex: string;
   private _files: { [id: string]: SimpleFile } = {};
 

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 
-import { FileSystem } from '../file-manager';
 import * as fsBuilder from '../fs-builder';
+import { MicropythonFsHex } from '../micropython-fs-hex';
 
 // MicroPython hex file for testing
 const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -11,7 +11,7 @@ describe('Test general read write operations', () => {
     const content1 = "from microbit import display\r\ndisplay.show('x')";
     const content2 = "from microbit import display\r\ndisplay.show('y')";
 
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
     microbitFs.write('test.py', content1);
     microbitFs.write('test2.py', content2);
     const file1 = microbitFs.read('test.py');
@@ -28,7 +28,7 @@ describe('Test general read write operations', () => {
     const content1 = new Uint8Array([1, 2, 3]);
     const content2 = new Uint8Array([4, 5, 6]);
 
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
     microbitFs.write('test.py', content1);
     microbitFs.write('test2.py', content2);
     const file1 = microbitFs.readBytes('test.py');
@@ -44,7 +44,7 @@ describe('Test general read write operations', () => {
 
 describe('Test create method.', () => {
   it('Creates new files.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
     expect(microbitFs.exists('test.py')).toBe(false);
 
     microbitFs.create('test.py', 'content');
@@ -53,7 +53,7 @@ describe('Test create method.', () => {
   });
 
   it('Create does not overwrite files.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
     microbitFs.create('test.py', 'content');
 
     const failCase = () => {
@@ -64,7 +64,7 @@ describe('Test create method.', () => {
   });
 
   it('Throw error with invalid file name.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase1 = () => {
       microbitFs.create('', 'content');
@@ -84,7 +84,7 @@ describe('Test create method.', () => {
   });
 
   it('Throw error with invalid file content.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase1 = () => {
       microbitFs.create('file.txt', '');
@@ -106,7 +106,7 @@ describe('Test create method.', () => {
 
 describe('Test write method.', () => {
   it('Throw error with invalid file name.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase1 = () => {
       microbitFs.write('', 'content');
@@ -126,7 +126,7 @@ describe('Test write method.', () => {
   });
 
   it('Throw error with invalid file content.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase1 = () => {
       microbitFs.write('file.txt', '');
@@ -148,7 +148,7 @@ describe('Test write method.', () => {
 
 describe('Test append method.', () => {
   it('Throw error with invalid file name.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase1 = () => {
       microbitFs.append('', 'more content');
@@ -168,7 +168,7 @@ describe('Test append method.', () => {
   });
 
   it('Throw error if the file does not exists.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase = () => {
       microbitFs.append('does_not_exists.txt', 'content');
@@ -178,7 +178,7 @@ describe('Test append method.', () => {
   });
 
   it('Append is not yet implemented.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
     microbitFs.write('a.txt', 'content');
 
     const failCase = () => {
@@ -191,7 +191,7 @@ describe('Test append method.', () => {
 
 describe('Test read method.', () => {
   it('Throw error with invalid file name.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase1 = () => {
       microbitFs.read('');
@@ -211,7 +211,7 @@ describe('Test read method.', () => {
   });
 
   it('Throw error if the file does not exists.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase = () => {
       microbitFs.read('does_not_exists.txt');
@@ -223,7 +223,7 @@ describe('Test read method.', () => {
 
 describe('Test readBytes method.', () => {
   it('Throw error with invalid file name.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase1 = () => {
       microbitFs.readBytes('');
@@ -243,7 +243,7 @@ describe('Test readBytes method.', () => {
   });
 
   it('Throw error if the file does not exists.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase = () => {
       microbitFs.readBytes('does_not_exists.txt');
@@ -256,7 +256,7 @@ describe('Test readBytes method.', () => {
 describe('Test remove method.', () => {
   it('Delete files.', () => {
     const content = "from microbit import display\r\ndisplay.show('x')";
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
     microbitFs.write('test.py', content);
     microbitFs.write('test2.py', content);
 
@@ -269,7 +269,7 @@ describe('Test remove method.', () => {
   });
 
   it('Throw error with invalid file name.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase1 = () => {
       microbitFs.remove('');
@@ -289,7 +289,7 @@ describe('Test remove method.', () => {
   });
 
   it('Throw error if the file does not exists.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase = () => {
       microbitFs.remove('does_not_exists.txt');
@@ -301,7 +301,7 @@ describe('Test remove method.', () => {
 
 describe('Tests exists method.', () => {
   it('Files exist.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
     microbitFs.write('test1.py', 'content');
 
     const test1Py = microbitFs.exists('test1.py');
@@ -315,7 +315,7 @@ describe('Tests exists method.', () => {
   });
 
   it('Invalid filenames do not exist.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const test1 = microbitFs.exists('');
     // @ts-ignore
@@ -333,7 +333,7 @@ describe('Other checks.', () => {
   it('Too large filename throws error.', () => {
     const maxLength = 120;
     const largeName = 'a'.repeat(maxLength + 1);
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
 
     const failCase = () => {
       microbitFs.write(largeName, 'content');
@@ -352,7 +352,7 @@ describe('Test Hex generation.', () => {
   });
 
   it('getIntelHex called with constructor hex string.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
     microbitFs.write('a.txt', 'content');
 
     const returnedIntelHex = microbitFs.getIntelHex();
@@ -362,7 +362,7 @@ describe('Test Hex generation.', () => {
   });
 
   it('getIntelHex called with argument hex string.', () => {
-    const microbitFs = new FileSystem(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
     const falseHex = 'Not the same Intel Hex text';
     microbitFs.write('a.txt', 'content');
 
@@ -383,7 +383,7 @@ describe('NOT A REAL UNIT TEST! Used for generating a test hex file.', () => {
       'from microbit import *\n' + 'display.scroll("Appended code")\n'
     );
 
-    const microbitFs = new FileSystem(uPyHexFileAppended);
+    const microbitFs = new MicropythonFsHex(uPyHexFileAppended);
     microbitFs.write('first_name.py', 'name = "Carlos"');
     microbitFs.write('surname.py', 'name = "Pereira"');
     microbitFs.write(
