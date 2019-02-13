@@ -68,7 +68,9 @@ function getIntelHexAppendedScript(intelHex: string): string {
 function createUserCodeBlock(dataBytes: Uint8Array): Uint8Array {
   let blockLength = dataBytes.length + UserCodeBlock.HeaderLength;
   // Old DAPLink versions need padding on the last record to fill the line
-  blockLength += HEX_RECORD_DATA_LEN - (blockLength % HEX_RECORD_DATA_LEN);
+  if (blockLength % HEX_RECORD_DATA_LEN) {
+    blockLength += HEX_RECORD_DATA_LEN - (blockLength % HEX_RECORD_DATA_LEN);
+  }
   const blockBytes: Uint8Array = new Uint8Array(blockLength).fill(0x00);
   // The user script block has to start with "MP" marker + script length
   blockBytes[0] = UserCodeBlock.HeaderStartByte0;
