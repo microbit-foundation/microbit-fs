@@ -1,5 +1,6 @@
 dist
 coverage
+docs
 
 # This is just for personal use
 ignore/
