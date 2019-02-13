@@ -23,7 +23,7 @@ WIP.
 
 ## Bugs
 
-Issue tracker: https://github.com/microbit-foundation/js-microbit-micropython-fs/issues
+Issue tracker: https://github.com/microbit-foundation/microbit-fs/issues
 
 ## Development Workflow
 

@@ -14,6 +14,6 @@ search_enabled: true
 # Aux links for the upper right navigation
 aux_links:
   'View on GitHub':
-    - 'https://github.com/microbit-foundation/js-microbit-micropython-fs/'
+    - 'https://github.com/microbit-foundation/microbit-fs/'
 # Color scheme currently only supports "dark" or nil (default)
 color_scheme: 'light'

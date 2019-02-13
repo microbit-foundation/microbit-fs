@@ -1,5 +1,5 @@
 {
-  "name": "@microbit/micropython-fs",
+  "name": "@microbit/microbit-fs",
   "version": "0.2.0",
   "description": "Manipulate files in a micro:bit MicroPython Intel Hex file.",
   "keywords": [
@@ -8,16 +8,16 @@
     "filesystem",
     "fs"
   ],
-  "main": "./dist/bundles/index.umd.js",
+  "main": "./dist/bundles/microbit-fs.umd.js",
   "module": "./dist/esm5/index.js",
   "typings": "./dist/types/index.d.ts",
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/microbit-foundation/js-microbit-micropython-fs"
+    "url": "https://github.com/microbit-foundation/microbit-fs"
   },
   "config": {
-    "umdName": "MicropythonFs"
+    "umdName": "microbitFs"
   },
   "author": "Micro:bit Educational Foundation <support@microbit.org>",
   "license": "MIT",
