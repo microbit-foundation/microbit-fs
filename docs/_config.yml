@@ -13,7 +13,7 @@ kramdown:
 search_enabled: true
 # Aux links for the upper right navigation
 aux_links:
-  'Code on GitHub':
+  'View on GitHub':
     - 'https://github.com/microbit-foundation/js-microbit-micropython-fs/'
 # Color scheme currently only supports "dark" or nil (default)
 color_scheme: 'light'
