@@ -36,7 +36,7 @@
     "verify": "npm run validate-js && npm run style && npm run test:ci",
     "style": "npm run format -- --list-different && npm run lint",
     "style:fix": "npm run format:fix && npm run lint:fix",
-    "format": "prettier --config prettier.config.js \"**/*.{ts,tsx,js,jsx,css,scss,sass,less,md}\"",
+    "format": "prettier --config prettier.config.js \"**/*.{ts,tsx,js,jsx,css,scss,sass,less}\"",
     "format:fix": "npm run format -- --write",
     "lint": "tslint --project tsconfig.json --format codeFrame",
     "lint:fix": "npm run lint -- --fix"
