@@ -351,6 +351,10 @@ describe('Test Hex generation.', () => {
     spy.mockReset();
   });
 
+  afterAll(() => {
+    spy.mockRestore();
+  });
+
   it('getIntelHex called with constructor hex string.', () => {
     const microbitFs = new MicropythonFsHex(uPyHexFile);
     microbitFs.write('a.txt', 'content');
@@ -374,18 +378,24 @@ describe('Test Hex generation.', () => {
 });
 
 /*
+import { addIntelHexAppendedScript } from '../appended-script';
+
 describe('NOT A REAL UNIT TEST! Used for generating a test hex file.', () => {
   it('Create output4.hex with 2 modules used in main.py.', () => {
-    // This test is a bit useless at the moment, need to replace as soon
-    // as this method is properly implemented
     const uPyHexFileAppended = addIntelHexAppendedScript(
       uPyHexFile,
       'from microbit import *\n' + 'display.scroll("Appended code")\n'
     );
 
     const microbitFs = new MicropythonFsHex(uPyHexFileAppended);
-    microbitFs.write('first_name.py', 'name = "Carlos"');
-    microbitFs.write('surname.py', 'name = "Pereira"');
+    microbitFs.write('first_name.py', 'name = "Hello"');
+    microbitFs.write('surname.py', 'name = "World"');
+    // This file takes a single chunk
+    microbitFs.write(
+      'a.py',
+      'a = """abcdefghijklmnopqrstuvwxyz\nabcdefghijklmnopqrstuvwxyz\n' +
+        'abcdefghijklmnopqrstuvwxyz\nabcdefghijklmnopqrstuvwxyz\na"""\n'
+    );
     microbitFs.write(
       'main.py',
       'from microbit import display\n' +
