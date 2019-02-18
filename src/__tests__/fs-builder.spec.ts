@@ -2,12 +2,16 @@ import * as fs from 'fs';
 
 import MemoryMap from 'nrf-intel-hex';
 
-import { strToBytes } from '../common';
-import { addFileToIntelHex, testResetFileSystem } from '../fs-builder';
+import { bytesToStr, strToBytes } from '../common';
+import {
+  addFileToIntelHex,
+  getIntelHexFiles,
+  testResetFileSystem,
+} from '../fs-builder';
 
-describe('Filesystem Builder', () => {
-  const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
+const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
 
+describe('Writing files to the filesystem.', () => {
   it('Add files to hex.', () => {
     const files = [
       {
@@ -170,7 +174,7 @@ describe('Filesystem Builder', () => {
     expect(failCase).toThrow(Error);
   });
 
-  it('Empty file throw an error.', () => {
+  it('Empty file data throw an error.', () => {
     const failCase = () => {
       const hexWithFs = addFileToIntelHex(
         uPyHexFile,
@@ -229,4 +233,188 @@ describe('Filesystem Builder', () => {
 
   // TODO: Hex file with persistent page marker doesn't get two markers
   // TODO: Hex file with injection string (:::...) still works
+});
+
+describe('Reading files from the filesystem.', () => {
+  const alastFilename = 'alast.py';
+  const alastContent =
+    '# Lorem Ipsum is simply dummy text of the printing and\n' +
+    "# typesetting industry. Lorem Ipsum has been the industry's\n" +
+    '# standard dummy text ever since the 1500s, when an unknown\n' +
+    '# printer took a galley of type and scrambled it to make a\n' +
+    '# type specimen book. It has survived not only five\n' +
+    '# centuries, but also the leap into electronic typesetting,\n' +
+    '# remaining essentially unchanged. It was popularised in the\n' +
+    '# 1960s with the release of Letraset sheets containing Lorem\n' +
+    '# Ipsum passages, and more recently with desktop publishing\n' +
+    '# software like Aldus PageMaker including versions of Lorem\n' +
+    '# Ipsum.\n' +
+    '# Lorem Ipsum is simply dummy text of the printing and\n' +
+    "# typesetting industry. Lorem Ipsum has been the industry's\n" +
+    '# standard dummy text ever since the 1500s, when an unknown\n' +
+    '# printer took a galley of type and scrambled it to make a\n' +
+    '# type specimen book. It has survived not only five\n' +
+    '# centuries, but also the leap into electronic typesetting,\n' +
+    '# remaining essentially unchanged. It was popularised in the\n' +
+    '# 1960s with the release of Letraset sheets containing Lorem\n' +
+    '# Ipsum passages, and more recently with desktop publishing\n' +
+    '# software like Aldus PageMaker including versions of Lorem\n' +
+    '# Ipsum.\n' +
+    'import afirst\n\n' +
+    "lastname = 'Pereira'\n" +
+    "full_name = '{} {}'.format(afirst.firstname, lastname)\n";
+  const alastHex =
+    ':020000040003F7\n' +
+    ':10930000FE2308616C6173742E707923204C6F7298\n' +
+    ':10931000656D20497073756D2069732073696D7078\n' +
+    ':109320006C792064756D6D792074657874206F6632\n' +
+    ':1093300020746865207072696E74696E6720616E52\n' +
+    ':10934000640A23207479706573657474696E67208C\n' +
+    ':10935000696E6475737472792E204C6F72656D201E\n' +
+    ':10936000497073756D20686173206265656E207445\n' +
+    ':10937000686520696E64757374727927730A2310A7\n' +
+    ':109380000F207374616E646172642064756D6D7911\n' +
+    ':10939000207465787420657665722073696E6365E4\n' +
+    ':1093A000207468652031353030732C207768656E05\n' +
+    ':1093B00020616E20756E6B6E6F776E0A232070725F\n' +
+    ':1093C000696E74657220746F6F6B20612067616CC9\n' +
+    ':1093D0006C6579206F66207479706520616E6420F9\n' +
+    ':1093E000736372616D626C656420697420746F20B0\n' +
+    ':1093F0006D616B6520610A2320747970652073119B\n' +
+    ':1094000010706563696D656E20626F6F6B2E204909\n' +
+    ':109410007420686173207375727669766564206E56\n' +
+    ':109420006F74206F6E6C7920666976650A232063FD\n' +
+    ':10943000656E7475726965732C2062757420616C39\n' +
+    ':10944000736F20746865206C65617020696E746F3D\n' +
+    ':1094500020656C656374726F6E69632074797065E2\n' +
+    ':1094600073657474696E672C0A232072656D616977\n' +
+    ':109470006E696E6720657373656E7469616C6C12DA\n' +
+    ':10948000117920756E6368616E6765642E2049747A\n' +
+    ':109490002077617320706F70756C61726973656499\n' +
+    ':1094A00020696E207468650A2320313936307320B4\n' +
+    ':1094B00077697468207468652072656C656173658E\n' +
+    ':1094C000206F66204C6574726173657420736865E3\n' +
+    ':1094D00065747320636F6E7461696E696E67204C8A\n' +
+    ':1094E0006F72656D0A2320497073756D207061730A\n' +
+    ':1094F00073616765732C20616E64206D6F726513F4\n' +
+    ':109500001220726563656E746C79207769746820C7\n' +
+    ':109510006465736B746F70207075626C69736869D1\n' +
+    ':109520006E670A2320736F667477617265206C69B9\n' +
+    ':109530006B6520416C64757320506167654D616B8C\n' +
+    ':10954000657220696E636C7564696E6720766572FA\n' +
+    ':1095500073696F6E73206F66204C6F72656D0A239E\n' +
+    ':1095600020497073756D2E0A23204C6F72656D2033\n' +
+    ':10957000497073756D2069732073696D706C79140F\n' +
+    ':10958000132064756D6D792074657874206F662082\n' +
+    ':10959000746865207072696E74696E6720616E64AC\n' +
+    ':1095A0000A23207479706573657474696E67206925\n' +
+    ':1095B0006E6475737472792E204C6F72656D2049DC\n' +
+    ':1095C0007073756D20686173206265656E207468C4\n' +
+    ':1095D0006520696E64757374727927730A2320732A\n' +
+    ':1095E00074616E646172642064756D6D7920746558\n' +
+    ':1095F000787420657665722073696E6365207415D2\n' +
+    ':109600001468652031353030732C207768656E2002\n' +
+    ':10961000616E20756E6B6E6F776E0A2320707269B3\n' +
+    ':109620006E74657220746F6F6B20612067616C6C63\n' +
+    ':109630006579206F66207479706520616E6420738F\n' +
+    ':109640006372616D626C656420697420746F206D53\n' +
+    ':10965000616B6520610A23207479706520737065E1\n' +
+    ':1096600063696D656E20626F6F6B2E204974206890\n' +
+    ':109670006173207375727669766564206E6F7416F7\n' +
+    ':1096800015206F6E6C7920666976650A2320636504\n' +
+    ':109690006E7475726965732C2062757420616C73C9\n' +
+    ':1096A0006F20746865206C65617020696E746F202E\n' +
+    ':1096B000656C656374726F6E69632074797065732D\n' +
+    ':1096C000657474696E672C0A232072656D61696E1A\n' +
+    ':1096D000696E6720657373656E7469616C6C79205F\n' +
+    ':1096E000756E6368616E6765642E204974207761CA\n' +
+    ':1096F0007320706F70756C6172697365642069178F\n' +
+    ':10970000166E207468650A2320313936307320774D\n' +
+    ':10971000697468207468652072656C656173652082\n' +
+    ':109720006F66204C6574726173657420736865653B\n' +
+    ':10973000747320636F6E7461696E696E67204C6F1D\n' +
+    ':1097400072656D0A2320497073756D2070617373A3\n' +
+    ':10975000616765732C20616E64206D6F7265207285\n' +
+    ':109760006563656E746C79207769746820646573CD\n' +
+    ':109770006B746F70207075626C697368696E6718BE\n' +
+    ':10978000170A2320736F667477617265206C696BAA\n' +
+    ':109790006520416C64757320506167654D616B6530\n' +
+    ':1097A0007220696E636C7564696E6720766572738A\n' +
+    ':1097B000696F6E73206F66204C6F72656D0A23208F\n' +
+    ':1097C000497073756D2E0A696D706F7274206166D1\n' +
+    ':1097D000697273740A0A6C6173746E616D65203D01\n' +
+    ':1097E000202750657265697261270A66756C6C5F27\n' +
+    ':1097F0006E616D65203D20277B7D207B7D272E19A6\n' +
+    ':1098000018666F726D6174286166697273742E6672\n' +
+    ':10981000697273746E616D652C206C6173746E6116\n' +
+    ':109820006D65290AFFFFFFFFFFFFFFFFFFFFFFFF3F\n' +
+    ':00000001FF\n';
+
+  const afirstFilename = 'afirst.py';
+  const afirstContent = "firstname = 'Carlos'";
+  const afirstHex =
+    ':020000040003F7\n' +
+    ':10DF0000FE1F096166697273742E70796669727397\n' +
+    ':10DF1000746E616D65203D20274361726C6F7327BD\n' +
+    ':00000001FF\n';
+
+  const mainFilename = 'main.py';
+  const mainContent =
+    'from microbit import display, Image, sleep\n\n' +
+    'from afirst import firstname\n' +
+    'from alast import lastname, full_name\n\n' +
+    "if full_name == 'Carlos Pereira':\n" +
+    '    display.show(Image.HAPPY)\n' +
+    'else:\n' +
+    '    display.show(Image.SAD)\n' +
+    'sleep(2000)\n' +
+    "full = '{} {}'.format(firstname, lastname)\n" +
+    'print(full)\n' +
+    'display.scroll(full)\n';
+  const mainHex =
+    ':020000040003F7\n' +
+    ':10F08000FE37076D61696E2E707966726F6D206D47\n' +
+    ':10F090006963726F62697420696D706F7274206445\n' +
+    ':10F0A0006973706C61792C20496D6167652C2073E0\n' +
+    ':10F0B0006C6565700A0A66726F6D206166697273AD\n' +
+    ':10F0C0007420696D706F72742066697273746E61FA\n' +
+    ':10F0D0006D650A66726F6D20616C61737420696D75\n' +
+    ':10F0E000706F7274206C6173746E616D652C206634\n' +
+    ':10F0F000756C6C5F6E616D650A0A6966206675CB1A\n' +
+    ':10F10000CA6C6C5F6E616D65203D3D202743617266\n' +
+    ':10F110006C6F732050657265697261273A0A20200E\n' +
+    ':10F120002020646973706C61792E73686F77284949\n' +
+    ':10F130006D6167652E4841505059290A656C7365A9\n' +
+    ':10F140003A0A20202020646973706C61792E7368FC\n' +
+    ':10F150006F7728496D6167652E534144290A736CA6\n' +
+    ':10F160006565702832303030290A66756C6C203D38\n' +
+    ':10F1700020277B7D207B7D272E666F726D6174CC8E\n' +
+    ':10F18000CB2866697273746E616D652C206C617337\n' +
+    ':10F19000746E616D65290A646973706C61792E7390\n' +
+    ':10F1A00063726F6C6C2866756C6C290A7072696E7C\n' +
+    ':10F1B000742866756C6C290AFFFFFFFFFFFFFFFFD5\n' +
+    ':00000001FF\n';
+
+  it('Can read files of different sizes in non-consecutive locations.', () => {
+    // const hexFiles = fs.readFileSync('./ignore/upy-with-files.hex', 'utf8');
+    const largeMap = MemoryMap.fromHex(uPyHexFile);
+    const afirstMemMap = MemoryMap.fromHex(afirstHex);
+    afirstMemMap.forEach((value: Uint8Array, index: number) => {
+      largeMap.set(index, value);
+    });
+    const alastMemMap = MemoryMap.fromHex(alastHex);
+    alastMemMap.forEach((value: Uint8Array, index: number) => {
+      largeMap.set(index, value);
+    });
+    const mainMemMap = MemoryMap.fromHex(mainHex);
+    mainMemMap.forEach((value: Uint8Array, index: number) => {
+      largeMap.set(index, value);
+    });
+
+    const result = getIntelHexFiles(largeMap.asHexString());
+
+    expect(result).toHaveProperty([afirstFilename], strToBytes(afirstContent));
+    expect(result).toHaveProperty([alastFilename], strToBytes(alastContent));
+    expect(result).toHaveProperty([mainFilename]), strToBytes(mainContent);
+  });
 });
