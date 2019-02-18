@@ -236,6 +236,11 @@ describe('Writing files to the filesystem.', () => {
 });
 
 describe('Reading files from the filesystem.', () => {
+  // All the files generated below have been created by transferring the files
+  // to a micro:bit running MicroPython v1.0.1 using Mu.
+  // Because the filesystem limits depend on the MicroPython version, these will
+  // only work if combined with v1.0.1.
+
   const alastFilename = 'alast.py';
   const alastContent =
     '# Lorem Ipsum is simply dummy text of the printing and\n' +
@@ -263,6 +268,7 @@ describe('Reading files from the filesystem.', () => {
     'import afirst\n\n' +
     "lastname = 'Pereira'\n" +
     "full_name = '{} {}'.format(afirst.firstname, lastname)\n";
+  // Uses chunk 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19
   const alastHex =
     ':020000040003F7\n' +
     ':10930000FE2308616C6173742E707923204C6F7298\n' +
@@ -352,6 +358,7 @@ describe('Reading files from the filesystem.', () => {
 
   const afirstFilename = 'afirst.py';
   const afirstContent = "firstname = 'Carlos'";
+  // Uses chunk ??
   const afirstHex =
     ':020000040003F7\n' +
     ':10DF0000FE1F096166697273742E70796669727397\n' +
@@ -371,6 +378,7 @@ describe('Reading files from the filesystem.', () => {
     "full = '{} {}'.format(firstname, lastname)\n" +
     'print(full)\n' +
     'display.scroll(full)\n';
+  // Uses chunk 0xCA, 0xCB, 0xCC
   const mainHex =
     ':020000040003F7\n' +
     ':10F08000FE37076D61696E2E707966726F6D206D47\n' +
@@ -396,7 +404,6 @@ describe('Reading files from the filesystem.', () => {
     ':00000001FF\n';
 
   it('Can read files of different sizes in non-consecutive locations.', () => {
-    // const hexFiles = fs.readFileSync('./ignore/upy-with-files.hex', 'utf8');
     const largeMap = MemoryMap.fromHex(uPyHexFile);
     const afirstMemMap = MemoryMap.fromHex(afirstHex);
     afirstMemMap.forEach((value: Uint8Array, index: number) => {
@@ -417,4 +424,82 @@ describe('Reading files from the filesystem.', () => {
     expect(result).toHaveProperty([alastFilename], strToBytes(alastContent));
     expect(result).toHaveProperty([mainFilename]), strToBytes(mainContent);
   });
+
+  const oneChunkPlusFilename = 'one_chunk_plus.py';
+  const oneChunkPlusContent =
+    'a = """abcdefghijklmnopqrstuvwxyz\n' +
+    'abcdefghijklmnopqrstuvwxyz\n' +
+    'abcdefghijklmnopqrstuvwxyz\n' +
+    'abcdefghijklmno"""\n';
+  // Uses chunk 0x45 and 0x46
+  const oneChunkPlusHex =
+    ':020000040003F7\n' +
+    ':10AE0000FE00116F6E655F6368756E6B5F706C75C9\n' +
+    ':10AE1000732E707961203D20222222616263646575\n' +
+    ':10AE2000666768696A6B6C6D6E6F7071727374754A\n' +
+    ':10AE3000767778797A0A6162636465666768696AB9\n' +
+    ':10AE40006B6C6D6E6F707172737475767778797ADA\n' +
+    ':10AE50000A6162636465666768696A6B6C6D6E6FD0\n' +
+    ':10AE6000707172737475767778797A0A6162636447\n' +
+    ':10AE700065666768696A6B6C6D6E6F2222220A468E\n' +
+    ':10AE800045FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8C\n' +
+    ':00000001FF\n';
+
+  it('Can read a file that occupies a single chunk and also the next.', () => {
+    // In the one_chunk_plus.py example the data inside the file would take
+    // exactly 128 Bytes, or one chunk. However, MicroPython also "takes" or
+    // "links" the next chunk and doesn't put any data into it.
+    const largeMap = MemoryMap.fromHex(uPyHexFile);
+    const oneChunkPlusMemMap = MemoryMap.fromHex(oneChunkPlusHex);
+    oneChunkPlusMemMap.forEach((value: Uint8Array, index: number) => {
+      largeMap.set(index, value);
+    });
+
+    const result = getIntelHexFiles(largeMap.asHexString());
+
+    expect(result).toHaveProperty(
+      [oneChunkPlusFilename],
+      strToBytes(oneChunkPlusContent)
+    );
+  });
+
+  const oneChunkMinusFilename = 'one_chunk_minus.py';
+  const oneChunkMinusContent =
+    'a = """abcdefghijklmnopqrstuvwxyz\n' +
+    'abcdefghijklmnopqrstuvwxyz\n' +
+    'abcdefghijklmnopqrstuvwxyz\n' +
+    'abcdefghijklm"""\n';
+  // Uses chunk ??
+  const oneChunkMinusHex =
+    ':020000040003F7\n' +
+    ':10920000FE7D126F6E655F6368756E6B5F6D696E74\n' +
+    ':1092100075732E707961203D202222226162636481\n' +
+    ':1092200065666768696A6B6C6D6E6F707172737476\n' +
+    ':1092300075767778797A0A616263646566676869CA\n' +
+    ':109240006A6B6C6D6E6F7071727374757677787906\n' +
+    ':109250007A0A6162636465666768696A6B6C6D6EE1\n' +
+    ':109260006F707172737475767778797A0A61626358\n' +
+    ':109270006465666768696A6B6C6D2222220AFFFF6B\n' +
+    ':00000001FF\n';
+
+  it('Can read a file that occupies almost a full chunk.', () => {
+    // In contrast to the one_chunk_plus.py example, this one fills the chunk
+    // minus 1 Byte (The second 0xFF at the end is the chunk tail).
+    const largeMap = MemoryMap.fromHex(uPyHexFile);
+    const oneChunkMinusMemMap = MemoryMap.fromHex(oneChunkMinusHex);
+    oneChunkMinusMemMap.forEach((value: Uint8Array, index: number) => {
+      largeMap.set(index, value);
+    });
+
+    const result = getIntelHexFiles(largeMap.asHexString());
+
+    expect(result).toHaveProperty(
+      [oneChunkMinusFilename],
+      strToBytes(oneChunkMinusContent)
+    );
+  });
+
+  // TODO: Create tests with a file that has chunks in non-continuous order
+  // TODO: Create test with chunks that point to each other in an infinite loop
+  // TODO: Create test with chunks that point to each other in the Marker/Tail
 });
