@@ -1,14 +1,19 @@
 import MemoryMap from 'nrf-intel-hex';
 
 import { isAppendedScriptPresent, UserCodeBlock } from './appended-script';
-import { cleanseOldHexFormat, strToBytes } from './common';
+import {
+  bytesToStr,
+  cleanseOldHexFormat,
+  concatUint8Array,
+  strToBytes,
+} from './common';
 import { getHexMapUicrData } from './uicr-hex';
 
 const enum ChunkMarker {
   Freed = 0,
-  PersistentData = 253,
-  FileStart = 254,
-  Unused = 255,
+  PersistentData = 0xfd,
+  FileStart = 0xfe,
+  Unused = 0xff,
 }
 
 const enum ChunkFormatIndex {
@@ -303,4 +308,104 @@ function addFileToIntelHex(
   return intelHexMap.asHexString() + '\n';
 }
 
-export { addFileToIntelHex };
+/**
+ * Reads the filesystem included in a MicroPython Intel Hex string.
+ *
+ * @throws {Error} When multiple files with the same name encountered.
+ * @throws {Error} When a file chunk points to an unused chunk.
+ * @throws {Error} When a file chunk marker does not point to previous chunk.
+ * @throws {Error} When following through the chunks linked list iterates
+ *     through more chunks and used chunks (sign of an infinite loop).
+ *
+ * @param intelHex - The MicroPython Intel Hex string to read from.
+ * @returns Dictionary with the filename as key and byte array as values.
+ */
+function getIntelHexFiles(
+  intelHex: string
+): { [filename: string]: Uint8Array } {
+  const intelHexClean = cleanseOldHexFormat(intelHex);
+  const hexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
+  const startAddress: number = getStartAddress(hexMap);
+  const endAddress: number = getLastPageAddress(hexMap);
+
+  // Iterate through the filesystem to collect used chunks and file starts
+  const usedChunks: { [index: number]: Uint8Array } = {};
+  const startChunkIndexes: number[] = [];
+  let chunkAddr = startAddress;
+  let chunkIndex = 1;
+  while (chunkAddr < endAddress) {
+    const chunk = hexMap.slicePad(chunkAddr, CHUNK_LEN, ChunkMarker.Unused);
+    const marker = chunk[0];
+    if (
+      marker !== ChunkMarker.Unused &&
+      marker !== ChunkMarker.Freed &&
+      marker !== ChunkMarker.PersistentData
+    ) {
+      usedChunks[chunkIndex] = chunk;
+      if (marker === ChunkMarker.FileStart) {
+        startChunkIndexes.push(chunkIndex);
+      }
+    }
+    chunkIndex++;
+    chunkAddr += CHUNK_LEN;
+  }
+
+  // Go through the list of file-starts, follow the file chunks and collect data
+  const files: { [filename: string]: Uint8Array } = {};
+  for (const startChunkIndex of startChunkIndexes) {
+    const startChunk = usedChunks[startChunkIndex];
+    const endChunkOffset = startChunk[ChunkFormatIndex.EndOffset];
+    const filenameLen = startChunk[ChunkFormatIndex.NameLength];
+    // 1st byte is the marker, 2nd is the offset, 3rd is the filename length
+    let chunkDataStart = 3 + filenameLen;
+    const filename = bytesToStr(startChunk.slice(3, chunkDataStart));
+    if (files.hasOwnProperty(filename)) {
+      throw new Error(`Found multiple files named: ${filename}.`);
+    }
+    files[filename] = new Uint8Array(0);
+    let currentChunk = startChunk;
+    let currentIndex = startChunkIndex;
+    // Chunks are basically a double linked list, so invalid data could create
+    // an infinite loop. No file should traverse more chunks than available.
+    let iterations = Object.keys(usedChunks).length + 1;
+    while (iterations--) {
+      const nextIndex = currentChunk[ChunkFormatIndex.Tail];
+      if (nextIndex === ChunkMarker.Unused) {
+        // The current chunk is the last
+        files[filename] = concatUint8Array(
+          files[filename],
+          currentChunk.slice(chunkDataStart, 1 + endChunkOffset)
+        );
+        break;
+      } else {
+        files[filename] = concatUint8Array(
+          files[filename],
+          currentChunk.slice(chunkDataStart, ChunkFormatIndex.Tail)
+        );
+      }
+      const nextChunk = usedChunks[nextIndex];
+      if (!nextChunk) {
+        throw new Error(
+          `Chunk ${currentIndex} points to unused index ${nextIndex}.`
+        );
+      }
+      if (nextChunk[ChunkFormatIndex.Marker] !== currentIndex) {
+        throw new Error(
+          `Chunk index ${nextIndex} did not link to previous chunk index ${currentIndex}.`
+        );
+      }
+      currentChunk = nextChunk;
+      currentIndex = nextIndex;
+      // Only the start chunk has a different data start point
+      chunkDataStart = 1;
+    }
+    if (iterations <= 0) {
+      // We iterated through chunks more often than available chunks
+      throw new Error('Malformed file chunks did not link correctly.');
+    }
+  }
+
+  return files;
+}
+
+export { addFileToIntelHex, getIntelHexFiles };
