@@ -1,7 +1,12 @@
 import * as fs from 'fs';
 
+import MemoryMap from 'nrf-intel-hex';
+
 import * as fsBuilder from '../micropython-fs-builder';
 import { MicropythonFsHex } from '../micropython-fs-hex';
+
+// Mock Spy
+const addIntelHexFileSpy = jest.spyOn(fsBuilder, 'addIntelHexFile');
 
 // MicroPython hex file for testing
 const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -345,14 +350,8 @@ describe('Other checks.', () => {
 });
 
 describe('Test Hex generation.', () => {
-  const spy = jest.spyOn(fsBuilder, 'addIntelHexFile');
-
   beforeEach(() => {
-    spy.mockReset();
-  });
-
-  afterAll(() => {
-    spy.mockRestore();
+    addIntelHexFileSpy.mockReset();
   });
 
   it('getIntelHex called with constructor hex string.', () => {
@@ -361,8 +360,8 @@ describe('Test Hex generation.', () => {
 
     const returnedIntelHex = microbitFs.getIntelHex();
 
-    expect(spy.mock.calls.length).toEqual(1);
-    expect(spy.mock.calls[0][0]).toBe(uPyHexFile);
+    expect(addIntelHexFileSpy.mock.calls.length).toEqual(1);
+    expect(addIntelHexFileSpy.mock.calls[0][0]).toBe(uPyHexFile);
   });
 
   it('getIntelHex called with argument hex string.', () => {
@@ -372,8 +371,88 @@ describe('Test Hex generation.', () => {
 
     const returnedIntelHex = microbitFs.getIntelHex(falseHex);
 
-    expect(spy.mock.calls.length).toEqual(1);
-    expect(spy.mock.calls[0][0]).toBe(falseHex);
+    expect(addIntelHexFileSpy.mock.calls.length).toEqual(1);
+    expect(addIntelHexFileSpy.mock.calls[0][0]).toBe(falseHex);
+  });
+});
+
+describe('Add files from hex file.', () => {
+  // These were created using a micro:bit running MicroPython v1.0.1.
+  const extraFilesHex =
+    ':020000040003F7\n' +
+    // one_chunk_plus.py
+    ':10AE0000FE00116F6E655F6368756E6B5F706C75C9\n' +
+    ':10AE1000732E707961203D20222222616263646575\n' +
+    ':10AE2000666768696A6B6C6D6E6F7071727374754A\n' +
+    ':10AE3000767778797A0A6162636465666768696AB9\n' +
+    ':10AE40006B6C6D6E6F707172737475767778797ADA\n' +
+    ':10AE50000A6162636465666768696A6B6C6D6E6FD0\n' +
+    ':10AE6000707172737475767778797A0A6162636447\n' +
+    ':10AE700065666768696A6B6C6D6E6F2222220A468E\n' +
+    ':10AE800045FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8C\n' +
+    // a.py
+    ':10C18000FE1804612E707961203D20274A75737472\n' +
+    ':10C1900020612066696C65270AFFFFFFFFFFFFFF34\n' +
+    // afirst.py
+    ':10DF0000FE1F096166697273742E70796669727397\n' +
+    ':10DF1000746E616D65203D20274361726C6F7327BD\n' +
+    ':00000001FF\n';
+  const extraFiles: { [filename: string]: string } = {
+    'afirst.py': "firstname = 'Carlos'",
+    'one_chunk_plus.py':
+      'a = """abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmno"""\n',
+    'a.py': "a = 'Just a file'\n",
+  };
+
+  beforeEach(() => {
+    addIntelHexFileSpy.mockReset();
+  });
+
+  const hexStrWithFiles = (): string => {
+    const fullUpyFsMemMap = MemoryMap.fromHex(uPyHexFile);
+    const filesMap = MemoryMap.fromHex(extraFilesHex);
+    filesMap.forEach((value: Uint8Array, index: number) => {
+      fullUpyFsMemMap.set(index, value);
+    });
+    return fullUpyFsMemMap.asHexString();
+  };
+
+  it('addFilesFromIntelHex correctly reads files from a hex.', () => {
+    const hexWithFiles = hexStrWithFiles();
+    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+
+    const fileList = micropythonFs.importFilesFromIntelHex(hexWithFiles);
+
+    Object.keys(extraFiles).forEach((filename) => {
+      expect(fileList).toContain(filename);
+      expect(micropythonFs.read(filename)).toEqual(extraFiles[filename]);
+    });
+  });
+
+  it('Throws an error if a file with the same name already exists.', () => {
+    const hexWithFiles = hexStrWithFiles();
+    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    micropythonFs.write('a.py', 'some content');
+
+    const failCase = () => {
+      micropythonFs.importFilesFromIntelHex(hexWithFiles);
+    };
+
+    expect(failCase).toThrow(Error);
+  });
+
+  it('When files are imported it still uses the constructor hex file.', () => {
+    const hexWithFiles = hexStrWithFiles();
+    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+
+    micropythonFs.importFilesFromIntelHex(hexWithFiles);
+    const returnedIntelHex = micropythonFs.getIntelHex();
+
+    expect(addIntelHexFileSpy.mock.calls.length).toEqual(3);
+    expect(addIntelHexFileSpy.mock.calls[0][0]).toBe(uPyHexFile);
   });
 });
 

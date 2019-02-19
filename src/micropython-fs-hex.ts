@@ -1,6 +1,6 @@
 /** Manage files in a MicroPython hex file. */
 import { FsInterface } from './fs-interface';
-import { addIntelHexFile } from './micropython-fs-builder';
+import { addIntelHexFile, getIntelHexFiles } from './micropython-fs-builder';
 import { SimpleFile } from './simple-file';
 
 export class MicropythonFsHex implements FsInterface {
@@ -134,8 +134,26 @@ export class MicropythonFsHex implements FsInterface {
     return files;
   }
 
-  addFilesFromIntelHex(intelHex: string): void {
-    // TODO: Implement this.
+  /**
+   * Read the files included in a MicroPython hex string and add them to this
+   * instance.
+   *
+   * @throws {Error} When there is a problem reading the files from the hex.
+   * @throws {Error} When a filename already exists in this instance.
+   *
+   * @param intelHex - MicroPython hex string with files.
+   * @returns A list of added filenames.
+   */
+  importFilesFromIntelHex(intelHex: string): string[] {
+    const files = getIntelHexFiles(intelHex);
+    Object.keys(files).forEach((filename) => {
+      if (this.exists(filename)) {
+        // TODO: Do something better than just stop and throw an error
+        throw new Error(`File "${filename}" from hex already exists.`);
+      }
+      this.write(filename, files[filename]);
+    });
+    return Object.keys(files);
   }
 
   /**

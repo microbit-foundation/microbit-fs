@@ -14,6 +14,9 @@ Initialise a File System instance with a MicroPython Intel Hex string and start 
 ```js
 // Create a new FileSystem instance passing the MicroPython Intel Hex string
 var micropythonFs = new microbitFs.MicropythonFsHex(IntelHexStr);
+var micropythonFsWithFiles = = new microbitFs.MicropythonFsHex(UploadedHexWithUserFiles);
+
+var addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFiles);
 
 micropythonFs.create('filename.txt', 'Error thrown if file already exists.');
 micropythonFs.write('filename.txt', 'Create or overwrites file.');
