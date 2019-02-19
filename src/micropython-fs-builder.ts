@@ -1,12 +1,12 @@
 import MemoryMap from 'nrf-intel-hex';
 
-import { AppendedBlock, isAppendedScriptPresent } from './appended-script';
 import {
   bytesToStr,
   cleanseOldHexFormat,
   concatUint8Array,
   strToBytes,
 } from './common';
+import { AppendedBlock, isAppendedScriptPresent } from './micropython-appended';
 import { getHexMapUicrData } from './uicr';
 
 const enum ChunkMarker {
