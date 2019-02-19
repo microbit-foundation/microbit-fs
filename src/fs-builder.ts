@@ -1,6 +1,6 @@
 import MemoryMap from 'nrf-intel-hex';
 
-import { isAppendedScriptPresent, UserCodeBlock } from './appended-script';
+import { AppendedBlock, isAppendedScriptPresent } from './appended-script';
 import {
   bytesToStr,
   cleanseOldHexFormat,
@@ -108,7 +108,7 @@ function getStartAddress(intelHexMap: MemoryMap): number {
 function getEndAddress(intelHexMap: MemoryMap): number {
   let endAddress = FLASH_END;
   if (isAppendedScriptPresent(intelHexMap)) {
-    endAddress = UserCodeBlock.StartAdd;
+    endAddress = AppendedBlock.StartAdd;
   }
   return endAddress - CALIBRATION_PAGE_SIZE;
 }
@@ -396,7 +396,7 @@ function getIntelHexFiles(
       }
       currentChunk = nextChunk;
       currentIndex = nextIndex;
-      // Only the start chunk has a different data start point
+      // Start chunk data has a unique start, all others start after marker
       chunkDataStart = 1;
     }
     if (iterations <= 0) {
