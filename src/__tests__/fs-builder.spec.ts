@@ -404,21 +404,21 @@ describe('Reading files from the filesystem.', () => {
     ':00000001FF\n';
 
   it('Can read files of different sizes in non-consecutive locations.', () => {
-    const largeMap = MemoryMap.fromHex(uPyHexFile);
+    const fullUpyFsMemMap = MemoryMap.fromHex(uPyHexFile);
     const afirstMemMap = MemoryMap.fromHex(afirstHex);
     afirstMemMap.forEach((value: Uint8Array, index: number) => {
-      largeMap.set(index, value);
+      fullUpyFsMemMap.set(index, value);
     });
     const alastMemMap = MemoryMap.fromHex(alastHex);
     alastMemMap.forEach((value: Uint8Array, index: number) => {
-      largeMap.set(index, value);
+      fullUpyFsMemMap.set(index, value);
     });
     const mainMemMap = MemoryMap.fromHex(mainHex);
     mainMemMap.forEach((value: Uint8Array, index: number) => {
-      largeMap.set(index, value);
+      fullUpyFsMemMap.set(index, value);
     });
 
-    const result = getIntelHexFiles(largeMap.asHexString());
+    const result = getIntelHexFiles(fullUpyFsMemMap.asHexString());
 
     expect(result).toHaveProperty([afirstFilename], strToBytes(afirstContent));
     expect(result).toHaveProperty([alastFilename], strToBytes(alastContent));
@@ -449,13 +449,13 @@ describe('Reading files from the filesystem.', () => {
     // In the one_chunk_plus.py example the data inside the file would take
     // exactly 128 Bytes, or one chunk. However, MicroPython also "takes" or
     // "links" the next chunk and doesn't put any data into it.
-    const largeMap = MemoryMap.fromHex(uPyHexFile);
+    const fullUpyFsMemMap = MemoryMap.fromHex(uPyHexFile);
     const oneChunkPlusMemMap = MemoryMap.fromHex(oneChunkPlusHex);
     oneChunkPlusMemMap.forEach((value: Uint8Array, index: number) => {
-      largeMap.set(index, value);
+      fullUpyFsMemMap.set(index, value);
     });
 
-    const result = getIntelHexFiles(largeMap.asHexString());
+    const result = getIntelHexFiles(fullUpyFsMemMap.asHexString());
 
     expect(result).toHaveProperty(
       [oneChunkPlusFilename],
@@ -485,18 +485,49 @@ describe('Reading files from the filesystem.', () => {
   it('Can read a file that occupies almost a full chunk.', () => {
     // In contrast to the one_chunk_plus.py example, this one fills the chunk
     // minus 1 Byte (The second 0xFF at the end is the chunk tail).
-    const largeMap = MemoryMap.fromHex(uPyHexFile);
+    const fullUpyFsMemMap = MemoryMap.fromHex(uPyHexFile);
     const oneChunkMinusMemMap = MemoryMap.fromHex(oneChunkMinusHex);
     oneChunkMinusMemMap.forEach((value: Uint8Array, index: number) => {
-      largeMap.set(index, value);
+      fullUpyFsMemMap.set(index, value);
     });
 
-    const result = getIntelHexFiles(largeMap.asHexString());
+    const result = getIntelHexFiles(fullUpyFsMemMap.asHexString());
 
     expect(result).toHaveProperty(
       [oneChunkMinusFilename],
       strToBytes(oneChunkMinusContent)
     );
+  });
+
+  const duplicateFilename = 'a.py';
+  // Uses chunks ??
+  const oneFileCopyHex =
+    ':020000040003F7\n' +
+    ':10AE0000FE1804612E707961203D20274A75737405\n' +
+    ':10AE100020612066696C65270AFFFFFFFFFFFFFFC7\n' +
+    ':00000001FF\n';
+  const otherFileCopyHex =
+    ':020000040003F7\n' +
+    ':10C18000FE1804612E707961203D20274A75737472\n' +
+    ':10C1900020612066696C65270AFFFFFFFFFFFFFF34\n' +
+    ':00000001FF\n';
+
+  it('Duplicate file names throws an error.', () => {
+    // In contrast to the one_chunk_plus.py example, this one fills the chunk
+    // minus 1 Byte (The second 0xFF at the end is the chunk tail).
+    const fullUpyFsMemMap = MemoryMap.fromHex(uPyHexFile);
+    const oneFileCopyMemMap = MemoryMap.fromHex(oneFileCopyHex);
+    oneFileCopyMemMap.forEach((value: Uint8Array, index: number) => {
+      fullUpyFsMemMap.set(index, value);
+    });
+    const otherFileCopyMemMap = MemoryMap.fromHex(otherFileCopyHex);
+    otherFileCopyMemMap.forEach((value: Uint8Array, index: number) => {
+      fullUpyFsMemMap.set(index, value);
+    });
+
+    const failCase = () => getIntelHexFiles(fullUpyFsMemMap.asHexString());
+
+    expect(failCase).toThrow(Error);
   });
 
   // TODO: Create tests with a file that has chunks in non-continuous order
