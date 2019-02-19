@@ -7,7 +7,7 @@ import {
   concatUint8Array,
   strToBytes,
 } from './common';
-import { getHexMapUicrData } from './uicr-hex';
+import { getHexMapUicrData } from './uicr';
 
 const enum ChunkMarker {
   Freed = 0,
@@ -285,7 +285,7 @@ class FsFile {
  * @param data - Byte array for the file data.
  * @returns MicroPython Intel Hex string with the file in the filesystem.
  */
-function addFileToIntelHex(
+function addIntelHexFile(
   intelHex: string,
   filename: string,
   data: Uint8Array
@@ -408,4 +408,4 @@ function getIntelHexFiles(
   return files;
 }
 
-export { addFileToIntelHex, getIntelHexFiles };
+export { addIntelHexFile, getIntelHexFiles };

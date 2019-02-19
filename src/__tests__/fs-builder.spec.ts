@@ -4,10 +4,10 @@ import MemoryMap from 'nrf-intel-hex';
 
 import { bytesToStr, strToBytes } from '../common';
 import {
-  addFileToIntelHex,
+  addIntelHexFile,
   getIntelHexFiles,
   testResetFileSystem,
-} from '../fs-builder';
+} from '../micropython-fs-builder';
 
 const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
 
@@ -144,12 +144,12 @@ describe('Writing files to the filesystem.', () => {
     const shortData = shortMap.get(0x3c900);
 
     testResetFileSystem();
-    let fwWithFsOther = addFileToIntelHex(
+    let fwWithFsOther = addIntelHexFile(
       uPyHexFile,
       files[0].fileName,
       strToBytes(files[0].fileStr)
     );
-    fwWithFsOther = addFileToIntelHex(
+    fwWithFsOther = addIntelHexFile(
       fwWithFsOther,
       files[1].fileName,
       strToBytes(files[1].fileStr)
@@ -165,7 +165,7 @@ describe('Writing files to the filesystem.', () => {
 
   it('Empty file name throws an error.', () => {
     const failCase = () => {
-      const hexWithFs = addFileToIntelHex(
+      const hexWithFs = addIntelHexFile(
         uPyHexFile,
         '',
         strToBytes('Some content.')
@@ -176,7 +176,7 @@ describe('Writing files to the filesystem.', () => {
 
   it('Empty file data throw an error.', () => {
     const failCase = () => {
-      const hexWithFs = addFileToIntelHex(
+      const hexWithFs = addIntelHexFile(
         uPyHexFile,
         'my_file.txt',
         new Uint8Array(0)
@@ -187,7 +187,7 @@ describe('Writing files to the filesystem.', () => {
 
   it('Large file that does not fit throws error.', () => {
     const failCase = () => {
-      const hexWithFs = addFileToIntelHex(
+      const hexWithFs = addIntelHexFile(
         uPyHexFile,
         'my_file.txt',
         new Uint8Array(50 * 1024).fill(0x55)
@@ -205,7 +205,7 @@ describe('Writing files to the filesystem.', () => {
     const addLargeFiles = () => {
       // At 4Kbs we only fit 7 files
       for (let i = 0; i < 15; i++) {
-        hexWithFs = addFileToIntelHex(
+        hexWithFs = addIntelHexFile(
           hexWithFs,
           'file_' + i + '.txt',
           fakeBigFileData
@@ -215,7 +215,7 @@ describe('Writing files to the filesystem.', () => {
     const completeFsFilling = () => {
       // At a maximum of 4 Kbs left, it would fit 32 chunks max
       for (let i = 100; i < 132; i++) {
-        hexWithFs = addFileToIntelHex(
+        hexWithFs = addIntelHexFile(
           hexWithFs,
           'file_' + i + '.txt',
           fakeSingleChunkData
@@ -230,7 +230,7 @@ describe('Writing files to the filesystem.', () => {
     const workingCase = () => {
       const maxLength = 120;
       const largeName = 'a'.repeat(maxLength);
-      addFileToIntelHex(uPyHexFile, largeName, strToBytes('Some content.'));
+      addIntelHexFile(uPyHexFile, largeName, strToBytes('Some content.'));
     };
     expect(workingCase).not.toThrow(Error);
   });
@@ -239,7 +239,7 @@ describe('Writing files to the filesystem.', () => {
     const failCase = () => {
       const maxLength = 120;
       const largeName = 'a'.repeat(maxLength + 1);
-      addFileToIntelHex(uPyHexFile, largeName, strToBytes('Some content.'));
+      addIntelHexFile(uPyHexFile, largeName, strToBytes('Some content.'));
     };
     expect(failCase).toThrow(Error);
   });

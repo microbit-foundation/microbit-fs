@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 
-import * as fsBuilder from '../fs-builder';
+import * as fsBuilder from '../micropython-fs-builder';
 import { MicropythonFsHex } from '../micropython-fs-hex';
 
 // MicroPython hex file for testing
@@ -345,7 +345,7 @@ describe('Other checks.', () => {
 });
 
 describe('Test Hex generation.', () => {
-  const spy = jest.spyOn(fsBuilder, 'addFileToIntelHex');
+  const spy = jest.spyOn(fsBuilder, 'addIntelHexFile');
 
   beforeEach(() => {
     spy.mockReset();

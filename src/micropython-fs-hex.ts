@@ -1,6 +1,6 @@
 /** Manage files in a MicroPython hex file. */
-import { addFileToIntelHex } from './fs-builder';
 import { FsInterface } from './fs-interface';
+import { addIntelHexFile } from './micropython-fs-builder';
 import { SimpleFile } from './simple-file';
 
 export class MicropythonFsHex implements FsInterface {
@@ -153,7 +153,7 @@ export class MicropythonFsHex implements FsInterface {
   getIntelHex(intelHex?: string): string {
     let finalHex = intelHex || this._intelHex;
     Object.values(this._files).forEach((file) => {
-      finalHex = addFileToIntelHex(finalHex, file.filename, file.getBytes());
+      finalHex = addIntelHexFile(finalHex, file.filename, file.getBytes());
     });
     return finalHex;
   }

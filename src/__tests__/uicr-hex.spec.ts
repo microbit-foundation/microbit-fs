@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 
-import { getIntelHexUicrData } from '../uicr-hex';
+import { getIntelHexUicrData } from '../uicr';
 
 describe('Read MicroPython UICR data.', () => {
   it('Read MicroPython v1.0.1 hex file UICR', () => {
