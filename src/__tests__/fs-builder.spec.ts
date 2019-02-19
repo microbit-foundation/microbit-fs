@@ -198,19 +198,32 @@ describe('Writing files to the filesystem.', () => {
 
   it('Add files until no more fit.', () => {
     // The MicroPython hex has about 29 KBs
-    const failCase = () => {
-      let hexWithFs = uPyHexFile;
-      // Use 2 KB blocks per file (each chunk is 128 B)
-      const fakeFileData = new Uint8Array(1900).fill(0x55);
+    let hexWithFs = uPyHexFile;
+    // Use 4 KB blocks per file (each chunk is 128 B)
+    const fakeBigFileData = new Uint8Array(4000).fill(0x55);
+    const fakeSingleChunkData = new Uint8Array([0x55, 0x55]);
+    const addLargeFiles = () => {
+      // At 4Kbs we only fit 7 files
       for (let i = 0; i < 15; i++) {
         hexWithFs = addFileToIntelHex(
           hexWithFs,
-          'my_file_' + i + '.txt',
-          fakeFileData
+          'file_' + i + '.txt',
+          fakeBigFileData
         );
       }
     };
-    expect(failCase).toThrow(Error);
+    const completeFsFilling = () => {
+      // At a maximum of 4 Kbs left, it would fit 32 chunks max
+      for (let i = 100; i < 132; i++) {
+        hexWithFs = addFileToIntelHex(
+          hexWithFs,
+          'file_' + i + '.txt',
+          fakeSingleChunkData
+        );
+      }
+    };
+    expect(addLargeFiles).toThrow(Error);
+    expect(completeFsFilling).toThrow(Error);
   });
 
   it('Max filename works.', () => {
