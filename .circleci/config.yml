@@ -29,6 +29,8 @@ jobs:
       - persist_to_workspace:
           root: ~/repo
           paths: .
+      - store_artifacts:
+          path: ~/repo/dist
 
 workflows:
   version: 2
