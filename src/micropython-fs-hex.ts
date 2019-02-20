@@ -142,13 +142,13 @@ export class MicropythonFsHex implements FsInterface {
    * @throws {Error} When a filename already exists in this instance.
    *
    * @param intelHex - MicroPython hex string with files.
-   * @returns A list of added filenames.
+   * @param overwrite - Flag to overwrite existing files in this instance.
+   * @returns A filename list of added files.
    */
-  importFilesFromIntelHex(intelHex: string): string[] {
+  importFilesFromIntelHex(intelHex: string, overwrite?: boolean): string[] {
     const files = getIntelHexFiles(intelHex);
     Object.keys(files).forEach((filename) => {
-      if (this.exists(filename)) {
-        // TODO: Do something better than just stop and throw an error
+      if (!overwrite && this.exists(filename)) {
         throw new Error(`File "${filename}" from hex already exists.`);
       }
       this.write(filename, files[filename]);

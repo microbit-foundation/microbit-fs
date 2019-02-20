@@ -334,7 +334,7 @@ describe('Tests exists method.', () => {
   });
 });
 
-describe('Other checks.', () => {
+describe('Test other.', () => {
   it('Too large filename throws error.', () => {
     const maxLength = 120;
     const largeName = 'a'.repeat(maxLength + 1);
@@ -349,7 +349,7 @@ describe('Other checks.', () => {
   });
 });
 
-describe('Test Hex generation.', () => {
+describe('Test hex generation.', () => {
   beforeEach(() => {
     addIntelHexFileSpy.mockReset();
   });
@@ -376,7 +376,7 @@ describe('Test Hex generation.', () => {
   });
 });
 
-describe('Add files from hex file.', () => {
+describe('Test importing files from hex.', () => {
   // These were created using a micro:bit running MicroPython v1.0.1.
   const extraFilesHex =
     ':020000040003F7\n' +
@@ -420,7 +420,7 @@ describe('Add files from hex file.', () => {
     return fullUpyFsMemMap.asHexString();
   };
 
-  it('addFilesFromIntelHex correctly reads files from a hex.', () => {
+  it('Correctly read files from a hex.', () => {
     const hexWithFiles = hexStrWithFiles();
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
 
@@ -432,7 +432,33 @@ describe('Add files from hex file.', () => {
     });
   });
 
-  it('Throws an error if a file with the same name already exists.', () => {
+  it('Disabled overwrite flag throws an error when file exists.', () => {
+    const hexWithFiles = hexStrWithFiles();
+    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const originalFileContent = 'Original file content.';
+    micropythonFs.write('a.py', originalFileContent);
+
+    const failCase = () => {
+      micropythonFs.importFilesFromIntelHex(hexWithFiles, false);
+    };
+
+    expect(failCase).toThrow(Error);
+    expect(micropythonFs.read('a.py')).toEqual(originalFileContent);
+  });
+
+  it('Enabled overwrite flag replaces the file.', () => {
+    const hexWithFiles = hexStrWithFiles();
+    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const originalFileContent = 'Original file content.';
+    micropythonFs.write('a.py', originalFileContent);
+
+    micropythonFs.importFilesFromIntelHex(hexWithFiles, true);
+
+    expect(micropythonFs.read('a.py')).not.toEqual(originalFileContent);
+    expect(micropythonFs.read('a.py')).toEqual(extraFiles['a.py']);
+  });
+
+  it('By default it throws an error if a filename already exists.', () => {
     const hexWithFiles = hexStrWithFiles();
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
     micropythonFs.write('a.py', 'some content');
