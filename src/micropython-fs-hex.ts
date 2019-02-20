@@ -9,12 +9,20 @@ export class MicropythonFsHex implements FsInterface {
 
   /**
    * File System manager constructor.
+   * At the moment it needs a MicroPython hex string without a files included.
+   *
+   * TODO: If files are already in input hex file, deal with them somehow.
    *
    * @param intelHex - MicroPython Intel Hex string.
    */
   constructor(intelHex: string) {
     this._intelHex = intelHex;
-    // TODO: Read present file system in Intel Hex and populate files here
+    this.importFilesFromIntelHex(this._intelHex);
+    if (this.ls().length) {
+      throw new Error(
+        'There are files in the MicropythonFsHex constructor hex file input.'
+      );
+    }
   }
 
   /**

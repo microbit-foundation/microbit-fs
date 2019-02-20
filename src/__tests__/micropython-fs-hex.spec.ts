@@ -411,7 +411,7 @@ describe('Test importing files from hex.', () => {
     addIntelHexFileSpy.mockReset();
   });
 
-  const hexStrWithFiles = (): string => {
+  const createHexStrWithFiles = (): string => {
     const fullUpyFsMemMap = MemoryMap.fromHex(uPyHexFile);
     const filesMap = MemoryMap.fromHex(extraFilesHex);
     filesMap.forEach((value: Uint8Array, index: number) => {
@@ -419,12 +419,12 @@ describe('Test importing files from hex.', () => {
     });
     return fullUpyFsMemMap.asHexString();
   };
+  const hexStrWithFiles: string = createHexStrWithFiles();
 
   it('Correctly read files from a hex.', () => {
-    const hexWithFiles = hexStrWithFiles();
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
 
-    const fileList = micropythonFs.importFilesFromIntelHex(hexWithFiles);
+    const fileList = micropythonFs.importFilesFromIntelHex(hexStrWithFiles);
 
     Object.keys(extraFiles).forEach((filename) => {
       expect(fileList).toContain(filename);
@@ -433,13 +433,12 @@ describe('Test importing files from hex.', () => {
   });
 
   it('Disabled overwrite flag throws an error when file exists.', () => {
-    const hexWithFiles = hexStrWithFiles();
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
     const originalFileContent = 'Original file content.';
     micropythonFs.write('a.py', originalFileContent);
 
     const failCase = () => {
-      micropythonFs.importFilesFromIntelHex(hexWithFiles, false);
+      micropythonFs.importFilesFromIntelHex(hexStrWithFiles, false);
     };
 
     expect(failCase).toThrow(Error);
@@ -447,38 +446,41 @@ describe('Test importing files from hex.', () => {
   });
 
   it('Enabled overwrite flag replaces the file.', () => {
-    const hexWithFiles = hexStrWithFiles();
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
     const originalFileContent = 'Original file content.';
     micropythonFs.write('a.py', originalFileContent);
 
-    micropythonFs.importFilesFromIntelHex(hexWithFiles, true);
+    micropythonFs.importFilesFromIntelHex(hexStrWithFiles, true);
 
     expect(micropythonFs.read('a.py')).not.toEqual(originalFileContent);
     expect(micropythonFs.read('a.py')).toEqual(extraFiles['a.py']);
   });
 
   it('By default it throws an error if a filename already exists.', () => {
-    const hexWithFiles = hexStrWithFiles();
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
     micropythonFs.write('a.py', 'some content');
 
     const failCase = () => {
-      micropythonFs.importFilesFromIntelHex(hexWithFiles);
+      micropythonFs.importFilesFromIntelHex(hexStrWithFiles);
     };
 
     expect(failCase).toThrow(Error);
   });
 
   it('When files are imported it still uses the constructor hex file.', () => {
-    const hexWithFiles = hexStrWithFiles();
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
 
-    micropythonFs.importFilesFromIntelHex(hexWithFiles);
+    micropythonFs.importFilesFromIntelHex(hexStrWithFiles);
     const returnedIntelHex = micropythonFs.getIntelHex();
 
     expect(addIntelHexFileSpy.mock.calls.length).toEqual(3);
     expect(addIntelHexFileSpy.mock.calls[0][0]).toBe(uPyHexFile);
+  });
+
+  it('Constructor hex file with files to import thorws an error.', () => {
+    const failCase = () => new MicropythonFsHex(hexStrWithFiles);
+
+    expect(failCase).toThrow(Error);
   });
 });
 
