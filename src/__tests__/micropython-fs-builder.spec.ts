@@ -10,6 +10,8 @@ import {
 } from '../micropython-fs-builder';
 
 const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
+const makecodeHexFile = fs.readFileSync('./src/__tests__/makecode.hex', 'utf8');
+const randContent = strToBytes('Some random content.');
 
 describe('Writing files to the filesystem.', () => {
   it('Add files to hex.', () => {
@@ -164,13 +166,8 @@ describe('Writing files to the filesystem.', () => {
   });
 
   it('Empty file name throws an error.', () => {
-    const failCase = () => {
-      const hexWithFs = addIntelHexFile(
-        uPyHexFile,
-        '',
-        strToBytes('Some content.')
-      );
-    };
+    const failCase = () => addIntelHexFile(uPyHexFile, '', randContent);
+
     expect(failCase).toThrow(Error);
   });
 
@@ -226,21 +223,29 @@ describe('Writing files to the filesystem.', () => {
     expect(completeFsFilling).toThrow(Error);
   });
 
-  it('Max filename works.', () => {
-    const workingCase = () => {
-      const maxLength = 120;
-      const largeName = 'a'.repeat(maxLength);
-      addIntelHexFile(uPyHexFile, largeName, strToBytes('Some content.'));
-    };
+  it('Max filename length works.', () => {
+    const maxLength = 120;
+    const largeName = 'a'.repeat(maxLength);
+
+    const workingCase = () =>
+      addIntelHexFile(uPyHexFile, largeName, randContent);
+
     expect(workingCase).not.toThrow(Error);
   });
 
   it('Too large filename throws error.', () => {
-    const failCase = () => {
-      const maxLength = 120;
-      const largeName = 'a'.repeat(maxLength + 1);
-      addIntelHexFile(uPyHexFile, largeName, strToBytes('Some content.'));
-    };
+    const maxLength = 120;
+    const largeName = 'a'.repeat(maxLength + 1);
+
+    const failCase = () => addIntelHexFile(uPyHexFile, largeName, randContent);
+
+    expect(failCase).toThrow(Error);
+  });
+
+  it('Adding files to non-MicroPython hex fails.', () => {
+    const failCase = () =>
+      addIntelHexFile(makecodeHexFile, 'a.py', randContent);
+
     expect(failCase).toThrow(Error);
   });
 
@@ -255,32 +260,33 @@ describe('Reading files from the filesystem.', () => {
   // only work if combined with v1.0.1.
 
   const alastFilename = 'alast.py';
-  const alastContent =
+  const alastContent = strToBytes(
     '# Lorem Ipsum is simply dummy text of the printing and\n' +
-    "# typesetting industry. Lorem Ipsum has been the industry's\n" +
-    '# standard dummy text ever since the 1500s, when an unknown\n' +
-    '# printer took a galley of type and scrambled it to make a\n' +
-    '# type specimen book. It has survived not only five\n' +
-    '# centuries, but also the leap into electronic typesetting,\n' +
-    '# remaining essentially unchanged. It was popularised in the\n' +
-    '# 1960s with the release of Letraset sheets containing Lorem\n' +
-    '# Ipsum passages, and more recently with desktop publishing\n' +
-    '# software like Aldus PageMaker including versions of Lorem\n' +
-    '# Ipsum.\n' +
-    '# Lorem Ipsum is simply dummy text of the printing and\n' +
-    "# typesetting industry. Lorem Ipsum has been the industry's\n" +
-    '# standard dummy text ever since the 1500s, when an unknown\n' +
-    '# printer took a galley of type and scrambled it to make a\n' +
-    '# type specimen book. It has survived not only five\n' +
-    '# centuries, but also the leap into electronic typesetting,\n' +
-    '# remaining essentially unchanged. It was popularised in the\n' +
-    '# 1960s with the release of Letraset sheets containing Lorem\n' +
-    '# Ipsum passages, and more recently with desktop publishing\n' +
-    '# software like Aldus PageMaker including versions of Lorem\n' +
-    '# Ipsum.\n' +
-    'import afirst\n\n' +
-    "lastname = 'Pereira'\n" +
-    "full_name = '{} {}'.format(afirst.firstname, lastname)\n";
+      "# typesetting industry. Lorem Ipsum has been the industry's\n" +
+      '# standard dummy text ever since the 1500s, when an unknown\n' +
+      '# printer took a galley of type and scrambled it to make a\n' +
+      '# type specimen book. It has survived not only five\n' +
+      '# centuries, but also the leap into electronic typesetting,\n' +
+      '# remaining essentially unchanged. It was popularised in the\n' +
+      '# 1960s with the release of Letraset sheets containing Lorem\n' +
+      '# Ipsum passages, and more recently with desktop publishing\n' +
+      '# software like Aldus PageMaker including versions of Lorem\n' +
+      '# Ipsum.\n' +
+      '# Lorem Ipsum is simply dummy text of the printing and\n' +
+      "# typesetting industry. Lorem Ipsum has been the industry's\n" +
+      '# standard dummy text ever since the 1500s, when an unknown\n' +
+      '# printer took a galley of type and scrambled it to make a\n' +
+      '# type specimen book. It has survived not only five\n' +
+      '# centuries, but also the leap into electronic typesetting,\n' +
+      '# remaining essentially unchanged. It was popularised in the\n' +
+      '# 1960s with the release of Letraset sheets containing Lorem\n' +
+      '# Ipsum passages, and more recently with desktop publishing\n' +
+      '# software like Aldus PageMaker including versions of Lorem\n' +
+      '# Ipsum.\n' +
+      'import afirst\n\n' +
+      "lastname = 'Pereira'\n" +
+      "full_name = '{} {}'.format(afirst.firstname, lastname)\n"
+  );
   // Uses chunk 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19
   const alastHex =
     ':020000040003F7\n' +
@@ -370,7 +376,7 @@ describe('Reading files from the filesystem.', () => {
     ':00000001FF\n';
 
   const afirstFilename = 'afirst.py';
-  const afirstContent = "firstname = 'Carlos'";
+  const afirstContent = strToBytes("firstname = 'Carlos'");
   // Uses chunk ??
   const afirstHex =
     ':020000040003F7\n' +
@@ -379,18 +385,19 @@ describe('Reading files from the filesystem.', () => {
     ':00000001FF\n';
 
   const mainFilename = 'main.py';
-  const mainContent =
+  const mainContent = strToBytes(
     'from microbit import display, Image, sleep\n\n' +
-    'from afirst import firstname\n' +
-    'from alast import lastname, full_name\n\n' +
-    "if full_name == 'Carlos Pereira':\n" +
-    '    display.show(Image.HAPPY)\n' +
-    'else:\n' +
-    '    display.show(Image.SAD)\n' +
-    'sleep(2000)\n' +
-    "full = '{} {}'.format(firstname, lastname)\n" +
-    'print(full)\n' +
-    'display.scroll(full)\n';
+      'from afirst import firstname\n' +
+      'from alast import lastname, full_name\n\n' +
+      "if full_name == 'Carlos Pereira':\n" +
+      '    display.show(Image.HAPPY)\n' +
+      'else:\n' +
+      '    display.show(Image.SAD)\n' +
+      'sleep(2000)\n' +
+      "full = '{} {}'.format(firstname, lastname)\n" +
+      'display.scroll(full)\n' +
+      'print(full)\n'
+  );
   // Uses chunk 0xCA, 0xCB, 0xCC
   const mainHex =
     ':020000040003F7\n' +
@@ -431,11 +438,11 @@ describe('Reading files from the filesystem.', () => {
       fullUpyFsMemMap.set(index, value);
     });
 
-    const result = getIntelHexFiles(fullUpyFsMemMap.asHexString());
+    const foundFiles = getIntelHexFiles(fullUpyFsMemMap.asHexString());
 
-    expect(result).toHaveProperty([afirstFilename], strToBytes(afirstContent));
-    expect(result).toHaveProperty([alastFilename], strToBytes(alastContent));
-    expect(result).toHaveProperty([mainFilename]), strToBytes(mainContent);
+    expect(foundFiles).toHaveProperty([afirstFilename], afirstContent);
+    expect(foundFiles).toHaveProperty([alastFilename], alastContent);
+    expect(foundFiles).toHaveProperty([mainFilename], mainContent);
   });
 
   const oneChunkPlusFilename = 'one_chunk_plus.py';
@@ -468,9 +475,9 @@ describe('Reading files from the filesystem.', () => {
       fullUpyFsMemMap.set(index, value);
     });
 
-    const result = getIntelHexFiles(fullUpyFsMemMap.asHexString());
+    const foundFiles = getIntelHexFiles(fullUpyFsMemMap.asHexString());
 
-    expect(result).toHaveProperty(
+    expect(foundFiles).toHaveProperty(
       [oneChunkPlusFilename],
       strToBytes(oneChunkPlusContent)
     );
@@ -504,9 +511,9 @@ describe('Reading files from the filesystem.', () => {
       fullUpyFsMemMap.set(index, value);
     });
 
-    const result = getIntelHexFiles(fullUpyFsMemMap.asHexString());
+    const foundFiles = getIntelHexFiles(fullUpyFsMemMap.asHexString());
 
-    expect(result).toHaveProperty(
+    expect(foundFiles).toHaveProperty(
       [oneChunkMinusFilename],
       strToBytes(oneChunkMinusContent)
     );
@@ -539,6 +546,18 @@ describe('Reading files from the filesystem.', () => {
     });
 
     const failCase = () => getIntelHexFiles(fullUpyFsMemMap.asHexString());
+
+    expect(failCase).toThrow(Error);
+  });
+
+  it('Reading files from empty MicroPython hex returns empty list.', () => {
+    const foundFiles = getIntelHexFiles(uPyHexFile);
+
+    expect(foundFiles).toEqual({});
+  });
+
+  it('Reading files from non-MicroPython hex fails.', () => {
+    const failCase = () => getIntelHexFiles(makecodeHexFile);
 
     expect(failCase).toThrow(Error);
   });
