@@ -482,6 +482,45 @@ describe('Test importing files from hex.', () => {
 
     expect(failCase).toThrow(Error);
   });
+
+  it('Enabling formatFirst flag erases the previous files.', () => {
+    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    micropythonFs.write('old_file.py', 'Some content.');
+
+    const fileList = micropythonFs.importFilesFromIntelHex(
+      hexStrWithFiles,
+      false,
+      true
+    );
+
+    Object.keys(extraFiles).forEach((filename) => {
+      expect(fileList).toContain(filename);
+      expect(micropythonFs.read(filename)).toEqual(extraFiles[filename]);
+    });
+    expect(micropythonFs.ls()).not.toContain('old_file.py');
+  });
+
+  it('Disabling formatFirst flag, and by default, keeps old files.', () => {
+    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    micropythonFs.write('old_file.py', 'Some content.');
+
+    const fileList1 = micropythonFs.importFilesFromIntelHex(
+      hexStrWithFiles,
+      false
+    );
+    const fileList2 = micropythonFs.importFilesFromIntelHex(
+      hexStrWithFiles,
+      true,
+      false
+    );
+
+    Object.keys(extraFiles).forEach((filename) => {
+      expect(fileList1).toContain(filename);
+      expect(fileList2).toContain(filename);
+      expect(micropythonFs.read(filename)).toEqual(extraFiles[filename]);
+    });
+    expect(micropythonFs.ls()).toContain('old_file.py');
+  });
 });
 
 /*

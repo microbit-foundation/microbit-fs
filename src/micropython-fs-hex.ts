@@ -152,10 +152,20 @@ export class MicropythonFsHex implements FsInterface {
    *
    * @param intelHex - MicroPython hex string with files.
    * @param overwrite - Flag to overwrite existing files in this instance.
+   * @param formatFirst - Erase all the previous files before importing. It only
+   *     erases the files after there are no error during hex file parsing.
    * @returns A filename list of added files.
    */
-  importFilesFromIntelHex(intelHex: string, overwrite?: boolean): string[] {
+  importFilesFromIntelHex(
+    intelHex: string,
+    overwrite?: boolean,
+    formatFirst?: boolean
+  ): string[] {
     const files = getIntelHexFiles(intelHex);
+    if (formatFirst) {
+      delete this._files;
+      this._files = {};
+    }
     const existingFiles: string[] = [];
     Object.keys(files).forEach((filename) => {
       if (!overwrite && this.exists(filename)) {
