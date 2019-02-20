@@ -139,7 +139,8 @@ export class MicropythonFsHex implements FsInterface {
    * instance.
    *
    * @throws {Error} When there is a problem reading the files from the hex.
-   * @throws {Error} When a filename already exists in this instance.
+   * @throws {Error} When a filename already exists in this instance (all other
+   *     files are still imported).
    *
    * @param intelHex - MicroPython hex string with files.
    * @param overwrite - Flag to overwrite existing files in this instance.
@@ -147,12 +148,18 @@ export class MicropythonFsHex implements FsInterface {
    */
   importFilesFromIntelHex(intelHex: string, overwrite?: boolean): string[] {
     const files = getIntelHexFiles(intelHex);
+    const existingFiles: string[] = [];
     Object.keys(files).forEach((filename) => {
       if (!overwrite && this.exists(filename)) {
-        throw new Error(`File "${filename}" from hex already exists.`);
+        existingFiles.push(filename);
+      } else {
+        this.write(filename, files[filename]);
       }
-      this.write(filename, files[filename]);
     });
+    // Only throw the error at the end so that all other files are imported
+    if (existingFiles.length) {
+      throw new Error(`Files "${existingFiles}" from hex already exists.`);
+    }
     return Object.keys(files);
   }
 
