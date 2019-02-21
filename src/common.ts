@@ -2,7 +2,7 @@
  * General utilities.
  */
 
-import encoding from 'text-encoding';
+import { TextDecoderLite, TextEncoderLite } from 'text-encoder-lite';
 
 /**
  * Marker placed inside the MicroPython hex string to indicate where to
@@ -26,7 +26,7 @@ export function cleanseOldHexFormat(intelHex: string): string {
  * @returns A byte array with the encoded data.
  */
 export function strToBytes(str: string): Uint8Array {
-  const encoder = new encoding.TextEncoder();
+  const encoder = new TextEncoderLite();
   return encoder.encode(str);
 }
 
@@ -36,7 +36,7 @@ export function strToBytes(str: string): Uint8Array {
  * @returns String output from the conversion.
  */
 export function bytesToStr(byteArray: Uint8Array): string {
-  const decoder = new encoding.TextDecoder();
+  const decoder = new TextDecoderLite();
   return decoder.decode(byteArray);
 }
 
