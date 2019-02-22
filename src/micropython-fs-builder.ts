@@ -85,7 +85,7 @@ function getFreeChunks(intelHexMap: MemoryMap): number[] {
  */
 function getStartAddress(intelHexMap: MemoryMap): number {
   const uicrData = getHexMapUicrData(intelHexMap);
-  const startAddress = uicrData.RuntimeEndAddress;
+  const startAddress = uicrData.runtimeEndAddress;
   // Ensure the start address aligns with the page size
   if (startAddress % FLASH_PAGE_SIZE) {
     throw new Error(

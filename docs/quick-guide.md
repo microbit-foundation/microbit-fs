@@ -44,3 +44,17 @@ if (microbitFs.isAppendedScriptPresent(finalHexStr)) {
   var pythonCode = microbitFs.getIntelHexAppendedScript(finalHexStr)
 }
 ```
+
+### Read UICR data
+
+```js
+var uicrData = getIntelHexUicrData(IntelHexStr);
+console.log('' + );
+console.log('Flash Page Size:' + uicrData.flashPageSize);
+console.log('Runtime Start Page:' + uicrData.runtimeStartPage);
+console.log('Runtime Start Address:' + uicrData.runtimeStartAddress);
+console.log('Runtime End Used:' + uicrData.runtimeEndUsed);
+console.log('Runtime End Address:' + uicrData.runtimeEndAddress);
+console.log('Version Address:' + uicrData.versionAddress);
+console.log('Version: ' + uicrData.version);
+```

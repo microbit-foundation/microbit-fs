@@ -39,13 +39,13 @@ enum MicropythonUicrAddress {
 
 /** MicroPython data stored in the UICR Customer area. */
 interface MicropythonUicrData {
-  FlashPageSize: number;
-  RuntimeStartPage: number;
-  RuntimeStartAddress: number;
-  RuntimeEndUsed: number;
-  RuntimeEndAddress: number;
-  VersionAddress: number;
-  Version: string;
+  flashPageSize: number;
+  runtimeStartPage: number;
+  runtimeStartAddress: number;
+  runtimeEndUsed: number;
+  runtimeEndAddress: number;
+  versionAddress: number;
+  version: string;
 }
 
 /**
@@ -186,7 +186,7 @@ function getVersionLocation(intelHexMap: MemoryMap): number {
 function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
   const uicrMap = intelHexMap.slice(UICR_UPY_START);
   if (!confirmMagicValue(uicrMap)) {
-    throw new Error('Could not find valid UICR data in Intel Hex data.');
+    throw new Error('Could not find valid MicroPython UICR data.');
   }
   const pageSize: number = getPageSize(uicrMap);
   const startPage: number = getStartPage(uicrMap);
@@ -195,13 +195,13 @@ function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
   const version: string = getStringFromIntelHexMap(intelHexMap, versionAddress);
 
   return {
-    FlashPageSize: pageSize,
-    RuntimeStartPage: startPage,
-    RuntimeStartAddress: startPage * pageSize,
-    RuntimeEndUsed: pagesUsed,
-    RuntimeEndAddress: pagesUsed * pageSize,
-    VersionAddress: versionAddress,
-    Version: version,
+    flashPageSize: pageSize,
+    runtimeStartPage: startPage,
+    runtimeStartAddress: startPage * pageSize,
+    runtimeEndUsed: pagesUsed,
+    runtimeEndAddress: pagesUsed * pageSize,
+    versionAddress,
+    version,
   };
 }
 

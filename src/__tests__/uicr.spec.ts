@@ -21,17 +21,17 @@ describe('Read MicroPython UICR data.', () => {
 
     const result = getIntelHexUicrData(uPyHexFile);
 
-    expect(result.FlashPageSize).toEqual(expectedPageSize);
-    expect(result.RuntimeStartPage).toEqual(expectedRuntimeStartPage);
-    expect(result.RuntimeStartAddress).toEqual(
+    expect(result.flashPageSize).toEqual(expectedPageSize);
+    expect(result.runtimeStartPage).toEqual(expectedRuntimeStartPage);
+    expect(result.runtimeStartAddress).toEqual(
       expectedRuntimeStartPage * expectedPageSize
     );
-    expect(result.RuntimeEndUsed).toEqual(expectedRuntimeEndPage);
-    expect(result.RuntimeEndAddress).toEqual(
+    expect(result.runtimeEndUsed).toEqual(expectedRuntimeEndPage);
+    expect(result.runtimeEndAddress).toEqual(
       expectedRuntimeEndPage * expectedPageSize
     );
-    expect(result.VersionAddress).toEqual(expectedVersionAddress);
-    expect(result.Version).toEqual(expectedVersion);
+    expect(result.versionAddress).toEqual(expectedVersionAddress);
+    expect(result.version).toEqual(expectedVersion);
   });
 
   it('UICR data without MicroPython magic number', () => {
