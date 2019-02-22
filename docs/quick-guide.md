@@ -20,13 +20,15 @@ var addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFi
 
 micropythonFs.create('filename.txt', 'Error thrown if file already exists.');
 micropythonFs.write('filename.txt', 'Create or overwrites file.');
+// Append not yet implemented
 micropythonFs.append('filename.txt', 'Adds additional content.');
 var content = micropythonFs.read('filename.txt');
+var contentByteArray = micropythonFs.readBytes('filename.txt');
 if (micropythonFs.exists('filename.txt')) {
   micropythonFs.remove('filename.txt');
 }
-micropythonFs.ls();
 var fileSizeInBytes = micropythonFs.size('filename.txt');
+var fileList = micropythonFs.ls();
 
 var intelHexWithFs = micropythonFs.getIntelHex();
 ```
