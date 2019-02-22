@@ -26,6 +26,7 @@ if (micropythonFs.exists('filename.txt')) {
   micropythonFs.remove('filename.txt');
 }
 micropythonFs.ls();
+var fileSizeInBytes = micropythonFs.size('filename.txt');
 
 var intelHexWithFs = micropythonFs.getIntelHex();
 ```
@@ -38,6 +39,6 @@ To add and remove the Python code using the old format:
 ```js
 var finalHexStr = microbitFs.addIntelHexAppendedScript(originalIntelHexStr, 'print("hello world!")');
 if (microbitFs.isAppendedScriptPresent(finalHexStr)) {
-  var pythonCode = getIntelHexAppendedScript(finalHexStr)
+  var pythonCode = microbitFs.getIntelHexAppendedScript(finalHexStr)
 }
 ```

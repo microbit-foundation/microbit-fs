@@ -134,6 +134,25 @@ export class MicropythonFsHex implements FsInterface {
   }
 
   /**
+   * Returns the size of a file in bytes.
+   *
+   * @throws {Error} When invalid file name is provided.
+   * @throws {Error} When the file doesn't exist.
+   *
+   * @param filename - Name for the file to check.
+   * @returns Size file size in bytes.
+   */
+  size(filename: string): number {
+    if (!filename) {
+      throw new Error('Invalid filename.');
+    }
+    if (!this.exists(filename)) {
+      throw new Error(`File "${filename}" does not exist.`);
+    }
+    return this._files[filename].getSize();
+  }
+
+  /**
    * @returns A list all the files in the file system.
    */
   ls(): string[] {

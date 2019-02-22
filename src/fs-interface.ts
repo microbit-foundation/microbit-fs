@@ -5,5 +5,6 @@ export interface FsInterface {
   readBytes(filename: string): Uint8Array;
   remove(filename: string): void;
   exists(filename: string): boolean;
+  size(filename: string): number;
   ls(): string[];
 }
