@@ -1,6 +1,10 @@
 /** Manage files in a MicroPython hex file. */
 import { FsInterface } from './fs-interface';
-import { addIntelHexFiles, getIntelHexFiles } from './micropython-fs-builder';
+import {
+  addIntelHexFiles,
+  calculateFileSize,
+  getIntelHexFiles,
+} from './micropython-fs-builder';
 import { SimpleFile } from './simple-file';
 
 export class MicropythonFsHex implements FsInterface {
@@ -149,7 +153,10 @@ export class MicropythonFsHex implements FsInterface {
     if (!this.exists(filename)) {
       throw new Error(`File "${filename}" does not exist.`);
     }
-    return this._files[filename].getSize();
+    return calculateFileSize(
+      this._files[filename].filename,
+      this._files[filename].getBytes()
+    );
   }
 
   /**

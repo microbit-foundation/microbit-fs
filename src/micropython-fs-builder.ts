@@ -270,6 +270,29 @@ class FsFile {
     }
     return fileFsBytes;
   }
+
+  /**
+   * @returns Size, in bytes, of how much space the file takes in the filesystem
+   *     flash memory.
+   */
+  getFsFileSize(): number {
+    let chunksUsed = Math.ceil(this._fsDataBytes.length / CHUNK_DATA_LEN);
+    // When MicroPython uses up to the last byte of the last chunk it will
+    // still consume the next chunk, even if it doesn't add any data to it
+    if (!(this._fsDataBytes.length % CHUNK_DATA_LEN)) {
+      chunksUsed += 1;
+    }
+    return chunksUsed * CHUNK_LEN;
+  }
+}
+
+/**
+ * @returns Size, in bytes, of how much space the file would take in the
+ *     MicroPython filesystem.
+ */
+function calculateFileSize(filename: string, data: Uint8Array): number {
+  const file = new FsFile(filename, data);
+  return file.getFsFileSize();
 }
 
 /**
@@ -457,4 +480,9 @@ function getIntelHexFiles(
   return files;
 }
 
-export { addIntelHexFile, addIntelHexFiles, getIntelHexFiles };
+export {
+  addIntelHexFile,
+  addIntelHexFiles,
+  calculateFileSize,
+  getIntelHexFiles,
+};

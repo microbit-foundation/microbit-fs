@@ -558,7 +558,9 @@ describe('Reading files from the filesystem.', () => {
     expect(failCase).toThrow(Error);
   });
 
-  // TODO: Create tests with a file that has chunks in non-continuous order
-  // TODO: Create test with chunks that point to each other in an infinite loop
-  // TODO: Create test with chunks that point to each other in the Marker/Tail
+  // TODO: Read tests with a file that has chunks in non-continuous order
+  // TODO: Read test with chunks that point to each other in an infinite loop
+  // TODO: Read test with chunks that don't point to each other in Marker/Tail
+  // TODO: Read test with chunks using the all the start file markers
+  // TODO: Test calculateFileSize()
 });

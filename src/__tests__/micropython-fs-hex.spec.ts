@@ -277,14 +277,15 @@ describe('Tests exists method.', () => {
 describe('Test size method.', () => {
   it('File size is retrieved correctly.', () => {
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
-    micropythonFs.write(
-      'five_bytes.txt',
-      new Uint8Array([30, 31, 32, 33, 34, 35])
-    );
+    micropythonFs.write('five_bytes.txt', new Uint8Array([30, 31, 32, 33, 34]));
+    micropythonFs.write('more_bytes.txt', new Uint8Array(128).fill(0x55));
 
-    const fileSize = micropythonFs.size('five_bytes.txt');
+    const fileSize1 = micropythonFs.size('five_bytes.txt');
+    const fileSize2 = micropythonFs.size('more_bytes.txt');
 
-    expect(fileSize).toEqual(6);
+    // Real size counts chunks, so always a multiple of 128
+    expect(fileSize1).toEqual(128);
+    expect(fileSize2).toEqual(256);
   });
 
   it('Throw error with invalid file name.', () => {

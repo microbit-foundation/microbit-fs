@@ -37,8 +37,4 @@ export class SimpleFile {
   getBytes(): Uint8Array {
     return this._dataBytes;
   }
-
-  getSize(): number {
-    return this._dataBytes.length;
-  }
 }
