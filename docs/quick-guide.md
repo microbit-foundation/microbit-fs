@@ -31,6 +31,7 @@ var fileSizeInBytes = micropythonFs.size('filename.txt');
 var fileList = micropythonFs.ls();
 
 var intelHexWithFs = micropythonFs.getIntelHex();
+var MicroPythonFsSize = micropythonFs.getFsSize();
 ```
 
 Public interface can be found in the `src/fs-interface.ts` file.
@@ -41,7 +42,7 @@ To add and remove the Python code using the old format:
 ```js
 var finalHexStr = microbitFs.addIntelHexAppendedScript(originalIntelHexStr, 'print("hello world!")');
 if (microbitFs.isAppendedScriptPresent(finalHexStr)) {
-  var pythonCode = microbitFs.getIntelHexAppendedScript(finalHexStr)
+  var pythonCode = microbitFs.getIntelHexAppendedScript(finalHexStr);
 }
 ```
 

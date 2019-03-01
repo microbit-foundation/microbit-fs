@@ -4,6 +4,7 @@ import {
   addIntelHexFiles,
   calculateFileSize,
   getIntelHexFiles,
+  getIntelHexFsSize,
 } from './micropython-fs-builder';
 import { SimpleFile } from './simple-file';
 
@@ -226,5 +227,14 @@ export class MicropythonFsHex implements FsInterface {
       files[file.filename] = file.getBytes();
     });
     return addIntelHexFiles(finalHex, files);
+  }
+
+  /**
+   * Calculate the MicroPython filesystem total size.
+   *
+   * @returns Size of the filesystem in bytes.
+   */
+  getFsSize(): number {
+    return getIntelHexFsSize(this._intelHex);
   }
 }

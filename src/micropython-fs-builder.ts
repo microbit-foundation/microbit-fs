@@ -400,6 +400,14 @@ function getIntelHexFiles(
   const startAddress: number = getStartAddress(hexMap);
   const endAddress: number = getLastPageAddress(hexMap);
 
+  // TODO: endAddress as the getLastPageAddress works now because this
+  // library uses the last page as the "persistent" page, so the filesystem does
+  // end there. In reality, the persistent page could be the first or the last
+  // page, so we should get the end address as the magnetometer page and then
+  // check if the persistent marker is present in the first of last page and take that
+  // into account in the memory range calculation.
+  // Note that the persistent marker is only present at the top of the page
+
   // Iterate through the filesystem to collect used chunks and file starts
   const usedChunks: { [index: number]: Uint8Array } = {};
   const startChunkIndexes: number[] = [];
@@ -480,9 +488,25 @@ function getIntelHexFiles(
   return files;
 }
 
+/**
+ * Calculate the MicroPython filesystem size.
+ *
+ * @param intelHex - The MicroPython Intel Hex string.
+ * @returns Size of the filesystem in bytes.
+ */
+function getIntelHexFsSize(intelHex: string): number {
+  const intelHexClean = cleanseOldHexFormat(intelHex);
+  const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
+  const startAddress: number = getStartAddress(intelHexMap);
+  const endAddress = getEndAddress(intelHexMap);
+  // Remember that one page is used as persistent page
+  return endAddress - startAddress - FLASH_PAGE_SIZE;
+}
+
 export {
   addIntelHexFile,
   addIntelHexFiles,
   calculateFileSize,
   getIntelHexFiles,
+  getIntelHexFsSize,
 };

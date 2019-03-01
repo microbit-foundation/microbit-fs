@@ -500,6 +500,17 @@ describe('Test importing files from hex.', () => {
   });
 });
 
+describe('Test MicroPython hex filesystem size.', () => {
+  it('Get how much available fs space there is in a MicroPython hex file.', () => {
+    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+
+    const totalSize = micropythonFs.getFsSize();
+
+    // Calculated by hand from the uPyHexFile v1.0.1 release.
+    expect(totalSize).toEqual(27 * 1024);
+  });
+});
+
 /*
 import { addIntelHexAppendedScript } from '../appended-script';
 

@@ -7,6 +7,7 @@ import {
   addIntelHexFile,
   addIntelHexFiles,
   getIntelHexFiles,
+  getIntelHexFsSize,
   testResetFileSystem,
 } from '../micropython-fs-builder';
 
@@ -562,5 +563,15 @@ describe('Reading files from the filesystem.', () => {
   // TODO: Read test with chunks that point to each other in an infinite loop
   // TODO: Read test with chunks that don't point to each other in Marker/Tail
   // TODO: Read test with chunks using the all the start file markers
+});
+
+describe('Calculate sizes.', () => {
+  it('Get how much available fs space there is in a MicroPython hex file.', () => {
+    const totalSize = getIntelHexFsSize(uPyHexFile);
+
+    // Calculated by hand from the uPyHexFile v1.0.1 release.
+    expect(totalSize).toEqual(27 * 1024);
+  });
+
   // TODO: Test calculateFileSize()
 });
