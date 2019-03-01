@@ -2,9 +2,10 @@ import * as fs from 'fs';
 
 import MemoryMap from 'nrf-intel-hex';
 
-import { bytesToStr, strToBytes } from '../common';
+import { strToBytes } from '../common';
 import {
   addIntelHexFile,
+  addIntelHexFiles,
   getIntelHexFiles,
   testResetFileSystem,
 } from '../micropython-fs-builder';
@@ -146,16 +147,11 @@ describe('Writing files to the filesystem.', () => {
     const shortData = shortMap.get(0x3c900);
 
     testResetFileSystem();
-    let fwWithFsOther = addIntelHexFile(
-      uPyHexFile,
-      files[0].fileName,
-      strToBytes(files[0].fileStr)
-    );
-    fwWithFsOther = addIntelHexFile(
-      fwWithFsOther,
-      files[1].fileName,
-      strToBytes(files[1].fileStr)
-    );
+    const filesObj: { [filename: string]: Uint8Array } = {};
+    filesObj[files[0].fileName] = strToBytes(files[0].fileStr);
+    filesObj[files[1].fileName] = strToBytes(files[1].fileStr);
+
+    const fwWithFsOther = addIntelHexFiles(uPyHexFile, filesObj);
     // fs.writeFileSync('./ignore/output2.hex', fwWithFsOther);
 
     const opMap = MemoryMap.fromHex(fwWithFsOther);

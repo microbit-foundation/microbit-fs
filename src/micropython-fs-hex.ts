@@ -1,6 +1,6 @@
 /** Manage files in a MicroPython hex file. */
 import { FsInterface } from './fs-interface';
-import { addIntelHexFile, getIntelHexFiles } from './micropython-fs-builder';
+import { addIntelHexFiles, getIntelHexFiles } from './micropython-fs-builder';
 import { SimpleFile } from './simple-file';
 
 export class MicropythonFsHex implements FsInterface {
@@ -204,19 +204,20 @@ export class MicropythonFsHex implements FsInterface {
    * Generate a new copy of the MicroPython Intel Hex with the filesystem
    * included.
    *
-   * @throws {Error} When the file doesn't have any data.
+   * @throws {Error} When a file doesn't have any data.
    * @throws {Error} When there are issues calculating file system boundaries.
-   * @throws {Error} When there is no space left for the file.
+   * @throws {Error} When there is no space left for a file.
    *
    * @param intelHex - Optionally provide a different Intel Hex to include the
    *    filesystem into.
-   * @returns A new Intel Hex string with the filesystem included.
+   * @returns A new string with MicroPython and the filesystem included.
    */
   getIntelHex(intelHex?: string): string {
-    let finalHex = intelHex || this._intelHex;
+    const finalHex = intelHex || this._intelHex;
+    const files: { [filename: string]: Uint8Array } = {};
     Object.values(this._files).forEach((file) => {
-      finalHex = addIntelHexFile(finalHex, file.filename, file.getBytes());
+      files[file.filename] = file.getBytes();
     });
-    return finalHex;
+    return addIntelHexFiles(finalHex, files);
   }
 }

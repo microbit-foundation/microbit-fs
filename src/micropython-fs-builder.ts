@@ -273,6 +273,40 @@ class FsFile {
 }
 
 /**
+ * Adds a byte array as a file to a MicroPython Memory Map.
+ *
+ * @throws {Error} When the invalid file name is given.
+ * @throws {Error} When the the file doesn't have any data.
+ * @throws {Error} When there are issues calculating the file system boundaries.
+ * @throws {Error} When there is no space left for the file.
+ *
+ * @param intelHexMap - Memory map for the MicroPython Intel Hex.
+ * @param filename - Name for the file.
+ * @param data - Byte array for the file data.
+ * @returns MicroPython Memory map with the file in the filesystem.
+ */
+function addMemMapFile(
+  intelHexMap: MemoryMap,
+  filename: string,
+  data: Uint8Array
+): MemoryMap {
+  if (!filename) throw new Error('File has to have a file name.');
+  if (!data.length) throw new Error(`File ${filename} has to contain data.`);
+
+  const freeChunks = getFreeChunks(intelHexMap);
+  if (freeChunks.length === 0) {
+    throw new Error('There is no storage space left.');
+  }
+  const chunksStartAddress = chuckIndexAddress(intelHexMap, freeChunks[0]);
+  // Create a file, generate and inject filesystem data.
+  const fsFile = new FsFile(filename, data);
+  const fileFsBytes = fsFile.getFsBytes(freeChunks);
+  intelHexMap.set(chunksStartAddress, fileFsBytes);
+  setPersistentPage(intelHexMap);
+  return intelHexMap;
+}
+
+/**
  * Adds a byte array as a file in the MicroPython filesystem.
  *
  * @throws {Error} When the invalid file name is given.
@@ -290,21 +324,36 @@ function addIntelHexFile(
   filename: string,
   data: Uint8Array
 ): string {
-  if (!filename) throw new Error('File has to have a file name.');
-  if (!data.length) throw new Error(`File ${filename} has to contain data.`);
-
+  // filename and data checked in addMemMapFile
   const intelHexClean = cleanseOldHexFormat(intelHex);
-  const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
-  const freeChunks = getFreeChunks(intelHexMap);
-  if (freeChunks.length === 0) {
-    throw new Error('There is no storage space left.');
-  }
-  const chunksStartAddress = chuckIndexAddress(intelHexMap, freeChunks[0]);
-  // Create a file, generate and inject filesystem data.
-  const fsFile = new FsFile(filename, data);
-  const fileFsBytes = fsFile.getFsBytes(freeChunks);
-  intelHexMap.set(chunksStartAddress, fileFsBytes);
-  setPersistentPage(intelHexMap);
+  let intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
+  intelHexMap = addMemMapFile(intelHexMap, filename, data);
+  return intelHexMap.asHexString() + '\n';
+}
+
+/**
+ * Adds a hash table of filenames and byte arrays as files to the MicroPython
+ * filesystem.
+ *
+ * @throws {Error} When the an invalid file name is given.
+ * @throws {Error} When the a file doesn't have any data.
+ * @throws {Error} When there are issues calculating the file system boundaries.
+ * @throws {Error} When there is no space left for a file.
+ *
+ * @param intelHex - MicroPython Intel Hex string.
+ * @param files - Hash table with filenames as the key and byte arrays as the
+ *     value.
+ * @returns MicroPython Intel Hex string with the file in the filesystem.
+ */
+function addIntelHexFiles(
+  intelHex: string,
+  files: { [filename: string]: Uint8Array }
+): string {
+  const intelHexClean = cleanseOldHexFormat(intelHex);
+  let intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
+  Object.keys(files).forEach((filename) => {
+    intelHexMap = addMemMapFile(intelHexMap, filename, files[filename]);
+  });
   return intelHexMap.asHexString() + '\n';
 }
 
@@ -408,4 +457,4 @@ function getIntelHexFiles(
   return files;
 }
 
-export { addIntelHexFile, getIntelHexFiles };
+export { addIntelHexFile, addIntelHexFiles, getIntelHexFiles };

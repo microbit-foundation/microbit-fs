@@ -6,7 +6,7 @@ import * as fsBuilder from '../micropython-fs-builder';
 import { MicropythonFsHex } from '../micropython-fs-hex';
 
 // Mock Spy
-const addIntelHexFileSpy = jest.spyOn(fsBuilder, 'addIntelHexFile');
+const addIntelHexFilesSpy = jest.spyOn(fsBuilder, 'addIntelHexFiles');
 
 // MicroPython hex file for testing
 const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -327,7 +327,7 @@ describe('Test other.', () => {
 
 describe('Test hex generation.', () => {
   beforeEach(() => {
-    addIntelHexFileSpy.mockReset();
+    addIntelHexFilesSpy.mockReset();
   });
 
   it('getIntelHex called with constructor hex string.', () => {
@@ -336,8 +336,8 @@ describe('Test hex generation.', () => {
 
     const returnedIntelHex = microbitFs.getIntelHex();
 
-    expect(addIntelHexFileSpy.mock.calls.length).toEqual(1);
-    expect(addIntelHexFileSpy.mock.calls[0][0]).toBe(uPyHexFile);
+    expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
+    expect(addIntelHexFilesSpy.mock.calls[0][0]).toBe(uPyHexFile);
   });
 
   it('getIntelHex called with argument hex string.', () => {
@@ -347,8 +347,8 @@ describe('Test hex generation.', () => {
 
     const returnedIntelHex = microbitFs.getIntelHex(falseHex);
 
-    expect(addIntelHexFileSpy.mock.calls.length).toEqual(1);
-    expect(addIntelHexFileSpy.mock.calls[0][0]).toBe(falseHex);
+    expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
+    expect(addIntelHexFilesSpy.mock.calls[0][0]).toBe(falseHex);
   });
 });
 
@@ -384,7 +384,7 @@ describe('Test importing files from hex.', () => {
   };
 
   beforeEach(() => {
-    addIntelHexFileSpy.mockReset();
+    addIntelHexFilesSpy.mockReset();
   });
 
   const createHexStrWithFiles = (): string => {
@@ -449,8 +449,8 @@ describe('Test importing files from hex.', () => {
     micropythonFs.importFilesFromIntelHex(hexStrWithFiles);
     const returnedIntelHex = micropythonFs.getIntelHex();
 
-    expect(addIntelHexFileSpy.mock.calls.length).toEqual(3);
-    expect(addIntelHexFileSpy.mock.calls[0][0]).toBe(uPyHexFile);
+    expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
+    expect(addIntelHexFilesSpy.mock.calls[0][0]).toBe(uPyHexFile);
   });
 
   it('Constructor hex file with files to import thorws an error.', () => {
