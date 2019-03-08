@@ -95,6 +95,35 @@ describe('Test create method.', () => {
   });
 });
 
+describe('Test size operations.', () => {
+  it('Creates new files.', () => {
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
+
+    expect(microbitFs.getStorageUsed()).toEqual(0);
+    expect(microbitFs.getStorageRemaining()).toEqual(27648);
+
+    microbitFs.create('chunk1.py', 'first 128 byte chunk');
+
+    expect(microbitFs.getStorageUsed()).toEqual(128);
+    expect(microbitFs.getStorageRemaining()).toEqual(27648 - 128);
+
+    microbitFs.create('chunk2.py', 'second 128 byte chunk');
+
+    expect(microbitFs.getStorageUsed()).toEqual(256);
+    expect(microbitFs.getStorageRemaining()).toEqual(27648 - 256);
+
+    microbitFs.create('chunk3.py', new Uint8Array(26800).fill(0x60));
+
+    expect(microbitFs.getStorageUsed()).toEqual(27648 - 128);
+    expect(microbitFs.getStorageRemaining()).toEqual(128);
+
+    microbitFs.create('chunk4.py', 'fourth chunk');
+
+    expect(microbitFs.getStorageUsed()).toEqual(27648);
+    expect(microbitFs.getStorageRemaining()).toEqual(0);
+  });
+});
+
 describe('Test write method.', () => {
   it('Throw error with invalid file name.', () => {
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
@@ -504,7 +533,7 @@ describe('Test MicroPython hex filesystem size.', () => {
   it('Get how much available fs space there is in a MicroPython hex file.', () => {
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
 
-    const totalSize = micropythonFs.getFsSize();
+    const totalSize = micropythonFs.getStorageSize();
 
     // Calculated by hand from the uPyHexFile v1.0.1 release.
     expect(totalSize).toEqual(27 * 1024);

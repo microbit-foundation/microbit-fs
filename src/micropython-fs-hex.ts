@@ -170,6 +170,38 @@ export class MicropythonFsHex implements FsInterface {
   }
 
   /**
+   * Calculate the MicroPython filesystem total size.
+   *
+   * @returns Size of the filesystem in bytes.
+   */
+  getStorageSize(): number {
+    return getIntelHexFsSize(this._intelHex);
+  }
+
+  /**
+   * @returns The total number of bytes currently used by files in the file system.
+   */
+  getStorageUsed(): number {
+    let total: number = 0;
+    Object.values(this._files).forEach(
+      (value) => (total += this.size(value.filename))
+    );
+    return total;
+  }
+
+  /**
+   * @returns The remaining storage of the file system in bytes.
+   */
+  getStorageRemaining(): number {
+    let total: number = 0;
+    const capacity: number = this.getStorageSize();
+    Object.values(this._files).forEach(
+      (value) => (total += this.size(value.filename))
+    );
+    return capacity - total;
+  }
+
+  /**
    * Read the files included in a MicroPython hex string and add them to this
    * instance.
    *
@@ -227,14 +259,5 @@ export class MicropythonFsHex implements FsInterface {
       files[file.filename] = file.getBytes();
     });
     return addIntelHexFiles(finalHex, files);
-  }
-
-  /**
-   * Calculate the MicroPython filesystem total size.
-   *
-   * @returns Size of the filesystem in bytes.
-   */
-  getFsSize(): number {
-    return getIntelHexFsSize(this._intelHex);
   }
 }
