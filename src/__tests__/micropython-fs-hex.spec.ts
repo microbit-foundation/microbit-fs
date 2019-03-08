@@ -112,12 +112,7 @@ describe('Test size operations.', () => {
     expect(microbitFs.getStorageUsed()).toEqual(256);
     expect(microbitFs.getStorageRemaining()).toEqual(27648 - 256);
 
-    const stringFiller = 'abcdefgh';
-    let fillString = '';
-    for (let b = 0; b < 3350; b++) {
-      fillString += stringFiller;
-    }
-    microbitFs.create('chunk3.py', fillString);
+    microbitFs.create('chunk3.py', new Uint8Array(26800).fill(0x60));
 
     expect(microbitFs.getStorageUsed()).toEqual(27648 - 128);
     expect(microbitFs.getStorageRemaining()).toEqual(128);
