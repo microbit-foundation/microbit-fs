@@ -183,7 +183,9 @@ export class MicropythonFsHex implements FsInterface {
    */
   getStorageUsed(): number {
     let total: number = 0;
-    Object.values(this._files).forEach((value) => total += this.size(value.filename));
+    Object.values(this._files).forEach(
+      (value) => (total += this.size(value.filename))
+    );
     return total;
   }
 
@@ -193,8 +195,10 @@ export class MicropythonFsHex implements FsInterface {
   getStorageRemaining(): number {
     let total: number = 0;
     const capacity: number = this.getStorageSize();
-    Object.values(this._files).forEach((value) => total += this.size(value.filename));
-    return (capacity - total);
+    Object.values(this._files).forEach(
+      (value) => (total += this.size(value.filename))
+    );
+    return capacity - total;
   }
 
   /**
@@ -256,5 +260,4 @@ export class MicropythonFsHex implements FsInterface {
     });
     return addIntelHexFiles(finalHex, files);
   }
-
 }

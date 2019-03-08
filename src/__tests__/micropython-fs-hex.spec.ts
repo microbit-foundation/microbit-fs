@@ -114,7 +114,7 @@ describe('Test size operations.', () => {
 
     const stringFiller = 'abcdefgh';
     let fillString = '';
-    for (let b=0;b<3350;b++){
+    for (let b = 0; b < 3350; b++) {
       fillString += stringFiller;
     }
     microbitFs.create('chunk3.py', fillString);
@@ -126,7 +126,6 @@ describe('Test size operations.', () => {
 
     expect(microbitFs.getStorageUsed()).toEqual(27648);
     expect(microbitFs.getStorageRemaining()).toEqual(0);
-
   });
 });
 
