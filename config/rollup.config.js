@@ -42,6 +42,8 @@ const plugins = /** @type {Plugin[]} */ ([
         {
           // Transformation of ES6 module syntax to another module type
           modules: false,
+          // How to handle polyfills, 'entry' replaces an import from the code
+          // useBuiltIns: 'entry',
           targets: {
             ie: '10',
           },
