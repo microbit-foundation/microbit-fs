@@ -53,7 +53,14 @@ declare module 'rollup-plugin-terser' {
 declare module 'rollup-plugin-babel' {
   export interface Options {
     presets?: string | (string | object)[][];
+    sourceType?: string;
+    ignore?: RegExp[];
   }
+  const plugin: RollupPluginImpl<Options>;
+  export default plugin;
+}
+declare module 'rollup-plugin-babel-minify' {
+  export interface Options {}
   const plugin: RollupPluginImpl<Options>;
   export default plugin;
 }

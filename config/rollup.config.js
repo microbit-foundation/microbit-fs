@@ -4,6 +4,7 @@ import nodeResolve from 'rollup-plugin-node-resolve';
 import json from 'rollup-plugin-json';
 import commonjs from 'rollup-plugin-commonjs';
 import babel from 'rollup-plugin-babel';
+import minify from 'rollup-plugin-babel-minify';
 
 import pkg from '../package.json';
 
@@ -27,7 +28,7 @@ const external = Object.keys(pkg.peerDependencies) || [];
 /**
  *  @type {Plugin[]}
  */
-const plugins = /** @type {Plugin[]} */ ([
+const defaultPlugins = /** @type {Plugin[]} */ ([
   json(),
   commonjs(),
   // Allow node_modules resolution.  Use 'external' to control
@@ -42,14 +43,19 @@ const plugins = /** @type {Plugin[]} */ ([
         {
           // Transformation of ES6 module syntax to another module type
           modules: false,
-          // How to handle polyfills, 'entry' replaces an import from the code
-          // useBuiltIns: 'entry',
+          // How to handle polyfills, 'usage' analyses each file and places the
+          // required imports on each one, rollup ensures single imports
+          useBuiltIns: 'usage',
           targets: {
             ie: '10',
           },
         },
       ],
     ],
+    // To avoiding circular dependencies with useBuiltIns: 'usage' these two
+    // settings are needed, which avoids core-js importing itself
+    sourceType: 'unambiguous',
+    ignore: [/\/core-js/],
   }),
 ]);
 
@@ -67,7 +73,27 @@ const umdConfig = {
     name: pkg.config.umdName,
     sourcemap: true,
   },
-  plugins,
+  plugins: defaultPlugins,
 };
 
-export default [umdConfig];
+const umdConfigMin = {
+  inlineDynamicImports: true,
+  external,
+  // Start with esm5 (es5 with import/export)
+  input: resolve(dist, 'esm5', 'index.js'),
+  output: {
+    file: pkg.mainMin,
+    format: 'umd',
+    name: pkg.config.umdName,
+    sourcemap: true,
+  },
+  plugins: [
+    ...defaultPlugins,
+    minify({
+      comments: false,
+      sourceMap: true,
+    }),
+  ],
+};
+
+export default [umdConfig, umdConfigMin];

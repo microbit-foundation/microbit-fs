@@ -9,6 +9,7 @@
     "fs"
   ],
   "main": "./dist/bundles/microbit-fs.umd.js",
+  "mainMin": "./dist/bundles/microbit-fs.umd.min.js",
   "module": "./dist/esm5/index.js",
   "typings": "./dist/types/index.d.ts",
   "sideEffects": false,
@@ -59,6 +60,7 @@
     "prettier": "1.15.3",
     "rollup": "0.68.2",
     "rollup-plugin-babel": "4.3.2",
+    "rollup-plugin-babel-minify": "8.0.0",
     "rollup-plugin-commonjs": "9.2.0",
     "rollup-plugin-json": "3.1.0",
     "rollup-plugin-node-resolve": "4.0.0",
