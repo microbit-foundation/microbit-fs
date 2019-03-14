@@ -47,7 +47,14 @@ const defaultPlugins = /** @type {Plugin[]} */ ([
           // required imports on each one, rollup ensures single imports
           useBuiltIns: 'usage',
           targets: {
-            ie: '10',
+            // To check what's covered: https://browserl.ist
+            browsers: [
+              '>0.1%',
+              'ie>=10',
+              'not ie<10',
+              'not ios_saf<9',
+              'not android<5',
+            ],
           },
         },
       ],
@@ -60,40 +67,40 @@ const defaultPlugins = /** @type {Plugin[]} */ ([
 ]);
 
 /**
- * @type {Config}
+ * @param {{outputFile: string, extraPlugins?: Plugin[]}} options
  */
-const umdConfig = {
+const createUmdConfig = ({ outputFile, extraPlugins }) => ({
   inlineDynamicImports: true,
   external,
   // Start with esm5 (es5 with import/export)
   input: resolve(dist, 'esm5', 'index.js'),
   output: {
-    file: pkg.main,
+    file: outputFile,
     format: 'umd',
     name: pkg.config.umdName,
     sourcemap: true,
   },
-  plugins: defaultPlugins,
-};
+  plugins: [...defaultPlugins, ...(extraPlugins || [])],
+});
 
-const umdConfigMin = {
-  inlineDynamicImports: true,
-  external,
-  // Start with esm5 (es5 with import/export)
-  input: resolve(dist, 'esm5', 'index.js'),
-  output: {
-    file: pkg.mainMin,
-    format: 'umd',
-    name: pkg.config.umdName,
-    sourcemap: true,
-  },
-  plugins: [
-    ...defaultPlugins,
+/**
+ * @type object
+ */
+const umdConfig = createUmdConfig({
+  outputFile: pkg.main,
+});
+
+/**
+ * @type object
+ */
+const umdConfigMin = createUmdConfig({
+  outputFile: pkg.mainMin,
+  extraPlugins: [
     minify({
       comments: false,
       sourceMap: true,
     }),
   ],
-};
+});
 
 export default [umdConfig, umdConfigMin];
