@@ -62,7 +62,7 @@ const defaultPlugins = /** @type {Plugin[]} */ ([
     // To avoiding circular dependencies with useBuiltIns: 'usage' these two
     // settings are needed, which avoids core-js importing itself
     sourceType: 'unambiguous',
-    ignore: [/\/core-js/],
+    ignore: [/[\/\\]core-js/],
   }),
 ]);
 
