@@ -148,12 +148,11 @@ describe('Writing files to the filesystem.', () => {
   const shortData = shortMap.get(0x3c900);
 
   it('Add files to hex.', () => {
-    const filesObj: { [filename: string]: Uint8Array } = {};
-    filesObj[files[0].fileName] = strToBytes(files[0].fileStr);
-    filesObj[files[1].fileName] = strToBytes(files[1].fileStr);
-
     testResetFileSystem();
-    const fwWithFsOther = addIntelHexFiles(uPyHexFile, filesObj);
+    const fwWithFsOther = addIntelHexFiles(uPyHexFile, {
+      [files[0].fileName]: strToBytes(files[0].fileStr),
+      [files[1].fileName]: strToBytes(files[1].fileStr),
+    });
     // fs.writeFileSync('./ignore/output2.hex', fwWithFsOther);
 
     const opMap = MemoryMap.fromHex(fwWithFsOther);

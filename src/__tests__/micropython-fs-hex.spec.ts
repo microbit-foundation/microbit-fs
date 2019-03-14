@@ -444,7 +444,9 @@ describe('Test importing files from hex.', () => {
     micropythonFs.write('a.py', originalFileContent);
 
     const failCase = () => {
-      micropythonFs.importFilesFromIntelHex(hexStrWithFiles, false);
+      micropythonFs.importFilesFromIntelHex(hexStrWithFiles, {
+        overwrite: false,
+      });
     };
 
     expect(failCase).toThrow(Error);
@@ -456,7 +458,7 @@ describe('Test importing files from hex.', () => {
     const originalFileContent = 'Original file content.';
     micropythonFs.write('a.py', originalFileContent);
 
-    micropythonFs.importFilesFromIntelHex(hexStrWithFiles, true);
+    micropythonFs.importFilesFromIntelHex(hexStrWithFiles, { overwrite: true });
 
     expect(micropythonFs.read('a.py')).not.toEqual(originalFileContent);
     expect(micropythonFs.read('a.py')).toEqual(extraFiles['a.py']);
@@ -493,11 +495,10 @@ describe('Test importing files from hex.', () => {
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
     micropythonFs.write('old_file.py', 'Some content.');
 
-    const fileList = micropythonFs.importFilesFromIntelHex(
-      hexStrWithFiles,
-      false,
-      true
-    );
+    const fileList = micropythonFs.importFilesFromIntelHex(hexStrWithFiles, {
+      overwrite: false,
+      formatFirst: true,
+    });
 
     Object.keys(extraFiles).forEach((filename) => {
       expect(fileList).toContain(filename);
@@ -510,15 +511,13 @@ describe('Test importing files from hex.', () => {
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
     micropythonFs.write('old_file.py', 'Some content.');
 
-    const fileList1 = micropythonFs.importFilesFromIntelHex(
-      hexStrWithFiles,
-      false
-    );
-    const fileList2 = micropythonFs.importFilesFromIntelHex(
-      hexStrWithFiles,
-      true,
-      false
-    );
+    const fileList1 = micropythonFs.importFilesFromIntelHex(hexStrWithFiles, {
+      overwrite: false,
+    });
+    const fileList2 = micropythonFs.importFilesFromIntelHex(hexStrWithFiles, {
+      overwrite: true,
+      formatFirst: false,
+    });
 
     Object.keys(extraFiles).forEach((filename) => {
       expect(fileList1).toContain(filename);

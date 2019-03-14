@@ -217,8 +217,10 @@ export class MicropythonFsHex implements FsInterface {
    */
   importFilesFromIntelHex(
     intelHex: string,
-    overwrite?: boolean,
-    formatFirst?: boolean
+    {
+      overwrite = false,
+      formatFirst = false,
+    }: { overwrite?: boolean; formatFirst?: boolean } = {}
   ): string[] {
     const files = getIntelHexFiles(intelHex);
     if (formatFirst) {
