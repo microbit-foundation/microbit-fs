@@ -16,22 +16,30 @@ Initialise a File System instance with a MicroPython Intel Hex string and start 
 var micropythonFs = new microbitFs.MicropythonFsHex(IntelHexStr);
 var micropythonFsWithFiles = = new microbitFs.MicropythonFsHex(UploadedHexWithUserFiles);
 
+// Import files from a different MicroPython hex file with filesystem
 var addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFiles);
+addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFiles, {overwrite: false, formatFirst: false});
 
+// File operations
 micropythonFs.create('filename.txt', 'Error thrown if file already exists.');
-micropythonFs.write('filename.txt', 'Create or overwrites file.');
+micropythonFs.write('filename.txt', 'Create or overwrite a file.');
 // Append not yet implemented
-micropythonFs.append('filename.txt', 'Adds additional content.');
-var content = micropythonFs.read('filename.txt');
-var contentByteArray = micropythonFs.readBytes('filename.txt');
+micropythonFs.append('filename.txt', 'Add additional content.');
+var fileContent = micropythonFs.read('filename.txt');
+var fileContentByteArray = micropythonFs.readBytes('filename.txt');
 if (micropythonFs.exists('filename.txt')) {
   micropythonFs.remove('filename.txt');
 }
 var fileSizeInBytes = micropythonFs.size('filename.txt');
 var fileList = micropythonFs.ls();
 
+// Filesystem size information
+var fsSize = micropythonFs.getStorageSize();
+var fsAvailableSize = micropythonFs.getStorageUsed();
+var fsUsedSize = micropythonFs.getStorageRemaining();
+
+// Generate a new hex string with MicroPython and the files
 var intelHexWithFs = micropythonFs.getIntelHex();
-var MicroPythonFsSize = micropythonFs.getFsSize();
 ```
 
 Public interface can be found in the `src/fs-interface.ts` file.
@@ -50,7 +58,6 @@ if (microbitFs.isAppendedScriptPresent(finalHexStr)) {
 
 ```js
 var uicrData = getIntelHexUicrData(IntelHexStr);
-console.log('' + );
 console.log('Flash Page Size:' + uicrData.flashPageSize);
 console.log('Runtime Start Page:' + uicrData.runtimeStartPage);
 console.log('Runtime Start Address:' + uicrData.runtimeStartAddress);
