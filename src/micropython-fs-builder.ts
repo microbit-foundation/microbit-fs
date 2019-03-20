@@ -40,15 +40,6 @@ const FLASH_END = 0x40000;
 /** Size of pages with specific functions. */
 const CALIBRATION_PAGE_SIZE = FLASH_PAGE_SIZE;
 
-// ----------------------------------------------------------------------------
-// Massive hack! Use temporarily for predictable start point for tests.
-// Will need to regenerate test data for other initial chunks
-let TEST_START_CHUNK = 0;
-export function testResetFileSystem(): void {
-  TEST_START_CHUNK = 0x2b;
-}
-// ----------------------------------------------------------------------------
-
 /**
  * Scans the file system area inside the Intel Hex data a returns a list of
  * available chunks.
@@ -65,10 +56,7 @@ function getFreeChunks(intelHexMap: MemoryMap): number[] {
   while (chunkAddr < endAddress) {
     const marker = intelHexMap.slicePad(chunkAddr, 1, ChunkMarker.Unused)[0];
     if (marker === ChunkMarker.Unused || marker === ChunkMarker.Freed) {
-      // TODO: REMOVE MASSIVE HACK TEMPORARILY INCLUDED HERE FOR TESTING
-      if (chunkIndex >= TEST_START_CHUNK) {
-        freeChunks.push(chunkIndex);
-      }
+      freeChunks.push(chunkIndex);
     }
     chunkIndex++;
     chunkAddr += CHUNK_LEN;
