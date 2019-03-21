@@ -1,8 +1,14 @@
+/**
+ * All the hex file strings generated below have been created by transferring
+ * the files to a micro:bit running MicroPython v1.0.1 using Mu.
+ * Because the filesystem limits depend on the MicroPython version, these will
+ * only work if combined with v1.0.1.
+ */
 import * as fs from 'fs';
 
 import MemoryMap from 'nrf-intel-hex';
 
-import { strToBytes } from '../common';
+import { bytesToStr, strToBytes } from '../common';
 import {
   addIntelHexFile,
   addIntelHexFiles,
@@ -177,6 +183,126 @@ describe('Writing files to the filesystem.', () => {
     expect(file1data).toEqual(files[1].bytes());
   });
 
+  // A chunk using up the last byte will also use the next and leave it empty
+  const fullChunkPlus = {
+    fileName: 'one_chunk_plus.py',
+    fileStr:
+      'a = """abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmno"""\n',
+    hex:
+      ':020000040003F7\n' +
+      ':108C0000FE00116F6E655F6368756E6B5F706C75EB\n' +
+      ':108C1000732E707961203D20222222616263646597\n' +
+      ':108C2000666768696A6B6C6D6E6F7071727374756C\n' +
+      ':108C3000767778797A0A6162636465666768696ADB\n' +
+      ':108C40006B6C6D6E6F707172737475767778797AFC\n' +
+      ':108C50000A6162636465666768696A6B6C6D6E6FF2\n' +
+      ':108C6000707172737475767778797A0A6162636469\n' +
+      ':108C700065666768696A6B6C6D6E6F2222220A02F4\n' +
+      ':108C800001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2\n' +
+      ':00000001FF',
+    fileAddress: 0x38c00,
+    fsSize: 144,
+    bytes() {
+      return MemoryMap.fromHex(this.hex).get(this.fileAddress);
+    },
+  };
+  // Using space except the last byte should only use a single chunk
+  const fullChunkMinus = {
+    fileName: 'one_chunk_minus.py',
+    fileStr:
+      'a = """abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklm"""\n',
+    hex:
+      ':020000040003F7\n' +
+      ':108C0000FE7D126F6E655F6368756E6B5F6D696E7A\n' +
+      ':108C100075732E707961203D202222226162636487\n' +
+      ':108C200065666768696A6B6C6D6E6F70717273747C\n' +
+      ':108C300075767778797A0A616263646566676869D0\n' +
+      ':108C40006A6B6C6D6E6F707172737475767778790C\n' +
+      ':108C50007A0A6162636465666768696A6B6C6D6EE7\n' +
+      ':108C60006F707172737475767778797A0A6162635E\n' +
+      ':108C70006465666768696A6B6C6D2222220AFFFF71\n' +
+      ':00000001FF',
+    fileAddress: 0x38c00,
+    fsSize: 128,
+    bytes() {
+      return MemoryMap.fromHex(this.hex).get(this.fileAddress);
+    },
+  };
+  // One full chunk + a single byte on the second
+  const twoChunks = {
+    fileName: 'two_chunks.py',
+    fileStr:
+      'a = """abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmnopqrstuvwxyz\n' +
+      'abcdefghijklmnopqrst"""\n',
+    hex:
+      ':020000040003F7\n' +
+      ':108C0000FE010D74776F5F6368756E6B732E7079FC\n' +
+      ':108C100061203D2022222261626364656667686983\n' +
+      ':108C20006A6B6C6D6E6F707172737475767778792C\n' +
+      ':108C30007A0A6162636465666768696A6B6C6D6E07\n' +
+      ':108C40006F707172737475767778797A0A6162637E\n' +
+      ':108C50006465666768696A6B6C6D6E6F707172735C\n' +
+      ':108C60007475767778797A0A616263646566676895\n' +
+      ':108C7000696A6B6C6D6E6F7071727374222222025E\n' +
+      ':108C8000010AFFFFFFFFFFFFFFFFFFFFFFFFFFFFE7\n' +
+      ':00000001FF',
+    fileAddress: 0x38c00,
+    fsSize: 144,
+    bytes() {
+      return MemoryMap.fromHex(this.hex).get(this.fileAddress);
+    },
+  };
+
+  it('Can generate a full chunk that also uses the next one.', () => {
+    const fwWithFsOther = addIntelHexFile(
+      uPyHexFile,
+      fullChunkPlus.fileName,
+      strToBytes(fullChunkPlus.fileStr)
+    );
+
+    const opMap = MemoryMap.fromHex(fwWithFsOther);
+    const readFileData = opMap
+      .slice(fullChunkPlus.fileAddress, fullChunkPlus.fsSize)
+      .get(fullChunkPlus.fileAddress);
+    expect(readFileData).toEqual(fullChunkPlus.bytes());
+  });
+
+  it('Correctly generate an almost full chunk (not using last byte).', () => {
+    const fwWithFsOther = addIntelHexFile(
+      uPyHexFile,
+      fullChunkMinus.fileName,
+      strToBytes(fullChunkMinus.fileStr)
+    );
+
+    const opMap = MemoryMap.fromHex(fwWithFsOther);
+    const readFileData = opMap
+      .slice(fullChunkMinus.fileAddress, fullChunkMinus.fsSize)
+      .get(fullChunkMinus.fileAddress);
+    expect(readFileData).toEqual(fullChunkMinus.bytes());
+  });
+
+  it('Correctlty generate just over a full chunk.', () => {
+    const fwWithFsOther = addIntelHexFile(
+      uPyHexFile,
+      twoChunks.fileName,
+      strToBytes(twoChunks.fileStr)
+    );
+
+    const opMap = MemoryMap.fromHex(fwWithFsOther);
+    const readFileData = opMap
+      .slice(twoChunks.fileAddress, twoChunks.fsSize)
+      .get(twoChunks.fileAddress);
+    expect(readFileData).toEqual(twoChunks.bytes());
+  });
+
   it('Empty file name throws an error.', () => {
     const failCase = () => addIntelHexFile(uPyHexFile, '', randContent);
 
@@ -266,11 +392,6 @@ describe('Writing files to the filesystem.', () => {
 });
 
 describe('Reading files from the filesystem.', () => {
-  // All the files generated below have been created by transferring the files
-  // to a micro:bit running MicroPython v1.0.1 using Mu.
-  // Because the filesystem limits depend on the MicroPython version, these will
-  // only work if combined with v1.0.1.
-
   const alastFilename = 'alast.py';
   const alastContent = strToBytes(
     '# Lorem Ipsum is simply dummy text of the printing and\n' +
@@ -410,7 +531,7 @@ describe('Reading files from the filesystem.', () => {
       'display.scroll(full)\n' +
       'print(full)\n'
   );
-  // Uses chunk 0xCA, 0xCB, 0xCC
+  // Uses chunks 0xCA, 0xCB, 0xCC
   const mainHex =
     ':020000040003F7\n' +
     ':10F08000FE37076D61696E2E707966726F6D206D47\n' +
@@ -436,19 +557,16 @@ describe('Reading files from the filesystem.', () => {
     ':00000001FF\n';
 
   it('Can read files of different sizes in non-consecutive locations.', () => {
+    const addHexToMap = (hexMap: MemoryMap, hex: string) => {
+      const newMemMap = MemoryMap.fromHex(hex);
+      newMemMap.forEach((value: Uint8Array, index: number) => {
+        hexMap.set(index, value);
+      });
+    };
     const fullUpyFsMemMap = MemoryMap.fromHex(uPyHexFile);
-    const afirstMemMap = MemoryMap.fromHex(afirstHex);
-    afirstMemMap.forEach((value: Uint8Array, index: number) => {
-      fullUpyFsMemMap.set(index, value);
-    });
-    const alastMemMap = MemoryMap.fromHex(alastHex);
-    alastMemMap.forEach((value: Uint8Array, index: number) => {
-      fullUpyFsMemMap.set(index, value);
-    });
-    const mainMemMap = MemoryMap.fromHex(mainHex);
-    mainMemMap.forEach((value: Uint8Array, index: number) => {
-      fullUpyFsMemMap.set(index, value);
-    });
+    addHexToMap(fullUpyFsMemMap, afirstHex);
+    addHexToMap(fullUpyFsMemMap, alastHex);
+    addHexToMap(fullUpyFsMemMap, mainHex);
 
     const foundFiles = getIntelHexFiles(fullUpyFsMemMap.asHexString());
 
@@ -457,6 +575,8 @@ describe('Reading files from the filesystem.', () => {
     expect(foundFiles).toHaveProperty([mainFilename], mainContent);
   });
 
+  // When MicroPython saves a file that takes full chunk it still utilises
+  // the next chunk and leaves it empty
   const oneChunkPlusFilename = 'one_chunk_plus.py';
   const oneChunkPlusContent =
     'a = """abcdefghijklmnopqrstuvwxyz\n' +
@@ -588,7 +708,7 @@ describe('Calculate sizes.', () => {
     expect(totalSize).toEqual(27 * 1024);
   });
 
-  it('Calculate the space ocupied for a file in the fs.', () => {
+  it('Calculate the space occupied for a file in the fs.', () => {
     const fileSizeOne = calculateFileSize(
       'one_chunk.txt',
       new Uint8Array([30, 31, 32, 33, 34])

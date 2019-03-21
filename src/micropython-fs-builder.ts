@@ -197,12 +197,16 @@ class FsFile {
     }
     this._dataBytes = data;
     // Generate a single byte array with the filesystem data bytes.
+    // When MicroPython uses up to the last byte of the last chunk it will
+    // still consume the next chunk, and leave it blank
+    // To replicate the same behaviour we add an extra 0xFF to the data block
     const fileHeader = this._generateFileHeaderBytes();
     this._fsDataBytes = new Uint8Array(
-      fileHeader.length + this._dataBytes.length
+      fileHeader.length + this._dataBytes.length + 1
     );
     this._fsDataBytes.set(fileHeader, 0);
     this._fsDataBytes.set(this._dataBytes, fileHeader.length);
+    this._fsDataBytes[this._fsDataBytes.length - 1] = 0xff;
   }
 
   /**
@@ -271,12 +275,7 @@ class FsFile {
    *     flash memory.
    */
   getFsFileSize(): number {
-    let chunksUsed = Math.ceil(this._fsDataBytes.length / CHUNK_DATA_LEN);
-    // When MicroPython uses up to the last byte of the last chunk it will
-    // still consume the next chunk, even if it doesn't add any data to it
-    if (!(this._fsDataBytes.length % CHUNK_DATA_LEN)) {
-      chunksUsed += 1;
-    }
+    const chunksUsed = Math.ceil(this._fsDataBytes.length / CHUNK_DATA_LEN);
     return chunksUsed * CHUNK_LEN;
   }
 
