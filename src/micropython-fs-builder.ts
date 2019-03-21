@@ -1,3 +1,33 @@
+/**
+ * Builds and reads a micro:bit MicroPython File System from Intel Hex data.
+ *
+ * Follows this implementation:
+ * https://github.com/bbcmicrobit/micropython/blob/v1.0.1/source/microbit/filesystem.c
+ *
+ * How it works:
+ * The File system size is calculated based on the UICR data addded to the
+ * MicroPython final hex to determine the limits of the filesystem space.
+ * Based on how many space there is available it calculates how many free
+ * chunks it can fit, each chunk being of CHUNK_LEN size in bytes.
+ * There is one spare page which holds persistent configuration data that is
+ * used by MicroPython for bulk erasing, so we also mark it as such here.
+ *
+ * Each chunk is enumerated with an index number. The first chunk starts with
+ * index 1 (as value 0 is reserved to indicate a Freed chunk) at the bottom of
+ * the File System (lowest address), and the indexes increase sequentially.
+ * Each chunk consists of a one byte marker at the head and a one tail byte.
+ * The byte at the tail is a pointer to the next chunk index.
+ * The head byte marker is either one of the values in the ChunkMarker enum, to
+ * indicate the a special type of chunk, or a pointer to the previous chunk
+ * index.
+ * The special markers indicate whether the chunk is the start of a file, if it
+ * is Unused, if it is Freed (same as unused, but not yet erased) or if this
+ * is the start of a flash page used for Persistent Data (bulk erase operation).
+ *
+ * A file consists of a double linked list of chunks. The first chunk in a
+ * file, indicated by the FileStart marker, contains the data end offset for
+ * the last chunk and the file name.
+ */
 import MemoryMap from 'nrf-intel-hex';
 
 import {
@@ -167,35 +197,12 @@ class FsFile {
     }
     this._dataBytes = data;
     // Generate a single byte array with the filesystem data bytes.
-    const fileHeader = this.generateFileHeaderBytes();
+    const fileHeader = this._generateFileHeaderBytes();
     this._fsDataBytes = new Uint8Array(
       fileHeader.length + this._dataBytes.length
     );
     this._fsDataBytes.set(fileHeader, 0);
     this._fsDataBytes.set(this._dataBytes, fileHeader.length);
-  }
-
-  /**
-   * Generates a byte array for the file header as expected by the MicroPython
-   * file system.
-   *
-   * @return Byte array with the header data.
-   */
-  generateFileHeaderBytes(): Uint8Array {
-    const headerSize =
-      CHUNK_HEADER_END_OFFSET_LEN +
-      CHUNK_HEADER_NAME_LEN +
-      this._filenameBytes.length;
-    const endOffset = (headerSize + this._dataBytes.length) % CHUNK_DATA_LEN;
-    const fileNameOffset: number = headerSize - this._filenameBytes.length;
-    // Format header byte array
-    const headerBytes: Uint8Array = new Uint8Array(headerSize);
-    headerBytes[ChunkFormatIndex.EndOffset - 1] = endOffset;
-    headerBytes[ChunkFormatIndex.NameLength - 1] = this._filenameBytes.length;
-    for (let i = fileNameOffset; i < headerSize; ++i) {
-      headerBytes[i] = this._filenameBytes[i - fileNameOffset];
-    }
-    return headerBytes;
   }
 
   /**
@@ -271,6 +278,29 @@ class FsFile {
       chunksUsed += 1;
     }
     return chunksUsed * CHUNK_LEN;
+  }
+
+  /**
+   * Generates a byte array for the file header as expected by the MicroPython
+   * file system.
+   *
+   * @return Byte array with the header data.
+   */
+  private _generateFileHeaderBytes(): Uint8Array {
+    const headerSize =
+      CHUNK_HEADER_END_OFFSET_LEN +
+      CHUNK_HEADER_NAME_LEN +
+      this._filenameBytes.length;
+    const endOffset = (headerSize + this._dataBytes.length) % CHUNK_DATA_LEN;
+    const fileNameOffset: number = headerSize - this._filenameBytes.length;
+    // Format header byte array
+    const headerBytes: Uint8Array = new Uint8Array(headerSize);
+    headerBytes[ChunkFormatIndex.EndOffset - 1] = endOffset;
+    headerBytes[ChunkFormatIndex.NameLength - 1] = this._filenameBytes.length;
+    for (let i = fileNameOffset; i < headerSize; ++i) {
+      headerBytes[i] = this._filenameBytes[i - fileNameOffset];
+    }
+    return headerBytes;
   }
 }
 
