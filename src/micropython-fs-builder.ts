@@ -387,14 +387,17 @@ function addIntelHexFile(
  */
 function addIntelHexFiles(
   intelHex: string,
-  files: { [filename: string]: Uint8Array }
-): string {
+  files: { [filename: string]: Uint8Array },
+  returnBytes: boolean = false
+): string | Uint8Array {
   const intelHexClean = cleanseOldHexFormat(intelHex);
   let intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
   Object.keys(files).forEach((filename) => {
     intelHexMap = addMemMapFile(intelHexMap, filename, files[filename]);
   });
-  return intelHexMap.asHexString() + '\n';
+  return returnBytes
+    ? intelHexMap.slicePad(0, FLASH_END)
+    : intelHexMap.asHexString() + '\n';
 }
 
 /**

@@ -368,6 +368,18 @@ describe('Test hex generation.', () => {
 
     expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
     expect(addIntelHexFilesSpy.mock.calls[0][0]).toBe(uPyHexFile);
+    expect(addIntelHexFilesSpy.mock.calls[0][2]).toBeFalsy();
+  });
+
+  it('getIntelHexBytes called with constructor hex string.', () => {
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
+    microbitFs.write('a.txt', 'content');
+
+    const returnedIntelHex = microbitFs.getIntelHexBytes();
+
+    expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
+    expect(addIntelHexFilesSpy.mock.calls[0][0]).toBe(uPyHexFile);
+    expect(addIntelHexFilesSpy.mock.calls[0][2]).toBeTruthy();
   });
 
   it('getIntelHex called with argument hex string.', () => {

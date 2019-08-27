@@ -165,7 +165,7 @@ describe('Writing files to the filesystem.', () => {
     },
   ];
 
-  it('Add files to hex.', () => {
+  it('Add files to hex, return a string.', () => {
     const fwWithFsOther = addIntelHexFiles(uPyHexFile, {
       [files[0].fileName]: strToBytes(files[0].fileStr),
       [files[1].fileName]: strToBytes(files[1].fileStr),
@@ -179,6 +179,28 @@ describe('Writing files to the filesystem.', () => {
     const file1data = opMap
       .slice(startFs + files[0].fsSize, files[1].fsSize)
       .get(startFs + files[0].fsSize);
+    expect(file0data).toEqual(files[0].bytes());
+    expect(file1data).toEqual(files[1].bytes());
+  });
+
+  it('Add files to hex, return a byte array', () => {
+    const fwWithFsBytes = addIntelHexFiles(
+      uPyHexFile,
+      {
+        [files[0].fileName]: strToBytes(files[0].fileStr),
+        [files[1].fileName]: strToBytes(files[1].fileStr),
+      },
+      true
+    );
+
+    // Address calculated starting at the top of the MicroPython v1.0.1 fs
+    const startFs = 0x38c00;
+    const file0data = fwWithFsBytes.slice(startFs, startFs + files[0].fsSize);
+    const file1start = startFs + files[0].fsSize;
+    const file1data = fwWithFsBytes.slice(
+      file1start,
+      file1start + files[1].fsSize
+    );
     expect(file0data).toEqual(files[0].bytes());
     expect(file1data).toEqual(files[1].bytes());
   });
