@@ -46,6 +46,7 @@ const defaultPlugins = /** @type {Plugin[]} */ ([
           // How to handle polyfills, 'usage' analyses each file and places the
           // required imports on each one, rollup ensures single imports
           useBuiltIns: 'usage',
+          corejs: 2,
           targets: {
             // To check what's covered: https://browserl.ist
             browsers: [
