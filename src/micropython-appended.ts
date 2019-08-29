@@ -6,7 +6,7 @@ import MemoryMap from 'nrf-intel-hex';
 import { bytesToStr, cleanseOldHexFormat, strToBytes } from './common';
 
 /** User script located at specific flash address. */
-const enum AppendedBlock {
+enum AppendedBlock {
   StartAdd = 0x3e000,
   Length = 8 * 1024,
   EndAdd = StartAdd + Length,
