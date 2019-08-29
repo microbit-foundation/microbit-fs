@@ -260,6 +260,26 @@ export class MicropythonFsHex implements FsInterface {
     Object.values(this._files).forEach((file) => {
       files[file.filename] = file.getBytes();
     });
-    return addIntelHexFiles(finalHex, files);
+    return addIntelHexFiles(finalHex, files) as string;
+  }
+
+  /**
+   * Generate a byte array of the MicroPython and filesystem data.
+   *
+   * @throws {Error} When a file doesn't have any data.
+   * @throws {Error} When there are issues calculating file system boundaries.
+   * @throws {Error} When there is no space left for a file.
+   *
+   * @param intelHex - Optionally provide a different Intel Hex to include the
+   *    filesystem into.
+   * @returns A Uint8Array with MicroPython and the filesystem included.
+   */
+  getIntelHexBytes(intelHex?: string): Uint8Array {
+    const finalHex = intelHex || this._intelHex;
+    const files: { [filename: string]: Uint8Array } = {};
+    Object.values(this._files).forEach((file) => {
+      files[file.filename] = file.getBytes();
+    });
+    return addIntelHexFiles(finalHex, files, true) as Uint8Array;
   }
 }

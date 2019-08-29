@@ -38,8 +38,9 @@ var fsSize = micropythonFs.getStorageSize();
 var fsAvailableSize = micropythonFs.getStorageUsed();
 var fsUsedSize = micropythonFs.getStorageRemaining();
 
-// Generate a new hex string with MicroPython and the files
-var intelHexWithFs = micropythonFs.getIntelHex();
+// Generate a new hex string or Uint8Array with MicroPython and the files
+var intelHexStrWithFs = micropythonFs.getIntelHex();
+var intelHexBytesWithFs = micropythonFs.getIntelHexBytes();
 ```
 
 Public interface can be found in the `src/fs-interface.ts` file.
