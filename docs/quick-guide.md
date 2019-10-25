@@ -38,6 +38,9 @@ var fsSize = micropythonFs.getStorageSize();
 var fsAvailableSize = micropythonFs.getStorageUsed();
 var fsUsedSize = micropythonFs.getStorageRemaining();
 
+// You can also provide an artificial storage size
+micropythonFs.setStorageSize(20 * 1024);
+
 // Generate a new hex string or Uint8Array with MicroPython and the files
 var intelHexStrWithFs = micropythonFs.getIntelHex();
 var intelHexBytesWithFs = micropythonFs.getIntelHexBytes();

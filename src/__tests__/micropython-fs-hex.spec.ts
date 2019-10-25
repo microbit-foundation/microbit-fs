@@ -122,6 +122,75 @@ describe('Test size operations.', () => {
     expect(microbitFs.getStorageUsed()).toEqual(27648);
     expect(microbitFs.getStorageRemaining()).toEqual(0);
   });
+
+  it('Sets a maximum filesystem size via constructor', () => {
+    const microbitFs = new MicropythonFsHex(uPyHexFile, { maxFsSize: 1024 });
+
+    expect(microbitFs.getStorageUsed()).toEqual(0);
+    expect(microbitFs.getStorageRemaining()).toEqual(1024);
+
+    microbitFs.create('chunk1.py', 'first 128 byte chunk');
+    microbitFs.create('chunk2.py', 'second 128 byte chunk');
+    microbitFs.create('chunk3.py', 'thrid 128 byte chunk');
+    microbitFs.create('chunk4.py', 'fouth 128 byte chunk');
+    microbitFs.create('chunk5.py', 'fifth 128 byte chunk');
+    microbitFs.create('chunk6.py', 'sixth 128 byte chunk');
+    microbitFs.create('chunk7.py', 'seventh 128 byte chunk');
+    microbitFs.create('chunk8.py', 'eighth 128 byte chunk');
+    microbitFs.getIntelHex();
+
+    expect(microbitFs.getStorageUsed()).toEqual(1024);
+    expect(microbitFs.getStorageRemaining()).toEqual(0);
+
+    microbitFs.create('chunk9.py', 'This file will not fit');
+    const failCase = () => {
+      microbitFs.getIntelHex();
+    };
+
+    expect(failCase).toThrow(Error);
+  });
+
+  it('Sets a maximum filesystem size via constructor', () => {
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
+    microbitFs.setStorageSize(1024);
+
+    expect(microbitFs.getStorageUsed()).toEqual(0);
+    expect(microbitFs.getStorageRemaining()).toEqual(1024);
+
+    microbitFs.create('chunk1.py', 'first 128 byte chunk');
+    microbitFs.create('chunk2.py', 'second 128 byte chunk');
+    microbitFs.create('chunk3.py', 'thrid 128 byte chunk');
+    microbitFs.create('chunk4.py', 'fouth 128 byte chunk');
+    microbitFs.create('chunk5.py', 'fifth 128 byte chunk');
+    microbitFs.create('chunk6.py', 'sixth 128 byte chunk');
+    microbitFs.create('chunk7.py', 'seventh 128 byte chunk');
+    microbitFs.create('chunk8.py', 'eighth 128 byte chunk');
+    microbitFs.getIntelHex();
+    microbitFs.getIntelHexBytes();
+
+    expect(microbitFs.getStorageUsed()).toEqual(1024);
+    expect(microbitFs.getStorageRemaining()).toEqual(0);
+
+    microbitFs.create('chunk9.py', 'This file will not fit');
+    const failCase1 = () => microbitFs.getIntelHex();
+    const failCase2 = () => microbitFs.getIntelHexBytes();
+
+    expect(failCase1).toThrow(Error);
+    expect(failCase2).toThrow(Error);
+  });
+
+  it('The maximum filesystem size cannot be larger than space available', () => {
+    const failCase1 = () => {
+      const microbitFs = new MicropythonFsHex(uPyHexFile, {
+        maxFsSize: 1024 * 1024,
+      });
+    };
+    const microbitFs = new MicropythonFsHex(uPyHexFile);
+    const failCase2 = () => microbitFs.setStorageSize(1024 * 1024);
+
+    expect(failCase1).toThrow(Error);
+    expect(failCase2).toThrow(Error);
+  });
 });
 
 describe('Test write method.', () => {
