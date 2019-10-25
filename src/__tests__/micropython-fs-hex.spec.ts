@@ -181,7 +181,7 @@ describe('Test size operations.', () => {
 
   it('The maximum filesystem size cannot be larger than space available', () => {
     const failCase1 = () => {
-      const microbitFs = new MicropythonFsHex(uPyHexFile, {
+      const microbitFs2 = new MicropythonFsHex(uPyHexFile, {
         maxFsSize: 1024 * 1024,
       });
     };
