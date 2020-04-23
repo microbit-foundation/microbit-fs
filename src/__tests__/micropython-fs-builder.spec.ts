@@ -22,14 +22,14 @@ const makecodeHexFile = fs.readFileSync('./src/__tests__/makecode.hex', 'utf8');
 const randContent = strToBytes('Some random content.');
 
 describe('Writing files to the filesystem.', () => {
-  const files: Array<{
+  const files: {
     fileName: string;
     fileStr: string;
     hex: string;
     fileAddress: number;
     fsSize: number;
     bytes: () => Uint8Array;
-  }> = [
+  }[] = [
     {
       fileName: 'test_file_1.py',
       fileStr: "from microbit import display\r\ndisplay.show('x')",
