@@ -1,3 +1,7 @@
+/**
+ * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
+ * SPDX-License-Identifier: MIT
+ */
 import * as fs from 'fs';
 
 import { getIntelHexUicrData } from '../uicr';

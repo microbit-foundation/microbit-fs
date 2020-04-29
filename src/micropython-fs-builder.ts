@@ -27,6 +27,9 @@
  * A file consists of a double linked list of chunks. The first chunk in a
  * file, indicated by the FileStart marker, contains the data end offset for
  * the last chunk and the file name.
+ *
+ * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
+ * SPDX-License-Identifier: MIT
  */
 import MemoryMap from 'nrf-intel-hex';
 

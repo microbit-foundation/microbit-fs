@@ -3,6 +3,9 @@
  * the files to a micro:bit running MicroPython v1.0.1 using Mu.
  * Because the filesystem limits depend on the MicroPython version, these will
  * only work if combined with v1.0.1.
+ *
+ * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
+ * SPDX-License-Identifier: MIT
  */
 import * as fs from 'fs';
 

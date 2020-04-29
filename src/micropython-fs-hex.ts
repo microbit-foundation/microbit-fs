@@ -1,4 +1,9 @@
-/** Manage files in a MicroPython hex file. */
+/**
+ *  Manage files in a MicroPython hex file.
+ *
+ * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
+ * SPDX-License-Identifier: MIT
+ */
 import { FsInterface } from './fs-interface';
 import {
   addIntelHexFiles,

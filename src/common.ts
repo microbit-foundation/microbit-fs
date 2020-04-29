@@ -1,7 +1,9 @@
 /**
  * General utilities.
+ *
+ * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
+ * SPDX-License-Identifier: MIT
  */
-
 import { TextDecoderLite, TextEncoderLite } from 'text-encoder-lite';
 
 /**

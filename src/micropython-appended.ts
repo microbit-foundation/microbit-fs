@@ -1,5 +1,8 @@
 /**
  * Module to add and remove Python scripts into and from a MicroPython hex.
+ *
+ * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
+ * SPDX-License-Identifier: MIT
  */
 import MemoryMap from 'nrf-intel-hex';
 

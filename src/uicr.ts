@@ -3,6 +3,9 @@
  *
  * For more info:
  * https://microbit-micropython.readthedocs.io/en/latest/devguide/hexformat.html
+ *
+ * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
+ * SPDX-License-Identifier: MIT
  */
 import MemoryMap from 'nrf-intel-hex';
 

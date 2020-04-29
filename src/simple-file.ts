@@ -1,3 +1,9 @@
+/**
+ * Class to represent a very simple file.
+ *
+ * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
+ * SPDX-License-Identifier: MIT
+ */
 import { bytesToStr, strToBytes } from './common';
 
 export class SimpleFile {
