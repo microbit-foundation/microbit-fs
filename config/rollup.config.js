@@ -28,7 +28,7 @@ const external = Object.keys(pkg.peerDependencies) || [];
 /**
  *  @type {Plugin[]}
  */
-const defaultPlugins = /** @type {Plugin[]} */ ([
+const plugins = /** @type {Plugin[]} */ ([
   json(),
   commonjs(),
   // Allow node_modules resolution.  Use 'external' to control
@@ -81,7 +81,7 @@ const createUmdConfig = ({ outputFile, extraPlugins }) => ({
     name: pkg.config.umdName,
     sourcemap: true,
   },
-  plugins: [...defaultPlugins, ...(extraPlugins || [])],
+  plugins: [...plugins, ...(extraPlugins || [])],
 });
 
 /**
