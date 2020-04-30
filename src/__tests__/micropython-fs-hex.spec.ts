@@ -659,6 +659,25 @@ describe('Test MicroPython hex filesystem size.', () => {
     // Calculated by hand from the uPyHexFile v1.0.1 release.
     expect(totalSize).toEqual(27 * 1024);
   });
+
+  it('Get available fs space when manually set in constructor.', () => {
+    const micropythonFs = new MicropythonFsHex({ maxFsSize: 1024 });
+
+    const totalSize = micropythonFs.getStorageSize();
+
+    expect(totalSize).toEqual(1024);
+  });
+
+  it('Get available fs space when both hex and constructor value are provided.', () => {
+    const micropythonFs = new MicropythonFsHex({
+      uPyHex: uPyHexFile,
+      maxFsSize: 1024,
+    });
+
+    const totalSize = micropythonFs.getStorageSize();
+
+    expect(totalSize).toEqual(1024);
+  });
 });
 
 /*

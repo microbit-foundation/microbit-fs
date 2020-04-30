@@ -202,15 +202,13 @@ export class MicropythonFsHex implements FsInterface {
   }
 
   /**
-   * Calculate the MicroPython filesystem total size.
-   * If an max storage size limit has been set, it returns this number.
+   * The available filesystem total size either calculated by the MicroPython
+   * hex or the max storage size limit has been set.
    *
    * @returns Size of the filesystem in bytes.
    */
   getStorageSize(): number {
-    return this._storageSize
-      ? this._storageSize
-      : getIntelHexFsSize(this._intelHex);
+    return this._storageSize;
   }
 
   /**
