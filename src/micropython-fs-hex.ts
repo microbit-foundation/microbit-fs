@@ -26,18 +26,25 @@ export class MicropythonFsHex implements FsInterface {
    *
    * @param intelHex - MicroPython Intel Hex string.
    */
-  constructor(
-    intelHex: string,
-    { maxFsSize = 0 }: { maxFsSize?: number } = {}
-  ) {
-    this._intelHex = intelHex;
-    this.importFilesFromIntelHex(this._intelHex);
-    if (this.ls().length) {
+  constructor({
+    uPyHex = '',
+    maxFsSize = 0,
+  }: { uPyHex?: string; maxFsSize?: number } = {}) {
+    this._intelHex = uPyHex;
+    if (this._intelHex) {
+      this.importFilesFromIntelHex(this._intelHex);
+      if (this.ls().length) {
+        throw new Error(
+          'There are files in the MicropythonFsHex constructor hex file input.'
+        );
+      }
+    }
+    if (!uPyHex && !maxFsSize) {
       throw new Error(
-        'There are files in the MicropythonFsHex constructor hex file input.'
+        'A MicroPython Hex or a maximum filesystem size must be provided.'
       );
     }
-    this.setStorageSize(maxFsSize);
+    this.setStorageSize(maxFsSize || getIntelHexFsSize(this._intelHex));
   }
 
   /**
@@ -159,7 +166,7 @@ export class MicropythonFsHex implements FsInterface {
    */
   size(filename: string): number {
     if (!filename) {
-      throw new Error('Invalid filename.');
+      throw new Error(`Invalid filename: ${filename}`);
     }
     if (!this.exists(filename)) {
       throw new Error(`File "${filename}" does not exist.`);
@@ -186,7 +193,7 @@ export class MicropythonFsHex implements FsInterface {
    * @param {number} size - Size in bytes for the filesystem.
    */
   setStorageSize(size: number): void {
-    if (size > getIntelHexFsSize(this._intelHex)) {
+    if (this._intelHex && size > getIntelHexFsSize(this._intelHex)) {
       throw new Error(
         'Storage size limit provided is larger than size available in the MicroPython hex.'
       );

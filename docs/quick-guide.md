@@ -13,8 +13,8 @@ Initialise a File System instance with a MicroPython Intel Hex string and start 
 
 ```js
 // Create a new FileSystem instance passing the MicroPython Intel Hex string
-var micropythonFs = new microbitFs.MicropythonFsHex(IntelHexStr);
-var micropythonFsWithFiles = = new microbitFs.MicropythonFsHex(UploadedHexWithUserFiles);
+var micropythonFs = new microbitFs.MicropythonFsHex({ uPyHex: IntelHexStr });
+var micropythonFsWithRestrictedFsSize = new microbitFs.MicropythonFsHex({ uPyHex: IntelHexStr, maxFsSize: 20 * 1024 });
 
 // Import files from a different MicroPython hex file with filesystem
 var addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFiles);
