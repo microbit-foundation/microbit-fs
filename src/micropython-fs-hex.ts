@@ -26,22 +26,18 @@ export class MicropythonFsHex implements FsInterface {
    *
    * @param intelHex - MicroPython Intel Hex string.
    */
-  constructor({
-    uPyHex = '',
-    maxFsSize = 0,
-  }: { uPyHex?: string; maxFsSize?: number } = {}) {
-    this._intelHex = uPyHex;
-    if (this._intelHex) {
-      this.importFilesFromIntelHex(this._intelHex);
-      if (this.ls().length) {
-        throw new Error(
-          'There are files in the MicropythonFsHex constructor hex file input.'
-        );
-      }
+  constructor(
+    intelHex: string,
+    { maxFsSize = 0 }: { maxFsSize?: number } = {}
+  ) {
+    if (!intelHex) {
+      throw new Error('Invalid MicroPython hex invalid.');
     }
-    if (!uPyHex && !maxFsSize) {
+    this._intelHex = intelHex;
+    this.importFilesFromIntelHex(this._intelHex);
+    if (this.ls().length) {
       throw new Error(
-        'A MicroPython Hex or a maximum filesystem size must be provided.'
+        'There are files in the MicropythonFsHex constructor hex file input.'
       );
     }
     this.setStorageSize(maxFsSize || getIntelHexFsSize(this._intelHex));
@@ -193,7 +189,7 @@ export class MicropythonFsHex implements FsInterface {
    * @param {number} size - Size in bytes for the filesystem.
    */
   setStorageSize(size: number): void {
-    if (this._intelHex && size > getIntelHexFsSize(this._intelHex)) {
+    if (size > getIntelHexFsSize(this._intelHex)) {
       throw new Error(
         'Storage size limit provided is larger than size available in the MicroPython hex.'
       );
@@ -283,20 +279,17 @@ export class MicropythonFsHex implements FsInterface {
    * @throws {Error} When there are issues calculating file system boundaries.
    * @throws {Error} When there is no space left for a file.
    *
-   * @param intelHex - Optionally provide a different Intel Hex to include the
-   *    filesystem into.
    * @returns A new string with MicroPython and the filesystem included.
    */
-  getIntelHex(intelHex?: string): string {
+  getIntelHex(): string {
     if (this.getStorageRemaining() < 0) {
       throw new Error('There is no storage space left.');
     }
-    const finalHex = intelHex || this._intelHex;
     const files: { [filename: string]: Uint8Array } = {};
     Object.values(this._files).forEach((file) => {
       files[file.filename] = file.getBytes();
     });
-    return addIntelHexFiles(finalHex, files) as string;
+    return addIntelHexFiles(this._intelHex, files) as string;
   }
 
   /**
@@ -306,19 +299,16 @@ export class MicropythonFsHex implements FsInterface {
    * @throws {Error} When there are issues calculating file system boundaries.
    * @throws {Error} When there is no space left for a file.
    *
-   * @param intelHex - Optionally provide a different Intel Hex to include the
-   *    filesystem into.
    * @returns A Uint8Array with MicroPython and the filesystem included.
    */
-  getIntelHexBytes(intelHex?: string): Uint8Array {
+  getIntelHexBytes(): Uint8Array {
     if (this.getStorageRemaining() < 0) {
       throw new Error('There is no storage space left.');
     }
-    const finalHex = intelHex || this._intelHex;
     const files: { [filename: string]: Uint8Array } = {};
     Object.values(this._files).forEach((file) => {
       files[file.filename] = file.getBytes();
     });
-    return addIntelHexFiles(finalHex, files, true) as Uint8Array;
+    return addIntelHexFiles(this._intelHex, files, true) as Uint8Array;
   }
 }
