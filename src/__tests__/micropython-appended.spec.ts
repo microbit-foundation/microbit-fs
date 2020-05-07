@@ -15,17 +15,18 @@ const simpleIntelHex: string =
   ':1000000000400020ED530100295401002B54010051\n' +
   ':00000001FF\n';
 
+const pyCode = 'from microbit import *\n' + "display.scroll('Hello, World!')";
+const pyCodeHex =
+  ':020000040003F7\n' +
+  ':10E000004D50360066726F6D206D6963726F626984\n' +
+  ':10E010007420696D706F7274202A0A646973706C61\n' +
+  ':10E0200061792E7363726F6C6C282748656C6C6F16\n' +
+  ':10E030002C20576F726C642127290000000000001B';
+
+const marker = ':::::::::::::::::::::::::::::::::::::::::::';
+
 describe('Inject Python code into Intel Hex string', () => {
   it('Inject Python code into an Intel Hex string', () => {
-    const pyCode =
-      'from microbit import *\n' + "display.scroll('Hello, World!')";
-    const pyCodeHex =
-      ':020000040003F7\n' +
-      ':10E000004D50360066726F6D206D6963726F626984\n' +
-      ':10E010007420696D706F7274202A0A646973706C61\n' +
-      ':10E0200061792E7363726F6C6C282748656C6C6F16\n' +
-      ':10E030002C20576F726C642127290000000000001B';
-
     const output: string = addIntelHexAppendedScript(simpleIntelHex, pyCode);
 
     const fullHex: string[] = simpleIntelHex.split('\n');
@@ -34,14 +35,6 @@ describe('Inject Python code into Intel Hex string', () => {
   });
 
   it('Inject Python with present UICR and Start Linear Address record', () => {
-    const pyCode: string =
-      'from microbit import *\n' + "display.scroll('Hello, World!')";
-    const pyCodeHex: string =
-      ':020000040003F7\n' +
-      ':10E000004D50360066726F6D206D6963726F626984\n' +
-      ':10E010007420696D706F7274202A0A646973706C61\n' +
-      ':10E0200061792E7363726F6C6C282748656C6C6F16\n' +
-      ':10E030002C20576F726C642127290000000000001B\n';
     const uicr: string =
       ':020000041000EA\n' +
       ':1010C0007CB0EE17FFFFFFFF0A0000000000E30006\n' +
@@ -57,8 +50,28 @@ describe('Inject Python code into Intel Hex string', () => {
 
     const expectedHex: string[] = simpleIntelHex.split('\n');
     // Note that the 05 record is removed by nrf-intel-hex library!
-    expectedHex.splice(2, 0, pyCodeHex + uicr);
+    expectedHex.splice(2, 0, pyCodeHex + '\n' + uicr);
     expect(output).toEqual(expectedHex.join('\n'));
+  });
+
+  it('Inject Python in a hex with a  marker', () => {
+    const fullHexWithMarker: string[] = simpleIntelHex.split('\n');
+    fullHexWithMarker.splice(2, 0, marker);
+    const fullHexWithout: string[] = simpleIntelHex.split('\n');
+    const expectedHex: string[] = simpleIntelHex.split('\n');
+    expectedHex.splice(2, 0, pyCodeHex);
+
+    const outputWithMarker: string = addIntelHexAppendedScript(
+      fullHexWithMarker.join('\n'),
+      pyCode
+    );
+    const outputWithout: string = addIntelHexAppendedScript(
+      fullHexWithout.join('\n'),
+      pyCode
+    );
+
+    expect(outputWithMarker).toEqual(expectedHex.join('\n'));
+    expect(outputWithMarker).toEqual(outputWithout);
   });
 
   it('Fail to inject Python code too large for flash', () => {
@@ -75,9 +88,15 @@ describe('Inject Python code into Intel Hex string', () => {
 
 describe('Extract Python code from Intel Hex string', () => {
   it('Extract Python code', () => {
-    const pyCode: string =
-      'from microbit import *\n' + "display.scroll('Hello, World!')";
-    const intelHex: string =
+    const intelHex1: string =
+      ':020000040000FA\n' +
+      ':1000000000400020ED530100295401002B54010051\n' +
+      ':020000040003F7\n' +
+      pyCodeHex +
+      '\n' +
+      ':00000001FF\n';
+    // pyCodeHex contains zeros to fill the record, this example doesn't
+    const intelHex2: string =
       ':020000040000FA\n' +
       ':1000000000400020ED530100295401002B54010051\n' +
       ':020000040003F7\n' +
@@ -87,14 +106,14 @@ describe('Extract Python code from Intel Hex string', () => {
       ':0AE030002C20576F726C6421272921\n' +
       ':00000001FF\n';
 
-    const result: string = getIntelHexAppendedScript(intelHex);
+    const result1: string = getIntelHexAppendedScript(intelHex1);
+    const result2: string = getIntelHexAppendedScript(intelHex2);
 
-    expect(result).toEqual(pyCode);
+    expect(result1).toEqual(pyCode);
+    expect(result2).toEqual(pyCode);
   });
 
   it('Extract Python code with present UICR and Start Linear Address record)', () => {
-    const pyCode: string =
-      'from microbit import *\n' + "display.scroll('Hello, World!')";
     const intelHex: string =
       ':020000040000FA\n' +
       ':1000000000400020ED530100295401002B54010051\n' +

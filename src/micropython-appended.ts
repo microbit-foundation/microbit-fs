@@ -6,7 +6,7 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { bytesToStr, cleanseOldHexFormat, strToBytes } from './common';
+import { bytesToStr, strToBytes } from './common';
 
 /** User script located at specific flash address. */
 enum AppendedBlock {
@@ -30,6 +30,22 @@ const HEADER_START_BYTE_1 = 80; // 'P'
 
 /** How many bytes per Intel Hex record line. */
 const HEX_RECORD_DATA_LEN = 16;
+
+/**
+ * Marker placed inside the MicroPython hex string to indicate where to
+ * inject the user Python Code.
+ */
+const HEX_INSERTION_POINT = ':::::::::::::::::::::::::::::::::::::::::::\n';
+
+/**
+ * Removes the old insertion line the input Intel Hex string contains it.
+ *
+ * @param intelHex - String with the intel hex lines.
+ * @returns The Intel Hex string without insertion line.
+ */
+export function cleanseOldHexFormat(intelHex: string): string {
+  return intelHex.replace(HEX_INSERTION_POINT, '');
+}
 
 /**
  * Parses through an Intel Hex string to find the Python code at the

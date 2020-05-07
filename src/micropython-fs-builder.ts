@@ -33,12 +33,7 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import {
-  bytesToStr,
-  cleanseOldHexFormat,
-  concatUint8Array,
-  strToBytes,
-} from './common';
+import { bytesToStr, concatUint8Array, strToBytes } from './common';
 import { AppendedBlock, isAppendedScriptPresent } from './micropython-appended';
 import { getHexMapUicrData } from './uicr';
 
@@ -368,8 +363,7 @@ function addIntelHexFile(
   data: Uint8Array
 ): string {
   // filename and data checked in addMemMapFile
-  const intelHexClean = cleanseOldHexFormat(intelHex);
-  let intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
+  let intelHexMap: MemoryMap = MemoryMap.fromHex(intelHex);
   intelHexMap = addMemMapFile(intelHexMap, filename, data);
   return intelHexMap.asHexString() + '\n';
 }
@@ -393,8 +387,7 @@ function addIntelHexFiles(
   files: { [filename: string]: Uint8Array },
   returnBytes: boolean = false
 ): string | Uint8Array {
-  const intelHexClean = cleanseOldHexFormat(intelHex);
-  let intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
+  let intelHexMap: MemoryMap = MemoryMap.fromHex(intelHex);
   Object.keys(files).forEach((filename) => {
     intelHexMap = addMemMapFile(intelHexMap, filename, files[filename]);
   });
@@ -418,8 +411,7 @@ function addIntelHexFiles(
 function getIntelHexFiles(
   intelHex: string
 ): { [filename: string]: Uint8Array } {
-  const intelHexClean = cleanseOldHexFormat(intelHex);
-  const hexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
+  const hexMap: MemoryMap = MemoryMap.fromHex(intelHex);
   const startAddress: number = getStartAddress(hexMap);
   const endAddress: number = getLastPageAddress(hexMap);
 
@@ -427,8 +419,8 @@ function getIntelHexFiles(
   // library uses the last page as the "persistent" page, so the filesystem does
   // end there. In reality, the persistent page could be the first or the last
   // page, so we should get the end address as the magnetometer page and then
-  // check if the persistent marker is present in the first of last page and take that
-  // into account in the memory range calculation.
+  // check if the persistent marker is present in the first of last page and
+  // take that into account in the memory range calculation.
   // Note that the persistent marker is only present at the top of the page
 
   // Iterate through the filesystem to collect used chunks and file starts
@@ -518,11 +510,10 @@ function getIntelHexFiles(
  * @returns Size of the filesystem in bytes.
  */
 function getIntelHexFsSize(intelHex: string): number {
-  const intelHexClean = cleanseOldHexFormat(intelHex);
-  const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHexClean);
+  const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHex);
   const startAddress: number = getStartAddress(intelHexMap);
   const endAddress = getEndAddress(intelHexMap);
-  // Remember that one page is used as persistent page
+  // One extra page is used as persistent page
   return endAddress - startAddress - FLASH_PAGE_SIZE;
 }
 
