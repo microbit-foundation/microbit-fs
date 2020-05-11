@@ -11,9 +11,8 @@ import * as fs from 'fs';
 
 import MemoryMap from 'nrf-intel-hex';
 
-import { bytesToStr, strToBytes } from '../common';
+import { strToBytes } from '../common';
 import {
-  addIntelHexFile,
   addIntelHexFiles,
   calculateFileSize,
   getIntelHexFiles,
@@ -286,12 +285,10 @@ describe('Writing files to the filesystem.', () => {
     },
   };
 
-  it('Can generate a full chunk that also uses the next one.', () => {
-    const fwWithFsOther = addIntelHexFile(
-      uPyHexFile,
-      fullChunkPlus.fileName,
-      strToBytes(fullChunkPlus.fileStr)
-    );
+  it('Can generate a full chunk that also consumes the next one.', () => {
+    const fwWithFsOther = addIntelHexFiles(uPyHexFile, {
+      [fullChunkPlus.fileName]: strToBytes(fullChunkPlus.fileStr),
+    });
 
     const opMap = MemoryMap.fromHex(fwWithFsOther);
     const readFileData = opMap
@@ -301,11 +298,9 @@ describe('Writing files to the filesystem.', () => {
   });
 
   it('Correctly generate an almost full chunk (not using last byte).', () => {
-    const fwWithFsOther = addIntelHexFile(
-      uPyHexFile,
-      fullChunkMinus.fileName,
-      strToBytes(fullChunkMinus.fileStr)
-    );
+    const fwWithFsOther = addIntelHexFiles(uPyHexFile, {
+      [fullChunkMinus.fileName]: strToBytes(fullChunkMinus.fileStr),
+    });
 
     const opMap = MemoryMap.fromHex(fwWithFsOther);
     const readFileData = opMap
@@ -314,12 +309,10 @@ describe('Writing files to the filesystem.', () => {
     expect(readFileData).toEqual(fullChunkMinus.bytes());
   });
 
-  it('Correctlty generate just over a full chunk.', () => {
-    const fwWithFsOther = addIntelHexFile(
-      uPyHexFile,
-      twoChunks.fileName,
-      strToBytes(twoChunks.fileStr)
-    );
+  it('Correctly generate just over a full chunk.', () => {
+    const fwWithFsOther = addIntelHexFiles(uPyHexFile, {
+      [twoChunks.fileName]: strToBytes(twoChunks.fileStr),
+    });
 
     const opMap = MemoryMap.fromHex(fwWithFsOther);
     const readFileData = opMap
@@ -329,31 +322,25 @@ describe('Writing files to the filesystem.', () => {
   });
 
   it('Empty file name throws an error.', () => {
-    const failCase = () => addIntelHexFile(uPyHexFile, '', randContent);
+    const failCase = () => addIntelHexFiles(uPyHexFile, { '': randContent });
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('File has to have a file name');
   });
 
   it('Empty file data throw an error.', () => {
-    const failCase = () => {
-      const hexWithFs = addIntelHexFile(
-        uPyHexFile,
-        'my_file.txt',
-        new Uint8Array(0)
-      );
-    };
-    expect(failCase).toThrow(Error);
+    const failCase = () =>
+      addIntelHexFiles(uPyHexFile, { 'my_file.txt': new Uint8Array(0) });
+
+    expect(failCase).toThrow('has to contain data');
   });
 
   it('Large file that does not fit throws error.', () => {
     const failCase = () => {
-      const hexWithFs = addIntelHexFile(
-        uPyHexFile,
-        'my_file.txt',
-        new Uint8Array(50 * 1024).fill(0x55)
-      );
+      addIntelHexFiles(uPyHexFile, {
+        'my_file.txt': new Uint8Array(50 * 1024).fill(0x55),
+      });
     };
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('Not enough space');
   });
 
   it('Add files until no more fit.', () => {
@@ -362,28 +349,41 @@ describe('Writing files to the filesystem.', () => {
     // Use 4 KB blocks per file (each chunk is 128 B)
     const fakeBigFileData = new Uint8Array(4000).fill(0x55);
     const fakeSingleChunkData = new Uint8Array([0x55, 0x55]);
+
     const addLargeFiles = () => {
       // At 4Kbs we only fit 7 files
       for (let i = 0; i < 15; i++) {
-        hexWithFs = addIntelHexFile(
-          hexWithFs,
-          'file_' + i + '.txt',
-          fakeBigFileData
-        );
+        hexWithFs = addIntelHexFiles(hexWithFs, {
+          ['file_' + i + '.txt']: fakeBigFileData,
+        }) as string;
       }
     };
     const completeFsFilling = () => {
       // At a maximum of 4 Kbs left, it would fit 32 chunks max
       for (let i = 100; i < 132; i++) {
-        hexWithFs = addIntelHexFile(
-          hexWithFs,
-          'file_' + i + '.txt',
-          fakeSingleChunkData
-        );
+        hexWithFs = addIntelHexFiles(hexWithFs, {
+          ['file_' + i + '.txt']: fakeSingleChunkData,
+        }) as string;
       }
     };
-    expect(addLargeFiles).toThrow(Error);
-    expect(completeFsFilling).toThrow(Error);
+
+    expect(addLargeFiles).toThrow('Not enough space');
+    expect(completeFsFilling).toThrow('no storage space left');
+  });
+
+  it('Add a group of files that do not fit.', () => {
+    // The MicroPython hex has about 29 KBs
+    const hexWithFs = uPyHexFile;
+    // Use 4 KB blocks per file (each chunk is 128 B)
+    const fakeBigFileData = new Uint8Array(4000).fill(0x55);
+    const tooManyBigFiles: { [filename: string]: Uint8Array } = {};
+    for (let i = 0; i < 8; i++) {
+      tooManyBigFiles['file_' + i + '.txt'] = fakeBigFileData;
+    }
+
+    const addingAllFiles = () => addIntelHexFiles(uPyHexFile, tooManyBigFiles);
+
+    expect(addingAllFiles).toThrow('Not enough space');
   });
 
   it('Max filename length works.', () => {
@@ -391,7 +391,7 @@ describe('Writing files to the filesystem.', () => {
     const largeName = 'a'.repeat(maxLength);
 
     const workingCase = () =>
-      addIntelHexFile(uPyHexFile, largeName, randContent);
+      addIntelHexFiles(uPyHexFile, { [largeName]: randContent });
 
     expect(workingCase).not.toThrow(Error);
   });
@@ -400,20 +400,20 @@ describe('Writing files to the filesystem.', () => {
     const maxLength = 120;
     const largeName = 'a'.repeat(maxLength + 1);
 
-    const failCase = () => addIntelHexFile(uPyHexFile, largeName, randContent);
+    const failCase = () =>
+      addIntelHexFiles(uPyHexFile, { [largeName]: randContent });
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('File name');
   });
 
   it('Adding files to non-MicroPython hex fails.', () => {
     const failCase = () =>
-      addIntelHexFile(makecodeHexFile, 'a.py', randContent);
+      addIntelHexFiles(makecodeHexFile, { 'a.py': randContent });
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('Could not find valid MicroPython UICR');
   });
 
   // TODO: Hex file with persistent page marker doesn't get two markers
-  // TODO: Hex file with injection string (:::...) still works
 });
 
 describe('Reading files from the filesystem.', () => {
@@ -704,7 +704,7 @@ describe('Reading files from the filesystem.', () => {
 
     const failCase = () => getIntelHexFiles(fullUpyFsMemMap.asHexString());
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('Found multiple files named');
   });
 
   it('Reading files from empty MicroPython hex returns empty list.', () => {
@@ -716,7 +716,7 @@ describe('Reading files from the filesystem.', () => {
   it('Reading files from non-MicroPython hex fails.', () => {
     const failCase = () => getIntelHexFiles(makecodeHexFile);
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('Could not find valid MicroPython UICR');
   });
 
   // TODO: Read tests with a file that has chunks in non-continuous order

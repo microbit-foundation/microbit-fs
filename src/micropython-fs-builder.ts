@@ -345,35 +345,11 @@ function addMemMapFile(
 }
 
 /**
- * Adds a byte array as a file in the MicroPython filesystem.
- *
- * @throws {Error} When the invalid file name is given.
- * @throws {Error} When the the file doesn't have any data.
- * @throws {Error} When there are issues calculating the file system boundaries.
- * @throws {Error} When there is no space left for the file.
- *
- * @param intelHex - MicroPython Intel Hex string.
- * @param filename - Name for the file.
- * @param data - Byte array for the file data.
- * @returns MicroPython Intel Hex string with the file in the filesystem.
- */
-function addIntelHexFile(
-  intelHex: string,
-  filename: string,
-  data: Uint8Array
-): string {
-  // filename and data checked in addMemMapFile
-  let intelHexMap: MemoryMap = MemoryMap.fromHex(intelHex);
-  intelHexMap = addMemMapFile(intelHexMap, filename, data);
-  return intelHexMap.asHexString() + '\n';
-}
-
-/**
  * Adds a hash table of filenames and byte arrays as files to the MicroPython
  * filesystem.
  *
  * @throws {Error} When the an invalid file name is given.
- * @throws {Error} When the a file doesn't have any data.
+ * @throws {Error} When a file doesn't have any data.
  * @throws {Error} When there are issues calculating the file system boundaries.
  * @throws {Error} When there is no space left for a file.
  *
@@ -518,7 +494,6 @@ function getIntelHexFsSize(intelHex: string): number {
 }
 
 export {
-  addIntelHexFile,
   addIntelHexFiles,
   calculateFileSize,
   getIntelHexFiles,
