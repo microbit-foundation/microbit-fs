@@ -12,7 +12,6 @@ import {
   addIntelHexFiles,
   calculateFileSize,
   getIntelHexFiles,
-  getIntelHexFsSize,
 } from './micropython-fs-builder';
 import { SimpleFile } from './simple-file';
 
@@ -43,9 +42,7 @@ export class MicropythonFsHex implements FsInterface {
         'There are files in the MicropythonFsHex constructor hex file input.'
       );
     }
-    this.setStorageSize(
-      maxFsSize || getIntelHexFsSize(this._uPyFsBuilderCache.originalIntelHex)
-    );
+    this.setStorageSize(maxFsSize || this._uPyFsBuilderCache.fsSize);
   }
 
   /**
@@ -194,7 +191,7 @@ export class MicropythonFsHex implements FsInterface {
    * @param {number} size - Size in bytes for the filesystem.
    */
   setStorageSize(size: number): void {
-    if (size > getIntelHexFsSize(this._uPyFsBuilderCache.originalIntelHex)) {
+    if (size > this._uPyFsBuilderCache.fsSize) {
       throw new Error(
         'Storage size limit provided is larger than size available in the MicroPython hex.'
       );

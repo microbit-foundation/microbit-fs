@@ -43,6 +43,7 @@ interface MpFsBuilderCache {
   originalMemMap: MemoryMap;
   uPyEndAddress: number;
   uPyIntelHex: string;
+  fsSize: number;
 }
 
 const enum ChunkMarker {
@@ -101,8 +102,9 @@ function createMpFsBuilderCache(originalIntelHex: string): MpFsBuilderCache {
   return {
     originalIntelHex,
     originalMemMap,
-    uPyEndAddress: uicrData.runtimeEndAddress,
     uPyIntelHex,
+    uPyEndAddress: uicrData.runtimeEndAddress,
+    fsSize: getMemMapFsSize(originalMemMap),
   };
 }
 
@@ -547,11 +549,10 @@ function getIntelHexFiles(
 /**
  * Calculate the MicroPython filesystem size.
  *
- * @param intelHex - The MicroPython Intel Hex string.
+ * @param intelHexMap - The MicroPython Intel Hex Memory Map.
  * @returns Size of the filesystem in bytes.
  */
-function getIntelHexFsSize(intelHex: string): number {
-  const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHex);
+function getMemMapFsSize(intelHexMap: MemoryMap): number {
   const startAddress: number = getStartAddress(intelHexMap);
   const endAddress = getEndAddress(intelHexMap);
   // One extra page is used as persistent page
@@ -565,5 +566,5 @@ export {
   generateHexWithFiles,
   calculateFileSize,
   getIntelHexFiles,
-  getIntelHexFsSize,
+  getMemMapFsSize,
 };

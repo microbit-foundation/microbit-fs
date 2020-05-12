@@ -18,7 +18,7 @@ import {
   addIntelHexFiles,
   calculateFileSize,
   getIntelHexFiles,
-  getIntelHexFsSize,
+  getMemMapFsSize,
 } from '../micropython-fs-builder';
 
 const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -443,6 +443,7 @@ describe('Writing files to the filesystem.', () => {
   });
 
   // TODO: Hex file with persistent page marker doesn't get two markers
+  // TODO: Create tests for createMpFsBuilderCache
 });
 
 describe('Reading files from the filesystem.', () => {
@@ -756,7 +757,7 @@ describe('Reading files from the filesystem.', () => {
 
 describe('Calculate sizes.', () => {
   it('Get how much available fs space there is in a MicroPython hex file.', () => {
-    const totalSize = getIntelHexFsSize(uPyHexFile);
+    const totalSize = getMemMapFsSize(MemoryMap.fromHex(uPyHexFile));
 
     // Calculated by hand from the uPyHexFile v1.0.1 release.
     expect(totalSize).toEqual(27 * 1024);
