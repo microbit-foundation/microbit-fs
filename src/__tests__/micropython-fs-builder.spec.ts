@@ -13,6 +13,8 @@ import MemoryMap from 'nrf-intel-hex';
 
 import { strToBytes } from '../common';
 import {
+  createMpFsBuilderCache,
+  generateHexWithFiles,
   addIntelHexFiles,
   calculateFileSize,
   getIntelHexFiles,
@@ -205,6 +207,33 @@ describe('Writing files to the filesystem.', () => {
     );
     expect(file0data).toEqual(files[0].bytes());
     expect(file1data).toEqual(files[1].bytes());
+  });
+
+  it('Both addIntelHexFiles() and generateHexWithFiles() generate compatible data', () => {
+    const fsFiles = {
+      [files[0].fileName]: strToBytes(files[0].fileStr),
+      [files[1].fileName]: strToBytes(files[1].fileStr),
+    };
+    for (let i = 0; i < 32; i++) {
+      fsFiles['file_' + i + '.txt'] = strToBytes("Content doesn't matter " + i);
+    }
+    const cache = createMpFsBuilderCache(uPyHexFile);
+
+    const hexFromIntelHex = addIntelHexFiles(uPyHexFile, fsFiles) as string;
+    const hexFromCache = generateHexWithFiles(cache, fsFiles);
+
+    // The generateHexWithFiles() function caches the MicroPython data in an
+    // Intel Hex string, instead of generating it every time, and so it only
+    // has to generate records for the filesystem and forward.
+    // So we'll always find an Extended Linear Address record at the beginning
+    // of the filesystem data (the slower addIntelHexFiles() generates a single
+    // continuous hex string). To compare the two functions, we add the extra
+    // record after the last line of MicroPython data (excluding UICR)
+    const hexFromIntelHexPlusRecord = hexFromIntelHex.replace(
+      ':0888B00095880100C1000000E1',
+      ':0888B00095880100C1000000E1\n:020000040003F7'
+    );
+    expect(hexFromCache).toEqual(hexFromIntelHexPlusRecord);
   });
 
   // A chunk using up the last byte will also use the next and leave it empty

@@ -6,6 +6,9 @@
  */
 import { FsInterface } from './fs-interface';
 import {
+  MpFsBuilderCache,
+  createMpFsBuilderCache,
+  generateHexWithFiles,
   addIntelHexFiles,
   calculateFileSize,
   getIntelHexFiles,
@@ -14,7 +17,7 @@ import {
 import { SimpleFile } from './simple-file';
 
 export class MicropythonFsHex implements FsInterface {
-  private _intelHex: string;
+  private _uPyFsBuilderCache: MpFsBuilderCache;
   private _files: { [id: string]: SimpleFile } = {};
   private _storageSize: number = 0;
 
@@ -33,14 +36,16 @@ export class MicropythonFsHex implements FsInterface {
     if (!intelHex) {
       throw new Error('Invalid MicroPython hex invalid.');
     }
-    this._intelHex = intelHex;
-    this.importFilesFromIntelHex(this._intelHex);
+    this._uPyFsBuilderCache = createMpFsBuilderCache(intelHex);
+    this.importFilesFromIntelHex(this._uPyFsBuilderCache.originalIntelHex);
     if (this.ls().length) {
       throw new Error(
         'There are files in the MicropythonFsHex constructor hex file input.'
       );
     }
-    this.setStorageSize(maxFsSize || getIntelHexFsSize(this._intelHex));
+    this.setStorageSize(
+      maxFsSize || getIntelHexFsSize(this._uPyFsBuilderCache.originalIntelHex)
+    );
   }
 
   /**
@@ -189,7 +194,7 @@ export class MicropythonFsHex implements FsInterface {
    * @param {number} size - Size in bytes for the filesystem.
    */
   setStorageSize(size: number): void {
-    if (size > getIntelHexFsSize(this._intelHex)) {
+    if (size > getIntelHexFsSize(this._uPyFsBuilderCache.originalIntelHex)) {
       throw new Error(
         'Storage size limit provided is larger than size available in the MicroPython hex.'
       );
@@ -289,7 +294,7 @@ export class MicropythonFsHex implements FsInterface {
     Object.values(this._files).forEach((file) => {
       files[file.filename] = file.getBytes();
     });
-    return addIntelHexFiles(this._intelHex, files) as string;
+    return generateHexWithFiles(this._uPyFsBuilderCache, files);
   }
 
   /**
@@ -309,6 +314,10 @@ export class MicropythonFsHex implements FsInterface {
     Object.values(this._files).forEach((file) => {
       files[file.filename] = file.getBytes();
     });
-    return addIntelHexFiles(this._intelHex, files, true) as Uint8Array;
+    return addIntelHexFiles(
+      this._uPyFsBuilderCache.originalIntelHex,
+      files,
+      true
+    ) as Uint8Array;
   }
 }

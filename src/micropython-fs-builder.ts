@@ -37,6 +37,14 @@ import { bytesToStr, concatUint8Array, strToBytes } from './common';
 import { AppendedBlock, isAppendedScriptPresent } from './micropython-appended';
 import { getHexMapUicrData } from './uicr';
 
+/** Object to contain cached data for quicker Intel Hex string generation */
+interface MpFsBuilderCache {
+  originalIntelHex: string;
+  originalMemMap: MemoryMap;
+  uPyEndAddress: number;
+  uPyIntelHex: string;
+}
+
 const enum ChunkMarker {
   Freed = 0,
   PersistentData = 0xfd,
@@ -67,6 +75,36 @@ const FLASH_END = 0x40000;
 
 /** Size of pages with specific functions. */
 const CALIBRATION_PAGE_SIZE = FLASH_PAGE_SIZE;
+
+/**
+ * To speed up the Intel Hex string generation with MicroPython and the
+ * filesystem we can cache some of the Intel Hex records and the parsed Memory
+ * Map. This function creates an object with cached data that can then be sent
+ * to other functions from this module.
+ *
+ * @param originalIntelHex Intel Hex string with MicroPython to cache.
+ * @returns Cached MpFsBuilderCache object.
+ */
+function createMpFsBuilderCache(originalIntelHex: string): MpFsBuilderCache {
+  const originalMemMap = MemoryMap.fromHex(originalIntelHex);
+  const uicrData = getHexMapUicrData(originalMemMap);
+  // slice() returns a new MemoryMap with only the MicroPython data, so it will
+  // not include the UICR. The End Of File record is removed because this string
+  // will be concatenated with the filesystem data any thing else in the MemMap
+  const uPyIntelHex = originalMemMap
+    .slice(
+      uicrData.runtimeStartAddress,
+      uicrData.runtimeEndAddress - uicrData.runtimeStartAddress
+    )
+    .asHexString()
+    .replace(':00000001FF', '');
+  return {
+    originalIntelHex,
+    originalMemMap,
+    uPyEndAddress: uicrData.runtimeEndAddress,
+    uPyIntelHex,
+  };
+}
 
 /**
  * Scans the file system area inside the Intel Hex data a returns a list of
@@ -142,14 +180,15 @@ function getLastPageAddress(intelHexMap: MemoryMap): number {
 /**
  * If not present already, it sets the persistent page in flash.
  *
- * This page can be located right below right on top or below the filesystem
+ * This page can be located right below or right on top of the filesystem
  * space.
  *
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  */
 function setPersistentPage(intelHexMap: MemoryMap): void {
-  // TODO: This could be the first or the last page. Check first if it exists,
-  // if it doesn't then randomise its location.
+  // At the moment we place this persistent page at the end of the filesystem
+  // TODO: This could be set to the first or the last page. Check first if it
+  //  exists, if it doesn't then randomise its location.
   intelHexMap.set(
     getLastPageAddress(intelHexMap),
     new Uint8Array([ChunkMarker.PersistentData])
@@ -356,7 +395,7 @@ function addMemMapFile(
  * @param intelHex - MicroPython Intel Hex string.
  * @param files - Hash table with filenames as the key and byte arrays as the
  *     value.
- * @returns MicroPython Intel Hex string with the file in the filesystem.
+ * @returns MicroPython Intel Hex string with the files in the filesystem.
  */
 function addIntelHexFiles(
   intelHex: string,
@@ -370,6 +409,32 @@ function addIntelHexFiles(
   return returnBytes
     ? intelHexMap.slicePad(0, FLASH_END)
     : intelHexMap.asHexString() + '\n';
+}
+
+/**
+ * Generates an Intel Hex string with MicroPython and files in the filesystem.
+ *
+ * Uses pre-cached MicroPython memory map and Intel Hex string of record to
+ * speed up the Intel Hex generation compared to addIntelHexFiles().
+ *
+ * @param cache - Object with cached data from createMpFsBuilderCache().
+ * @param files - Hash table with filenames as the key and byte arrays as the
+ *     value.
+ * @returns MicroPython Intel Hex string with the files in the filesystem.
+ */
+function generateHexWithFiles(
+  cache: MpFsBuilderCache,
+  files: { [filename: string]: Uint8Array }
+): string {
+  let memMapWithFiles = cache.originalMemMap.clone();
+  Object.keys(files).forEach((filename) => {
+    memMapWithFiles = addMemMapFile(memMapWithFiles, filename, files[filename]);
+  });
+  return (
+    cache.uPyIntelHex +
+    memMapWithFiles.slice(cache.uPyEndAddress).asHexString() +
+    '\n'
+  );
 }
 
 /**
@@ -494,7 +559,10 @@ function getIntelHexFsSize(intelHex: string): number {
 }
 
 export {
+  MpFsBuilderCache,
+  createMpFsBuilderCache,
   addIntelHexFiles,
+  generateHexWithFiles,
   calculateFileSize,
   getIntelHexFiles,
   getIntelHexFsSize,

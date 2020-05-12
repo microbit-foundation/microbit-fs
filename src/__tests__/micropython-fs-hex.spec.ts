@@ -9,8 +9,9 @@ import MemoryMap from 'nrf-intel-hex';
 import * as fsBuilder from '../micropython-fs-builder';
 import { MicropythonFsHex } from '../micropython-fs-hex';
 
-// Mock Spy
+// Mock Spies
 const addIntelHexFilesSpy = jest.spyOn(fsBuilder, 'addIntelHexFiles');
+const generateHexWithFilesSpy = jest.spyOn(fsBuilder, 'generateHexWithFiles');
 
 // MicroPython hex file for testing
 const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -455,6 +456,7 @@ describe('Test other.', () => {
 describe('Test hex generation.', () => {
   beforeEach(() => {
     addIntelHexFilesSpy.mockReset();
+    generateHexWithFilesSpy.mockReset();
   });
 
   it('getIntelHex called with constructor hex string.', () => {
@@ -463,9 +465,7 @@ describe('Test hex generation.', () => {
 
     const returnedIntelHex = microbitFs.getIntelHex();
 
-    expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
-    expect(addIntelHexFilesSpy.mock.calls[0][0]).toBe(uPyHexFile);
-    expect(addIntelHexFilesSpy.mock.calls[0][2]).toBeFalsy();
+    expect(generateHexWithFilesSpy.mock.calls.length).toEqual(1);
   });
 
   it('getIntelHexBytes called with constructor hex string.', () => {
@@ -513,6 +513,7 @@ describe('Test importing files from hex.', () => {
 
   beforeEach(() => {
     addIntelHexFilesSpy.mockReset();
+    generateHexWithFilesSpy.mockReset();
   });
 
   const createHexStrWithFiles = (): string => {
@@ -579,8 +580,7 @@ describe('Test importing files from hex.', () => {
     micropythonFs.importFilesFromIntelHex(hexStrWithFiles);
     const returnedIntelHex = micropythonFs.getIntelHex();
 
-    expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
-    expect(addIntelHexFilesSpy.mock.calls[0][0]).toBe(uPyHexFile);
+    expect(generateHexWithFilesSpy.mock.calls.length).toEqual(1);
   });
 
   it('Constructor hex file with files to import thorws an error.', () => {
