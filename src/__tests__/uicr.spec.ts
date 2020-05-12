@@ -18,6 +18,8 @@ describe('Read MicroPython UICR data.', () => {
     const expectedRuntimeEndPage = Math.ceil(
       MicroPythonLastByteUsed / expectedPageSize
     );
+    const expectedUicrStartAddress = 0x100010c0;
+    const expectedUicrEndAddress = 0x100010dc;
     const expectedVersionAddress = 0x036d2d;
     const expectedVersion =
       'micro:bit v1.0.1+b0bf4a9 on 2018-12-13; ' +
@@ -34,6 +36,8 @@ describe('Read MicroPython UICR data.', () => {
     expect(result.runtimeEndAddress).toEqual(
       expectedRuntimeEndPage * expectedPageSize
     );
+    expect(result.uicrStartAddress).toEqual(expectedUicrStartAddress);
+    expect(result.uicrEndAddress).toEqual(expectedUicrEndAddress);
     expect(result.versionAddress).toEqual(expectedVersionAddress);
     expect(result.version).toEqual(expectedVersion);
   });
@@ -55,5 +59,6 @@ describe('Read MicroPython UICR data.', () => {
   it('UICR data without enough MicroPython data.', () => {});
   it('UICR MicroPython version address is not in Intel Hex.', () => {});
   it('UICR MicroPython version address data does not have a null terminator.', () => {});
+  it('UICR runtimeStartPage is not 0', () => {});
   */
 });

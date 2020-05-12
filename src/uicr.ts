@@ -19,6 +19,7 @@ const UICR_UPY_START: number =
 
 const UPY_MAGIC_HEADER: number = 0x17eeb07c;
 const UPY_DELIMITER: number = 0xffffffff;
+const UPY_REGIONS_TERMINATOR: number = 0x00000000;
 
 const UPY_MAGIC_LEN: number = 4;
 const UPY_END_MARKER_LEN: number = 4;
@@ -27,6 +28,7 @@ const UPY_START_PAGE_LEN: number = 2;
 const UPY_PAGES_USED_LEN: number = 2;
 const UPY_DELIMITER_LEN: number = 4;
 const UPY_VERSION_LEN: number = 4;
+const UPY_REGIONS_TERMINATOR_LEN: number = 4;
 
 /** UICR Customer area addresses for MicroPython specific data. */
 enum MicropythonUicrAddress {
@@ -37,7 +39,8 @@ enum MicropythonUicrAddress {
   PagesUsed = StartPage + UPY_START_PAGE_LEN,
   Delimiter = PagesUsed + UPY_PAGES_USED_LEN,
   VersionLocation = Delimiter + UPY_DELIMITER_LEN,
-  End = VersionLocation + UPY_VERSION_LEN,
+  RegionsTerminator = VersionLocation + UPY_REGIONS_TERMINATOR_LEN,
+  End = RegionsTerminator + UPY_VERSION_LEN,
 }
 
 /** MicroPython data stored in the UICR Customer area. */
@@ -47,6 +50,8 @@ interface MicropythonUicrData {
   runtimeStartAddress: number;
   runtimeEndUsed: number;
   runtimeEndAddress: number;
+  uicrStartAddress: number;
+  uicrEndAddress: number;
   versionAddress: number;
   version: string;
 }
@@ -150,12 +155,11 @@ function getStartPage(intelHexMap: MemoryMap): number {
 }
 
 /**
- * Reads the UICR data that contains the address of the location in flash where
- * the MicroPython version is stored.
+ * Reads the UICR data that contains the number of flash pages used by the
+ * MicroPython runtime.
  *
  * @param intelHexMap - Memory map of the Intel Hex data.
- * @returns The address of the location in flash where the MicroPython version
- * is stored.
+ * @returns The number of pages used by the MicroPython runtime.
  */
 function getPagesUsed(intelHexMap: MemoryMap): number {
   return getUint16FromIntelHexMap(
@@ -165,11 +169,12 @@ function getPagesUsed(intelHexMap: MemoryMap): number {
 }
 
 /**
- * Reads the UICR data that contains the number of flash pages used by the
- * MicroPython runtime.
+ * Reads the UICR data that contains the address of the location in flash where
+ * the MicroPython version is stored.
  *
  * @param intelHexMap - Memory map of the Intel Hex data.
- * @returns The number of pages used by the MicroPython runtime.
+ * @returns The address of the location in flash where the MicroPython version
+ * is stored.
  */
 function getVersionLocation(intelHexMap: MemoryMap): number {
   return getUint32FromIntelHexMap(
@@ -203,6 +208,8 @@ function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
     runtimeStartAddress: startPage * pageSize,
     runtimeEndUsed: pagesUsed,
     runtimeEndAddress: pagesUsed * pageSize,
+    uicrStartAddress: MicropythonUicrAddress.MagicValue,
+    uicrEndAddress: MicropythonUicrAddress.End,
     versionAddress,
     version,
   };
