@@ -352,7 +352,7 @@ function calculateFileSize(filename: string, data: Uint8Array): number {
 }
 
 /**
- * Adds a byte array as a file to a MicroPython Memory Map.
+ * Adds a byte array as a file into a MicroPython Memory Map.
  *
  * @throws {Error} When the invalid file name is given.
  * @throws {Error} When the the file doesn't have any data.
@@ -362,13 +362,12 @@ function calculateFileSize(filename: string, data: Uint8Array): number {
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @param filename - Name for the file.
  * @param data - Byte array for the file data.
- * @returns MicroPython Memory map with the file in the filesystem.
  */
 function addMemMapFile(
   intelHexMap: MemoryMap,
   filename: string,
   data: Uint8Array
-): MemoryMap {
+) {
   if (!filename) throw new Error('File has to have a file name.');
   if (!data.length) throw new Error(`File ${filename} has to contain data.`);
 
@@ -382,7 +381,6 @@ function addMemMapFile(
   const fileFsBytes = fsFile.getFsBytes(freeChunks);
   intelHexMap.set(chunksStartAddress, fileFsBytes);
   setPersistentPage(intelHexMap);
-  return intelHexMap;
 }
 
 /**
@@ -404,9 +402,9 @@ function addIntelHexFiles(
   files: { [filename: string]: Uint8Array },
   returnBytes: boolean = false
 ): string | Uint8Array {
-  let intelHexMap: MemoryMap = MemoryMap.fromHex(intelHex);
+  const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHex);
   Object.keys(files).forEach((filename) => {
-    intelHexMap = addMemMapFile(intelHexMap, filename, files[filename]);
+    addMemMapFile(intelHexMap, filename, files[filename]);
   });
   return returnBytes
     ? intelHexMap.slicePad(0, FLASH_END)
@@ -428,9 +426,9 @@ function generateHexWithFiles(
   cache: MpFsBuilderCache,
   files: { [filename: string]: Uint8Array }
 ): string {
-  let memMapWithFiles = cache.originalMemMap.clone();
+  const memMapWithFiles = cache.originalMemMap.clone();
   Object.keys(files).forEach((filename) => {
-    memMapWithFiles = addMemMapFile(memMapWithFiles, filename, files[filename]);
+    addMemMapFile(memMapWithFiles, filename, files[filename]);
   });
   return (
     cache.uPyIntelHex +
