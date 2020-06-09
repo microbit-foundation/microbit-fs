@@ -24,8 +24,6 @@ export class MicropythonFsHex implements FsInterface {
    * File System manager constructor.
    * At the moment it needs a MicroPython hex string without a files included.
    *
-   * TODO: If files are already in input hex file, deal with them somehow.
-   *
    * @param intelHex - MicroPython Intel Hex string.
    */
   constructor(
@@ -36,13 +34,14 @@ export class MicropythonFsHex implements FsInterface {
       throw new Error('Invalid MicroPython hex invalid.');
     }
     this._uPyFsBuilderCache = createMpFsBuilderCache(intelHex);
-    this.importFilesFromIntelHex(this._uPyFsBuilderCache.originalIntelHex);
-    if (this.ls().length) {
+    this.setStorageSize(maxFsSize || this._uPyFsBuilderCache.fsSize);
+    // Check if there are files in the input hex
+    const hexFiles = getIntelHexFiles(this._uPyFsBuilderCache.originalMemMap);
+    if (Object.keys(hexFiles).length) {
       throw new Error(
         'There are files in the MicropythonFsHex constructor hex file input.'
       );
     }
-    this.setStorageSize(maxFsSize || this._uPyFsBuilderCache.fsSize);
   }
 
   /**
@@ -312,7 +311,7 @@ export class MicropythonFsHex implements FsInterface {
       files[file.filename] = file.getBytes();
     });
     return addIntelHexFiles(
-      this._uPyFsBuilderCache.originalIntelHex,
+      this._uPyFsBuilderCache.originalMemMap,
       files,
       true
     ) as Uint8Array;

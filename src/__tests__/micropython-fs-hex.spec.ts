@@ -475,7 +475,6 @@ describe('Test hex generation.', () => {
     const returnedIntelHex = microbitFs.getIntelHexBytes();
 
     expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
-    expect(addIntelHexFilesSpy.mock.calls[0][0]).toBe(uPyHexFile);
     expect(addIntelHexFilesSpy.mock.calls[0][2]).toBeTruthy();
   });
 });
@@ -583,10 +582,12 @@ describe('Test importing files from hex.', () => {
     expect(generateHexWithFilesSpy.mock.calls.length).toEqual(1);
   });
 
-  it('Constructor hex file with files to import thorws an error.', () => {
+  it('Constructor hex file with files to import throws an error.', () => {
     const failCase = () => new MicropythonFsHex(hexStrWithFiles);
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow(
+      'There are files in the MicropythonFsHex constructor hex file input'
+    );
   });
 
   it('Enabling formatFirst flag erases the previous files.', () => {

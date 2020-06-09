@@ -392,17 +392,22 @@ function addMemMapFile(
  * @throws {Error} When there are issues calculating the file system boundaries.
  * @throws {Error} When there is no space left for a file.
  *
- * @param intelHex - MicroPython Intel Hex string.
+ * @param intelHex - MicroPython Intel Hex string or MemoryMap.
  * @param files - Hash table with filenames as the key and byte arrays as the
  *     value.
  * @returns MicroPython Intel Hex string with the files in the filesystem.
  */
 function addIntelHexFiles(
-  intelHex: string,
+  intelHex: string | MemoryMap,
   files: { [filename: string]: Uint8Array },
   returnBytes: boolean = false
 ): string | Uint8Array {
-  const intelHexMap: MemoryMap = MemoryMap.fromHex(intelHex);
+  let intelHexMap: MemoryMap;
+  if (typeof intelHex === 'string') {
+    intelHexMap = MemoryMap.fromHex(intelHex);
+  } else {
+    intelHexMap = intelHex.clone();
+  }
   Object.keys(files).forEach((filename) => {
     addMemMapFile(intelHexMap, filename, files[filename]);
   });
@@ -438,7 +443,7 @@ function generateHexWithFiles(
 }
 
 /**
- * Reads the filesystem included in a MicroPython Intel Hex string.
+ * Reads the filesystem included in a MicroPython Intel Hex string or Map.
  *
  * @throws {Error} When multiple files with the same name encountered.
  * @throws {Error} When a file chunk points to an unused chunk.
@@ -446,13 +451,18 @@ function generateHexWithFiles(
  * @throws {Error} When following through the chunks linked list iterates
  *     through more chunks and used chunks (sign of an infinite loop).
  *
- * @param intelHex - The MicroPython Intel Hex string to read from.
+ * @param intelHex - The MicroPython Intel Hex string or MemoryMap to read from.
  * @returns Dictionary with the filename as key and byte array as values.
  */
 function getIntelHexFiles(
-  intelHex: string
+  intelHex: string | MemoryMap
 ): { [filename: string]: Uint8Array } {
-  const hexMap: MemoryMap = MemoryMap.fromHex(intelHex);
+  let hexMap: MemoryMap;
+  if (typeof intelHex === 'string') {
+    hexMap = MemoryMap.fromHex(intelHex);
+  } else {
+    hexMap = intelHex.clone();
+  }
   const startAddress: number = getStartAddress(hexMap);
   const endAddress: number = getLastPageAddress(hexMap);
 
