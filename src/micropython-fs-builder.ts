@@ -70,12 +70,11 @@ const CHUNK_HEADER_NAME_LEN = 1;
 
 const MAX_FILENAME_LENGTH = 120;
 
-/** Flash values for the micro:bit nRF microcontroller. */
-const FLASH_PAGE_SIZE = 1024;
-const FLASH_END = 0x40000;
-
-/** Size of pages with specific functions. */
-const CALIBRATION_PAGE_SIZE = FLASH_PAGE_SIZE;
+/**
+ * Chunks are a double linked list with 1-byte pointers and the front marker
+ * (previous pointer) cannot have the values listed in the ChunkMarker enum
+ */
+const MAX_NUMBER_OF_CHUNKS = 256 - 4;
 
 /**
  * To speed up the Intel Hex string generation with MicroPython and the
@@ -134,16 +133,28 @@ function getFreeChunks(intelHexMap: MemoryMap): number[] {
 
 /**
  * Calculates from the input Intel Hex where the MicroPython runtime ends and
- * return that as the start of the filesystem area.
+ * and where the start of the filesystem would be based on that.
  *
  * @param intelHexMap - Memory map for the MicroPython Intel Hex.
  * @returns Filesystem start address
  */
 function getStartAddress(intelHexMap: MemoryMap): number {
   const uicrData = getHexMapUicrData(intelHexMap);
-  const startAddress = uicrData.runtimeEndAddress;
-  // Ensure the start address aligns with the page size
-  if (startAddress % FLASH_PAGE_SIZE) {
+  // Calculate the maximum flash space the filesystem can possible take
+  let fsMaxSize = CHUNK_LEN * MAX_NUMBER_OF_CHUNKS;
+  // We need to add the persistent data which is one page aligned after fs data
+  fsMaxSize += uicrData.flashPageSize - (fsMaxSize % uicrData.flashPageSize);
+  fsMaxSize += uicrData.flashPageSize;
+
+  // Fs is placed at the end of flash, the space available from the MicroPython
+  // end to the end of flash might be larger than the fs max possible size
+  const fsMaxSizeStartAddress = getEndAddress(intelHexMap) - fsMaxSize;
+  const startAddress = Math.max(
+    uicrData.runtimeEndAddress,
+    fsMaxSizeStartAddress
+  );
+  // Ensure the start address is aligned with the page size
+  if (startAddress % uicrData.flashPageSize) {
     throw new Error(
       'File system start address from UICR does not align with flash page size.'
     );
@@ -162,11 +173,12 @@ function getStartAddress(intelHexMap: MemoryMap): number {
  * @returns End address for the filesystem.
  */
 function getEndAddress(intelHexMap: MemoryMap): number {
-  let endAddress = FLASH_END;
-  if (isAppendedScriptPresent(intelHexMap)) {
-    endAddress = AppendedBlock.StartAdd;
-  }
-  return endAddress - CALIBRATION_PAGE_SIZE;
+  const uicrData = getHexMapUicrData(intelHexMap);
+  const endAddress = isAppendedScriptPresent(intelHexMap)
+    ? AppendedBlock.StartAdd
+    : uicrData.flashSize;
+  // Magnetometer calibration data is one flash page
+  return endAddress - uicrData.flashPageSize;
 }
 
 /**
@@ -176,7 +188,8 @@ function getEndAddress(intelHexMap: MemoryMap): number {
  * @returns Memory address where the last filesystem page starts.
  */
 function getLastPageAddress(intelHexMap: MemoryMap): number {
-  return getEndAddress(intelHexMap) - FLASH_PAGE_SIZE;
+  const uicrData = getHexMapUicrData(intelHexMap);
+  return getEndAddress(intelHexMap) - uicrData.flashPageSize;
 }
 
 /**
@@ -408,11 +421,12 @@ function addIntelHexFiles(
   } else {
     intelHexMap = intelHex.clone();
   }
+  const uicrData = getHexMapUicrData(intelHexMap);
   Object.keys(files).forEach((filename) => {
     addMemMapFile(intelHexMap, filename, files[filename]);
   });
   return returnBytes
-    ? intelHexMap.slicePad(0, FLASH_END)
+    ? intelHexMap.slicePad(0, uicrData.flashSize)
     : intelHexMap.asHexString() + '\n';
 }
 
@@ -561,10 +575,11 @@ function getIntelHexFiles(
  * @returns Size of the filesystem in bytes.
  */
 function getMemMapFsSize(intelHexMap: MemoryMap): number {
-  const startAddress: number = getStartAddress(intelHexMap);
+  const uicrData = getHexMapUicrData(intelHexMap);
+  const startAddress = getStartAddress(intelHexMap);
   const endAddress = getEndAddress(intelHexMap);
   // One extra page is used as persistent page
-  return endAddress - startAddress - FLASH_PAGE_SIZE;
+  return endAddress - startAddress - uicrData.flashPageSize;
 }
 
 export {
