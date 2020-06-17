@@ -17,7 +17,7 @@ const UICR_CUSTOMER_UPY_OFFSET: number = 0x40;
 const UICR_UPY_START: number =
   UICR_START + UICR_CUSTOMER_OFFSET + UICR_CUSTOMER_UPY_OFFSET;
 
-const UPY_MAGIC_HEADER: number = 0x17eeb07c;
+const UPY_MAGIC_HEADER: number[] = [0x17eeb07c];
 const UPY_DELIMITER: number = 0xffffffff;
 const UPY_REGIONS_TERMINATOR: number = 0x00000000;
 
@@ -46,6 +46,7 @@ enum MicropythonUicrAddress {
 /** MicroPython data stored in the UICR Customer area. */
 interface MicropythonUicrData {
   flashPageSize: number;
+  flashSize: number;
   runtimeStartPage: number;
   runtimeStartAddress: number;
   runtimeEndUsed: number;
@@ -101,13 +102,13 @@ function getStringFromIntelHexMap(
   address: number
 ): string {
   const memBlock = intelHexMap.slice(address).get(address);
-  let i = 0;
-  for (i = 0; i < memBlock.length && memBlock[i] !== 0; i++);
-  if (i === memBlock.length) {
+  let iStrEnd = 0;
+  while (iStrEnd < memBlock.length && memBlock[iStrEnd] !== 0) iStrEnd++;
+  if (iStrEnd === memBlock.length) {
     // Could not find a null character to indicate the end of the string
     return '';
   }
-  const stringBytes = memBlock.slice(0, i);
+  const stringBytes = memBlock.slice(0, iStrEnd);
   return bytesToStr(stringBytes);
 }
 
@@ -119,11 +120,33 @@ function getStringFromIntelHexMap(
  * @return True if the magic number matches, false otherwise.
  */
 function confirmMagicValue(intelHexMap: MemoryMap): boolean {
-  const readMagicHeader: number = getUint32FromIntelHexMap(
+  const readMagicHeader = getMagicValue(intelHexMap);
+  return UPY_MAGIC_HEADER.includes(readMagicHeader);
+}
+
+/**
+ * Reads the UICR data that contains the Magic Value that indicates the
+ * MicroPython presence in the hex data.
+ *
+ * @param intelHexMap - Memory map of the Intel Hex data.
+ * @returns The Magic Value from UICR.
+ */
+function getMagicValue(intelHexMap: MemoryMap): number {
+  return getUint32FromIntelHexMap(
     intelHexMap,
     MicropythonUicrAddress.MagicValue
   );
-  return readMagicHeader === UPY_MAGIC_HEADER;
+}
+
+/**
+ * Reads the UICR data from an Intel Hex map and retrieves the flash size.
+ *
+ * @param intelHexMap - Memory map of the Intel Hex data.
+ * @returns The micro:bit flash size.
+ */
+function getFlashSize(intelHexMap: MemoryMap): number {
+  // This is the micro:bit flash size
+  return 0x40000;
 }
 
 /**
@@ -196,18 +219,20 @@ function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
   if (!confirmMagicValue(uicrMap)) {
     throw new Error('Could not find valid MicroPython UICR data.');
   }
-  const pageSize: number = getPageSize(uicrMap);
+  const flashPageSize: number = getPageSize(uicrMap);
+  const flashSize: number = getFlashSize(uicrMap);
   const startPage: number = getStartPage(uicrMap);
   const pagesUsed: number = getPagesUsed(uicrMap);
   const versionAddress: number = getVersionLocation(uicrMap);
   const version: string = getStringFromIntelHexMap(intelHexMap, versionAddress);
 
   return {
-    flashPageSize: pageSize,
+    flashPageSize,
+    flashSize,
     runtimeStartPage: startPage,
-    runtimeStartAddress: startPage * pageSize,
+    runtimeStartAddress: startPage * flashPageSize,
     runtimeEndUsed: pagesUsed,
-    runtimeEndAddress: pagesUsed * pageSize,
+    runtimeEndAddress: pagesUsed * flashPageSize,
     uicrStartAddress: MicropythonUicrAddress.MagicValue,
     uicrEndAddress: MicropythonUicrAddress.End,
     versionAddress,

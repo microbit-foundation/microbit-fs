@@ -62,6 +62,7 @@ if (microbitFs.isAppendedScriptPresent(finalHexStr)) {
 ```js
 var uicrData = getIntelHexUicrData(IntelHexStr);
 console.log('Flash Page Size:' + uicrData.flashPageSize);
+console.log('Flash Size:' + uicrData.flashSize);
 console.log('Runtime Start Page:' + uicrData.runtimeStartPage);
 console.log('Runtime Start Address:' + uicrData.runtimeStartAddress);
 console.log('Runtime End Used:' + uicrData.runtimeEndUsed);

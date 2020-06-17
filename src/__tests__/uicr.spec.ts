@@ -7,12 +7,11 @@ import * as fs from 'fs';
 import { getIntelHexUicrData } from '../uicr';
 
 describe('Read MicroPython UICR data.', () => {
+  const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
+
   it('Read MicroPython v1.0.1 hex file UICR', () => {
-    const uPyHexFile = fs.readFileSync(
-      './src/__tests__/upy-v1.0.1.hex',
-      'utf8'
-    );
     const expectedPageSize = 1024;
+    const expectedFlashSize = 256 * 1024;
     const expectedRuntimeStartPage = 0;
     const MicroPythonLastByteUsed = 0x388b8;
     const expectedRuntimeEndPage = Math.ceil(
@@ -28,6 +27,7 @@ describe('Read MicroPython UICR data.', () => {
     const result = getIntelHexUicrData(uPyHexFile);
 
     expect(result.flashPageSize).toEqual(expectedPageSize);
+    expect(result.flashSize).toEqual(expectedFlashSize);
     expect(result.runtimeStartPage).toEqual(expectedRuntimeStartPage);
     expect(result.runtimeStartAddress).toEqual(
       expectedRuntimeStartPage * expectedPageSize
@@ -48,9 +48,11 @@ describe('Read MicroPython UICR data.', () => {
       ':0410140000C0030015\n' +
       ':040000050003C0C173\n' +
       ':00000001FF\n';
+
     const failCase = () => {
       const result = getIntelHexUicrData(makeCodeUicr);
     };
+
     expect(failCase).toThrow(Error);
   });
 
