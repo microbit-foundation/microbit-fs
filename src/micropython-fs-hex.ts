@@ -235,6 +235,7 @@ export class MicropythonFsHex implements FsInterface {
    * Read the files included in a MicroPython hex string and add them to this
    * instance.
    *
+   * @throws {Error} When there are no files to import in the hex.
    * @throws {Error} When there is a problem reading the files from the hex.
    * @throws {Error} When a filename already exists in this instance (all other
    *     files are still imported).
@@ -253,6 +254,10 @@ export class MicropythonFsHex implements FsInterface {
     }: { overwrite?: boolean; formatFirst?: boolean } = {}
   ): string[] {
     const files = getIntelHexFiles(intelHex);
+    if (!Object.keys(files).length) {
+      throw new Error('Hex does not have any files to import');
+    }
+
     if (formatFirst) {
       delete this._files;
       this._files = {};

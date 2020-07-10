@@ -536,6 +536,14 @@ describe('Test importing files from hex.', () => {
     });
   });
 
+  it('Throws and error if there are no files to import.', () => {
+    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+
+    const failCase = () => micropythonFs.importFilesFromIntelHex(uPyHexFile);
+
+    expect(failCase).toThrow('Hex does not have any files to import');
+  });
+
   it('Disabled overwrite flag throws an error when file exists.', () => {
     const micropythonFs = new MicropythonFsHex(uPyHexFile);
     const originalFileContent = 'Original file content.';
@@ -573,15 +581,6 @@ describe('Test importing files from hex.', () => {
     expect(failCase).toThrow(Error);
   });
 
-  it('When files are imported it still uses the constructor hex file.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
-
-    micropythonFs.importFilesFromIntelHex(hexStrWithFiles);
-    const returnedIntelHex = micropythonFs.getIntelHex();
-
-    expect(generateHexWithFilesSpy.mock.calls.length).toEqual(1);
-  });
-
   it('Constructor hex file with files to import throws an error.', () => {
     const failCase = () => new MicropythonFsHex(hexStrWithFiles);
 
@@ -604,6 +603,23 @@ describe('Test importing files from hex.', () => {
       expect(micropythonFs.read(filename)).toEqual(extraFiles[filename]);
     });
     expect(micropythonFs.ls()).not.toContain('old_file.py');
+  });
+
+  it('Enabling formatFirst flag only formats if there are files to import.', () => {
+    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    micropythonFs.write('old_file.py', 'Some content.');
+
+    try {
+      const fileList = micropythonFs.importFilesFromIntelHex(uPyHexFile, {
+        overwrite: false,
+        formatFirst: true,
+      });
+    } catch (e) {
+      // Not having files to import should raise an error
+    }
+
+    expect(micropythonFs.ls()).toContain('old_file.py');
+    expect(micropythonFs.read('old_file.py')).toContain('Some content.');
   });
 
   it('Disabling formatFirst flag, and by default, keeps old files.', () => {
