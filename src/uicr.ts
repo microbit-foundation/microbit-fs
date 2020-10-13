@@ -11,13 +11,25 @@ import MemoryMap from 'nrf-intel-hex';
 
 import { bytesToStr } from './common';
 
+const DEVICE_INFO = [
+  {
+    deviceVersion: 1,
+    magicHeader: 0x17eeb07c,
+    flashSize: 0x40000,
+  },
+  {
+    deviceVersion: 2,
+    magicHeader: 0x47eeb07c,
+    flashSize: 0x80000,
+  },
+];
+
 const UICR_START: number = 0x10001000;
 const UICR_CUSTOMER_OFFSET: number = 0x80;
 const UICR_CUSTOMER_UPY_OFFSET: number = 0x40;
 const UICR_UPY_START: number =
   UICR_START + UICR_CUSTOMER_OFFSET + UICR_CUSTOMER_UPY_OFFSET;
 
-const UPY_MAGIC_HEADER: number[] = [0x17eeb07c];
 const UPY_DELIMITER: number = 0xffffffff;
 const UPY_REGIONS_TERMINATOR: number = 0x00000000;
 
@@ -55,6 +67,7 @@ interface MicropythonUicrData {
   uicrEndAddress: number;
   versionAddress: number;
   version: string;
+  deviceVersion: number;
 }
 
 /**
@@ -121,7 +134,12 @@ function getStringFromIntelHexMap(
  */
 function confirmMagicValue(intelHexMap: MemoryMap): boolean {
   const readMagicHeader = getMagicValue(intelHexMap);
-  return UPY_MAGIC_HEADER.includes(readMagicHeader);
+  for (const device of DEVICE_INFO) {
+    if (device.magicHeader === readMagicHeader) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -139,14 +157,35 @@ function getMagicValue(intelHexMap: MemoryMap): number {
 }
 
 /**
+ * Reads the UICR data from an Intel Hex map and detects the device version.
+ *
+ * @param intelHexMap - Memory map of the Intel Hex data.
+ * @returns The micro:bit board version.
+ */
+function getDeviceVersion(intelHexMap: MemoryMap): number {
+  const readMagicHeader = getMagicValue(intelHexMap);
+  for (const device of DEVICE_INFO) {
+    if (device.magicHeader === readMagicHeader) {
+      return device.deviceVersion;
+    }
+  }
+  throw new Error('Cannot find device version, unknown UICR Magic value');
+}
+
+/**
  * Reads the UICR data from an Intel Hex map and retrieves the flash size.
  *
  * @param intelHexMap - Memory map of the Intel Hex data.
  * @returns The micro:bit flash size.
  */
 function getFlashSize(intelHexMap: MemoryMap): number {
-  // This is the micro:bit flash size
-  return 0x40000;
+  const readMagicHeader = getMagicValue(intelHexMap);
+  for (const device of DEVICE_INFO) {
+    if (device.magicHeader === readMagicHeader) {
+      return device.flashSize;
+    }
+  }
+  throw new Error('Cannot find flash size, unknown UICR Magic value');
 }
 
 /**
@@ -225,6 +264,7 @@ function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
   const pagesUsed: number = getPagesUsed(uicrMap);
   const versionAddress: number = getVersionLocation(uicrMap);
   const version: string = getStringFromIntelHexMap(intelHexMap, versionAddress);
+  const deviceVersion: number = getDeviceVersion(uicrMap);
 
   return {
     flashPageSize,
@@ -237,6 +277,7 @@ function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
     uicrEndAddress: MicropythonUicrAddress.End,
     versionAddress,
     version,
+    deviceVersion,
   };
 }
 

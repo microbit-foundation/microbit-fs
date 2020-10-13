@@ -144,15 +144,21 @@ function getStartAddress(intelHexMap: MemoryMap): number {
   let fsMaxSize = CHUNK_LEN * MAX_NUMBER_OF_CHUNKS;
   // We need to add the persistent data which is one page aligned after fs data
   fsMaxSize += uicrData.flashPageSize - (fsMaxSize % uicrData.flashPageSize);
-  fsMaxSize += uicrData.flashPageSize;
+  if (uicrData.deviceVersion === 1) {
+    // TODO: v2 has persistent page inside the fs flash area
+    fsMaxSize += uicrData.flashPageSize;
+  }
+
+  let runtimeEndAddress = uicrData.runtimeEndAddress;
+  if (uicrData.deviceVersion === 2) {
+    // TODO: MicroPython for v2 is currently reserving a page for future expansion
+    runtimeEndAddress += uicrData.flashPageSize;
+  }
 
   // Fs is placed at the end of flash, the space available from the MicroPython
   // end to the end of flash might be larger than the fs max possible size
   const fsMaxSizeStartAddress = getEndAddress(intelHexMap) - fsMaxSize;
-  const startAddress = Math.max(
-    uicrData.runtimeEndAddress,
-    fsMaxSizeStartAddress
-  );
+  const startAddress = Math.max(runtimeEndAddress, fsMaxSizeStartAddress);
   // Ensure the start address is aligned with the page size
   if (startAddress % uicrData.flashPageSize) {
     throw new Error(
@@ -174,11 +180,21 @@ function getStartAddress(intelHexMap: MemoryMap): number {
  */
 function getEndAddress(intelHexMap: MemoryMap): number {
   const uicrData = getHexMapUicrData(intelHexMap);
-  const endAddress = isAppendedScriptPresent(intelHexMap)
+  let endAddress = isAppendedScriptPresent(intelHexMap)
     ? AppendedBlock.StartAdd
     : uicrData.flashSize;
-  // Magnetometer calibration data is one flash page
-  return endAddress - uicrData.flashPageSize;
+  if (uicrData.deviceVersion === 1) {
+    // In v1 the magnetometer calibration data takes one flash page
+    endAddress -= uicrData.flashPageSize;
+  } else if (uicrData.deviceVersion === 2) {
+    // TODO: For v2 72 KBs are used for bootloader and other pages (0x6E000)
+    // endAddress -= 72 * 1024;
+    // TODO: for the current release we need to overlap this page
+    endAddress -= 68 * 1024;
+  } else {
+    throw new Error('Unknown device flash map');
+  }
+  return endAddress;
 }
 
 /**
