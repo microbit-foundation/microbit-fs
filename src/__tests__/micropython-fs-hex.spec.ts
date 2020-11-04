@@ -14,26 +14,93 @@ const addIntelHexFilesSpy = jest.spyOn(fsBuilder, 'addIntelHexFiles');
 const generateHexWithFilesSpy = jest.spyOn(fsBuilder, 'generateHexWithFiles');
 
 // MicroPython hex file for testing
-const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
+const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
+const uPy1FsSize = 27 * 1024;
+const uPy2HexFile = fs.readFileSync('./src/__tests__/upy-v2-beta.hex', 'utf8');
+const uPy2FsSize = 20 * 1024;
 
 describe('Test the class constructor', () => {
   it('Falsy input for MicroPython hex throws an error', () => {
-    const failCase = () => {
-      const microbitFs = new MicropythonFsHex('');
-    };
+    expect(() => new MicropythonFsHex('')).toThrow('Invalid MicroPython hex');
 
-    expect(failCase).toThrow('Invalid MicroPython hex invalid.');
+    expect(() => {
+      const microbitFs = new MicropythonFsHex([
+        {
+          hex: '',
+          boardId: 0,
+        },
+      ]);
+    }).toThrow('Invalid MicroPython hex');
+
+    expect(() => {
+      const microbitFs = new MicropythonFsHex([
+        {
+          hex: uPy1HexFile,
+          boardId: 0x9903,
+        },
+        {
+          hex: '',
+          boardId: 0x9904,
+        },
+      ]);
+    }).toThrow('Invalid MicroPython hex');
+  });
+
+  it('Invalid hex for MicroPython throws an error', () => {
+    expect(() => new MicropythonFsHex('nothex')).toThrow(
+      'Malformed .hex file, could not parse any registers'
+    );
+
+    expect(() => {
+      const microbitFs = new MicropythonFsHex([
+        {
+          hex: 'notahex',
+          boardId: 0,
+        },
+      ]);
+    }).toThrow('Malformed .hex file, could not parse any registers');
+
+    expect(() => {
+      const microbitFs = new MicropythonFsHex([
+        {
+          hex: uPy1HexFile,
+          boardId: 0x9903,
+        },
+        {
+          hex: 'notahex',
+          boardId: 0x9904,
+        },
+      ]);
+    }).toThrow('Malformed .hex file, could not parse any registers');
   });
 
   it('The maximum filesystem size cannot be larger than space available', () => {
-    const failCase = () => {
-      const microbitFs = new MicropythonFsHex(uPyHexFile, {
+    expect(() => {
+      const microbitFs = new MicropythonFsHex(uPy1HexFile, {
         maxFsSize: 1024 * 1024,
       });
-    };
+    }).toThrow('larger than size available');
 
-    expect(failCase).toThrow('larger than size available');
+    expect(() => {
+      const microbitFs = new MicropythonFsHex(
+        [
+          {
+            hex: uPy1HexFile,
+            boardId: 0x9903,
+          },
+          {
+            hex: uPy2HexFile,
+            boardId: 0x9904,
+          },
+        ],
+        {
+          maxFsSize: 1024 * 1024,
+        }
+      );
+    }).toThrow('larger than size available');
   });
+
+  // Working constructor tested by using any methods in the rest of the tests
 
   // Hex file with files error tested in:
   // Test importing files from hex >
@@ -42,189 +109,297 @@ describe('Test the class constructor', () => {
 
 describe('Test general read write operations', () => {
   it('Write and read files', () => {
-    const content1 = "from microbit import display\r\ndisplay.show('x')";
-    const content2 = "from microbit import display\r\ndisplay.show('y')";
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const testInstance = (micropythonFs: MicropythonFsHex) => {
+      const content1 = "from microbit import display\r\ndisplay.show('x')";
+      const content2 = "from microbit import display\r\ndisplay.show('y')";
 
-    micropythonFs.write('test.py', content1);
-    micropythonFs.write('test2.py', content2);
-    const file1 = micropythonFs.read('test.py');
-    const file2 = micropythonFs.read('test2.py');
-    const files = micropythonFs.ls();
+      micropythonFs.write('test.py', content1);
+      micropythonFs.write('test2.py', content2);
+      const file1 = micropythonFs.read('test.py');
+      const file2 = micropythonFs.read('test2.py');
+      const files = micropythonFs.ls();
 
-    expect(files).toContain('test.py');
-    expect(files).toContain('test2.py');
-    expect(file1).toEqual(content1);
-    expect(file2).toEqual(content2);
+      expect(files).toContain('test.py');
+      expect(files).toContain('test2.py');
+      expect(file1).toEqual(content1);
+      expect(file2).toEqual(content2);
+    };
+
+    testInstance(new MicropythonFsHex(uPy1HexFile));
+    testInstance(
+      new MicropythonFsHex([
+        { hex: uPy1HexFile, boardId: 0x9900 },
+        { hex: uPy2HexFile, boardId: 0x9903 },
+      ])
+    );
   });
 
   it('Write and read files bytes', () => {
-    const content1 = new Uint8Array([1, 2, 3]);
-    const content2 = new Uint8Array([4, 5, 6]);
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const testInstance = (micropythonFs: MicropythonFsHex) => {
+      const content1 = new Uint8Array([1, 2, 3]);
+      const content2 = new Uint8Array([4, 5, 6]);
 
-    micropythonFs.write('test.py', content1);
-    micropythonFs.write('test2.py', content2);
-    const file1 = micropythonFs.readBytes('test.py');
-    const file2 = micropythonFs.readBytes('test2.py');
-    const files = micropythonFs.ls();
+      micropythonFs.write('test.py', content1);
+      micropythonFs.write('test2.py', content2);
+      const file1 = micropythonFs.readBytes('test.py');
+      const file2 = micropythonFs.readBytes('test2.py');
+      const files = micropythonFs.ls();
 
-    expect(files).toContain('test.py');
-    expect(files).toContain('test2.py');
-    expect(file1).toEqual(content1);
-    expect(file2).toEqual(content2);
+      expect(files).toContain('test.py');
+      expect(files).toContain('test2.py');
+      expect(file1).toEqual(content1);
+      expect(file2).toEqual(content2);
+    };
+
+    testInstance(new MicropythonFsHex(uPy1HexFile));
+    testInstance(
+      new MicropythonFsHex([
+        { hex: uPy1HexFile, boardId: 0x9900 },
+        { hex: uPy2HexFile, boardId: 0x9903 },
+      ])
+    );
   });
 });
 
 describe('Test create method.', () => {
   it('Creates new files.', () => {
-    const microbitFs = new MicropythonFsHex(uPyHexFile);
-    expect(microbitFs.exists('test.py')).toBe(false);
+    const testInstance = (microbitFs: MicropythonFsHex) => {
+      expect(microbitFs.exists('test.py')).toBe(false);
 
-    microbitFs.create('test.py', 'content');
+      microbitFs.create('test.py', 'content');
 
-    expect(microbitFs.exists('test.py')).toBe(true);
+      expect(microbitFs.exists('test.py')).toBe(true);
+    };
+
+    testInstance(new MicropythonFsHex(uPy1HexFile));
+    testInstance(
+      new MicropythonFsHex([
+        { hex: uPy1HexFile, boardId: 0x9900 },
+        { hex: uPy2HexFile, boardId: 0x9903 },
+      ])
+    );
   });
 
   it('Create does not overwrite files.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
-    micropythonFs.create('test.py', 'content');
+    const testInstance = (micropythonFs: MicropythonFsHex) => {
+      micropythonFs.create('test.py', 'content');
 
-    const failCase = () => micropythonFs.create('test.py', 'content');
+      const failCase = () => micropythonFs.create('test.py', 'content');
 
-    expect(failCase).toThrow(Error);
+      expect(failCase).toThrow(Error);
+    };
+
+    testInstance(new MicropythonFsHex(uPy1HexFile));
+    testInstance(
+      new MicropythonFsHex([
+        { hex: uPy1HexFile, boardId: 0x9900 },
+        { hex: uPy2HexFile, boardId: 0x9903 },
+      ])
+    );
   });
 
   it('Throw error with invalid file name.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const testInstance = (micropythonFs: MicropythonFsHex) => {
+      const failCase1 = () => micropythonFs.create('', 'content');
+      // @ts-ignore
+      const failCase2 = () => micropythonFs.create(null, 'content');
+      // @ts-ignore
+      const failCase3 = () => micropythonFs.create(undefined, 'content');
 
-    const failCase1 = () => micropythonFs.create('', 'content');
-    // @ts-ignore
-    const failCase2 = () => micropythonFs.create(null, 'content');
-    // @ts-ignore
-    const failCase3 = () => micropythonFs.create(undefined, 'content');
+      expect(failCase1).toThrow(Error);
+      expect(failCase2).toThrow(Error);
+      expect(failCase3).toThrow(Error);
+    };
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
-    expect(failCase3).toThrow(Error);
+    testInstance(new MicropythonFsHex(uPy1HexFile));
+    testInstance(
+      new MicropythonFsHex([
+        { hex: uPy1HexFile, boardId: 0x9900 },
+        { hex: uPy2HexFile, boardId: 0x9903 },
+      ])
+    );
   });
 
   it('Throw error with invalid file content.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const testInstance = (micropythonFs: MicropythonFsHex) => {
+      const failCase1 = () => micropythonFs.create('file.txt', '');
+      // @ts-ignore
+      const failCase2 = () => micropythonFs.create('file.txt', null);
+      // @ts-ignore
+      const failCase3 = () => micropythonFs.create('file.txt', undefined);
 
-    const failCase1 = () => micropythonFs.create('file.txt', '');
-    // @ts-ignore
-    const failCase2 = () => micropythonFs.create('file.txt', null);
-    // @ts-ignore
-    const failCase3 = () => micropythonFs.create('file.txt', undefined);
+      expect(failCase1).toThrow(Error);
+      expect(failCase2).toThrow(Error);
+      expect(failCase3).toThrow(Error);
+    };
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
-    expect(failCase3).toThrow(Error);
+    testInstance(new MicropythonFsHex(uPy1HexFile));
+    testInstance(
+      new MicropythonFsHex([
+        { hex: uPy1HexFile, boardId: 0x9900 },
+        { hex: uPy2HexFile, boardId: 0x9903 },
+      ])
+    );
   });
 });
 
 describe('Test size operations.', () => {
-  it('Creates new files.', () => {
-    const microbitFs = new MicropythonFsHex(uPyHexFile);
+  it('Creates files to fill the filesystem and calculates sizes.', () => {
+    const testInstance = (microbitFs: MicropythonFsHex, fsSize: number) => {
+      expect(microbitFs.getStorageUsed()).toEqual(0);
+      expect(microbitFs.getStorageRemaining()).toEqual(fsSize);
 
-    expect(microbitFs.getStorageUsed()).toEqual(0);
-    expect(microbitFs.getStorageRemaining()).toEqual(27648);
+      microbitFs.create('chunk1.py', 'first 128 byte chunk');
 
-    microbitFs.create('chunk1.py', 'first 128 byte chunk');
+      expect(microbitFs.getStorageUsed()).toEqual(128);
+      expect(microbitFs.getStorageRemaining()).toEqual(fsSize - 128);
 
-    expect(microbitFs.getStorageUsed()).toEqual(128);
-    expect(microbitFs.getStorageRemaining()).toEqual(27648 - 128);
+      microbitFs.create('chunk2.py', 'second 128 byte chunk');
 
-    microbitFs.create('chunk2.py', 'second 128 byte chunk');
+      expect(microbitFs.getStorageUsed()).toEqual(256);
+      expect(microbitFs.getStorageRemaining()).toEqual(fsSize - 256);
 
-    expect(microbitFs.getStorageUsed()).toEqual(256);
-    expect(microbitFs.getStorageRemaining()).toEqual(27648 - 256);
+      const chunksToFill = fsSize / 128 - 3;
+      const dataBytesPerChunk = 126;
+      const roughHeaderCount = 20;
+      microbitFs.create(
+        'chunk3.py',
+        new Uint8Array(
+          chunksToFill * dataBytesPerChunk - roughHeaderCount
+        ).fill(0x60)
+      );
 
-    microbitFs.create('chunk3.py', new Uint8Array(26800).fill(0x60));
+      expect(microbitFs.getStorageUsed()).toEqual(fsSize - 128);
+      expect(microbitFs.getStorageRemaining()).toEqual(128);
 
-    expect(microbitFs.getStorageUsed()).toEqual(27648 - 128);
-    expect(microbitFs.getStorageRemaining()).toEqual(128);
+      microbitFs.create('chunk4.py', 'fourth chunk');
 
-    microbitFs.create('chunk4.py', 'fourth chunk');
+      expect(microbitFs.getStorageUsed()).toEqual(fsSize);
+      expect(microbitFs.getStorageRemaining()).toEqual(0);
+    };
 
-    expect(microbitFs.getStorageUsed()).toEqual(27648);
-    expect(microbitFs.getStorageRemaining()).toEqual(0);
+    testInstance(new MicropythonFsHex(uPy1HexFile), uPy1FsSize);
+    testInstance(
+      new MicropythonFsHex([
+        { hex: uPy1HexFile, boardId: 0x9900 },
+        { hex: uPy2HexFile, boardId: 0x9903 },
+      ]),
+      uPy2FsSize
+    );
   });
 
   it('Sets a maximum filesystem size via constructor', () => {
-    const microbitFs = new MicropythonFsHex(uPyHexFile, { maxFsSize: 1024 });
+    const testInstance = (microbitFs: MicropythonFsHex, boardId?: number) => {
+      expect(microbitFs.getStorageUsed()).toEqual(0);
+      expect(microbitFs.getStorageRemaining()).toEqual(1024);
 
-    expect(microbitFs.getStorageUsed()).toEqual(0);
-    expect(microbitFs.getStorageRemaining()).toEqual(1024);
+      microbitFs.create('chunk1.py', 'first 128 byte chunk');
+      microbitFs.create('chunk2.py', 'second 128 byte chunk');
+      microbitFs.create('chunk3.py', 'thrid 128 byte chunk');
+      microbitFs.create('chunk4.py', 'fouth 128 byte chunk');
+      microbitFs.create('chunk5.py', 'fifth 128 byte chunk');
+      microbitFs.create('chunk6.py', 'sixth 128 byte chunk');
+      microbitFs.create('chunk7.py', 'seventh 128 byte chunk');
+      microbitFs.create('chunk8.py', 'eighth 128 byte chunk');
+      microbitFs.getIntelHex(boardId);
 
-    microbitFs.create('chunk1.py', 'first 128 byte chunk');
-    microbitFs.create('chunk2.py', 'second 128 byte chunk');
-    microbitFs.create('chunk3.py', 'thrid 128 byte chunk');
-    microbitFs.create('chunk4.py', 'fouth 128 byte chunk');
-    microbitFs.create('chunk5.py', 'fifth 128 byte chunk');
-    microbitFs.create('chunk6.py', 'sixth 128 byte chunk');
-    microbitFs.create('chunk7.py', 'seventh 128 byte chunk');
-    microbitFs.create('chunk8.py', 'eighth 128 byte chunk');
-    microbitFs.getIntelHex();
+      expect(microbitFs.getStorageUsed()).toEqual(1024);
+      expect(microbitFs.getStorageRemaining()).toEqual(0);
 
-    expect(microbitFs.getStorageUsed()).toEqual(1024);
-    expect(microbitFs.getStorageRemaining()).toEqual(0);
+      microbitFs.create('chunk9.py', 'This file will not fit');
+      const failCase1 = () => microbitFs.getIntelHex(boardId);
+      const failCase2 = () => microbitFs.getIntelHexBytes(boardId);
 
-    microbitFs.create('chunk9.py', 'This file will not fit');
-    const failCase = () => {
-      microbitFs.getIntelHex();
+      expect(failCase1).toThrow('no storage space left');
+      expect(failCase2).toThrow('no storage space left');
     };
 
-    expect(failCase).toThrow(Error);
+    testInstance(new MicropythonFsHex(uPy1HexFile, { maxFsSize: 1024 }));
+    testInstance(
+      new MicropythonFsHex(
+        [
+          { hex: uPy1HexFile, boardId: 0x9900 },
+          { hex: uPy2HexFile, boardId: 0x9903 },
+        ],
+        { maxFsSize: 1024 }
+      ),
+      0x9903
+    );
   });
 
   it('Sets a maximum filesystem size via method', () => {
-    const microbitFs = new MicropythonFsHex(uPyHexFile);
-    microbitFs.setStorageSize(1024);
+    const testInstance = (microbitFs: MicropythonFsHex, boardId?: number) => {
+      microbitFs.setStorageSize(1024);
 
-    expect(microbitFs.getStorageUsed()).toEqual(0);
-    expect(microbitFs.getStorageRemaining()).toEqual(1024);
+      expect(microbitFs.getStorageUsed()).toEqual(0);
+      expect(microbitFs.getStorageRemaining()).toEqual(1024);
 
-    microbitFs.create('chunk1.py', 'first 128 byte chunk');
-    microbitFs.create('chunk2.py', 'second 128 byte chunk');
-    microbitFs.create('chunk3.py', 'thrid 128 byte chunk');
-    microbitFs.create('chunk4.py', 'fouth 128 byte chunk');
-    microbitFs.create('chunk5.py', 'fifth 128 byte chunk');
-    microbitFs.create('chunk6.py', 'sixth 128 byte chunk');
-    microbitFs.create('chunk7.py', 'seventh 128 byte chunk');
-    microbitFs.create('chunk8.py', 'eighth 128 byte chunk');
-    microbitFs.getIntelHex();
-    microbitFs.getIntelHexBytes();
+      microbitFs.create('chunk1.py', 'first 128 byte chunk');
+      microbitFs.create('chunk2.py', 'second 128 byte chunk');
+      microbitFs.create('chunk3.py', 'thrid 128 byte chunk');
+      microbitFs.create('chunk4.py', 'fouth 128 byte chunk');
+      microbitFs.create('chunk5.py', 'fifth 128 byte chunk');
+      microbitFs.create('chunk6.py', 'sixth 128 byte chunk');
+      microbitFs.create('chunk7.py', 'seventh 128 byte chunk');
+      microbitFs.create('chunk8.py', 'eighth 128 byte chunk');
+      microbitFs.getIntelHex(boardId);
+      microbitFs.getIntelHexBytes(boardId);
 
-    expect(microbitFs.getStorageUsed()).toEqual(1024);
-    expect(microbitFs.getStorageRemaining()).toEqual(0);
+      expect(microbitFs.getStorageUsed()).toEqual(1024);
+      expect(microbitFs.getStorageRemaining()).toEqual(0);
 
-    microbitFs.create('chunk9.py', 'This file will not fit');
-    const failCase1 = () => microbitFs.getIntelHex();
-    const failCase2 = () => microbitFs.getIntelHexBytes();
+      microbitFs.create('chunk9.py', 'This file will not fit');
+      const failCase1 = () => microbitFs.getIntelHex();
+      const failCase2 = () => microbitFs.getIntelHexBytes();
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
+      expect(failCase1).toThrow('no storage space lef');
+      expect(failCase2).toThrow('no storage space lef');
+    };
+
+    testInstance(new MicropythonFsHex(uPy1HexFile));
+    testInstance(
+      new MicropythonFsHex([
+        { hex: uPy1HexFile, boardId: 0x9900 },
+        { hex: uPy2HexFile, boardId: 0x9903 },
+      ]),
+      0x9903
+    );
   });
 
   it('The maximum filesystem size cannot be larger than space available', () => {
-    const failCase1 = () => {
-      const microbitFs2 = new MicropythonFsHex(uPyHexFile, {
-        maxFsSize: 1024 * 1024,
-      });
-    };
-    const microbitFs = new MicropythonFsHex(uPyHexFile);
-    const failCase2 = () => microbitFs.setStorageSize(1024 * 1024);
+    expect(
+      () => new MicropythonFsHex(uPy1HexFile, { maxFsSize: 1024 * 1024 })
+    ).toThrow('Storage size limit provided is larger than size available');
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
+    expect(
+      () =>
+        new MicropythonFsHex(
+          [
+            { hex: uPy1HexFile, boardId: 0x9900 },
+            { hex: uPy2HexFile, boardId: 0x9903 },
+          ],
+          { maxFsSize: 1024 * 1024 }
+        )
+    ).toThrow('Storage size limit provided is larger than size available');
+
+    expect(() => {
+      const microbitFs = new MicropythonFsHex(uPy1HexFile);
+      microbitFs.setStorageSize(1024 * 1024);
+    }).toThrow('Storage size limit provided is larger than size available');
+
+    expect(() => {
+      const microbitFs = new MicropythonFsHex([
+        { hex: uPy1HexFile, boardId: 0x9900 },
+        { hex: uPy2HexFile, boardId: 0x9903 },
+      ]);
+      microbitFs.setStorageSize(1024 * 1024);
+    }).toThrow('Storage size limit provided is larger than size available');
   });
 });
 
 describe('Test write method.', () => {
   it('Throw error with invalid file name.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.write('', 'content');
     // @ts-ignore
@@ -232,13 +407,13 @@ describe('Test write method.', () => {
     // @ts-ignore
     const failCase3 = () => micropythonFs.write(undefined, 'content');
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
-    expect(failCase3).toThrow(Error);
+    expect(failCase1).toThrow('not provided a valid filename');
+    expect(failCase2).toThrow('not provided a valid filename');
+    expect(failCase3).toThrow('not provided a valid filename');
   });
 
   it('Throw error with invalid file content.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.write('file.txt', '');
     // @ts-ignore
@@ -246,15 +421,15 @@ describe('Test write method.', () => {
     // @ts-ignore
     const failCase3 = () => micropythonFs.write('file.txt', undefined);
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
-    expect(failCase3).toThrow(Error);
+    expect(failCase1).toThrow('does not have valid content');
+    expect(failCase2).toThrow('does not have valid content');
+    expect(failCase3).toThrow('does not have valid content');
   });
 });
 
 describe('Test append method.', () => {
   it('Throw error with invalid file name.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.append('', 'more content');
     // @ts-ignore
@@ -262,32 +437,32 @@ describe('Test append method.', () => {
     // @ts-ignore
     const failCase3 = () => micropythonFs.append(undefined, 'more content');
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
-    expect(failCase3).toThrow(Error);
+    expect(failCase1).toThrow('Invalid filename');
+    expect(failCase2).toThrow('Invalid filename');
+    expect(failCase3).toThrow('Invalid filename');
   });
 
   it('Throw error if the file does not exists.', () => {
-    const microbitFs = new MicropythonFsHex(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase = () => microbitFs.append('does_not_exists.txt', 'content');
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('does not exist');
   });
 
   it('Append is not yet implemented.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
     micropythonFs.write('a.txt', 'content');
 
     const failCase = () => micropythonFs.append('a.txt', 'more content');
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('not yet implemented');
   });
 });
 
 describe('Test read method.', () => {
   it('Throw error with invalid file name.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.read('');
     // @ts-ignore
@@ -295,23 +470,23 @@ describe('Test read method.', () => {
     // @ts-ignore
     const failCase3 = () => micropythonFs.read(undefined);
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
-    expect(failCase3).toThrow(Error);
+    expect(failCase1).toThrow('Invalid filename');
+    expect(failCase2).toThrow('Invalid filename');
+    expect(failCase3).toThrow('Invalid filename');
   });
 
   it('Throw error if the file does not exists.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase = () => micropythonFs.read('does_not_exists.txt');
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('does not exist');
   });
 });
 
 describe('Test readBytes method.', () => {
   it('Throw error with invalid file name.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.readBytes('');
     // @ts-ignore
@@ -319,24 +494,24 @@ describe('Test readBytes method.', () => {
     // @ts-ignore
     const failCase3 = () => micropythonFs.readBytes(undefined);
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
-    expect(failCase3).toThrow(Error);
+    expect(failCase1).toThrow('Invalid filename');
+    expect(failCase2).toThrow('Invalid filename');
+    expect(failCase3).toThrow('Invalid filename');
   });
 
   it('Throw error if the file does not exists.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase = () => micropythonFs.readBytes('does_not_exists.txt');
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('does not exist');
   });
 });
 
 describe('Test remove method.', () => {
   it('Delete files.', () => {
     const content = "from microbit import display\r\ndisplay.show('x')";
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
     micropythonFs.write('test.py', content);
     micropythonFs.write('test2.py', content);
 
@@ -349,7 +524,7 @@ describe('Test remove method.', () => {
   });
 
   it('Throw error with invalid file name.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.remove('');
     // @ts-ignore
@@ -357,23 +532,23 @@ describe('Test remove method.', () => {
     // @ts-ignore
     const failCase3 = () => micropythonFs.remove(undefined);
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
-    expect(failCase3).toThrow(Error);
+    expect(failCase1).toThrow('Invalid filename');
+    expect(failCase2).toThrow('Invalid filename');
+    expect(failCase3).toThrow('Invalid filename');
   });
 
   it('Throw error if the file does not exists.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase = () => micropythonFs.remove('does_not_exists.txt');
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('does not exist');
   });
 });
 
 describe('Tests exists method.', () => {
   it('Files exist.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
     micropythonFs.write('test1.py', 'content');
 
     const test1Py = micropythonFs.exists('test1.py');
@@ -387,7 +562,7 @@ describe('Tests exists method.', () => {
   });
 
   it('Invalid filenames do not exist.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const test1 = micropythonFs.exists('');
     // @ts-ignore
@@ -403,20 +578,29 @@ describe('Tests exists method.', () => {
 
 describe('Test size method.', () => {
   it('File size is retrieved correctly.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
-    micropythonFs.write('five_bytes.txt', new Uint8Array([30, 31, 32, 33, 34]));
-    micropythonFs.write('more_bytes.txt', new Uint8Array(128).fill(0x55));
+    const testInstance = (micropythonFs: MicropythonFsHex) => {
+      micropythonFs.write('5_bytes.txt', new Uint8Array([30, 31, 32, 33, 34]));
+      micropythonFs.write('more_bytes.txt', new Uint8Array(128).fill(0x55));
 
-    const fileSize1 = micropythonFs.size('five_bytes.txt');
-    const fileSize2 = micropythonFs.size('more_bytes.txt');
+      const fileSize1 = micropythonFs.size('5_bytes.txt');
+      const fileSize2 = micropythonFs.size('more_bytes.txt');
 
-    // Real size counts chunks, so always a multiple of 128
-    expect(fileSize1).toEqual(128);
-    expect(fileSize2).toEqual(256);
+      // Real size counts chunks, so always a multiple of 128
+      expect(fileSize1).toEqual(128);
+      expect(fileSize2).toEqual(256);
+    };
+
+    testInstance(new MicropythonFsHex(uPy1HexFile));
+    testInstance(
+      new MicropythonFsHex([
+        { hex: uPy1HexFile, boardId: 0x9900 },
+        { hex: uPy2HexFile, boardId: 0x9903 },
+      ])
+    );
   });
 
   it('Throw error with invalid file name.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.size('');
     // @ts-ignore
@@ -424,17 +608,17 @@ describe('Test size method.', () => {
     // @ts-ignore
     const failCase3 = () => micropythonFs.size(undefined);
 
-    expect(failCase1).toThrow(Error);
-    expect(failCase2).toThrow(Error);
-    expect(failCase3).toThrow(Error);
+    expect(failCase1).toThrow('Invalid filename');
+    expect(failCase2).toThrow('Invalid filename');
+    expect(failCase3).toThrow('Invalid filename');
   });
 
   it('Throw error if the file does not exists.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase = () => micropythonFs.size('does_not_exists.txt');
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('does not exist');
   });
 });
 
@@ -442,14 +626,14 @@ describe('Test other.', () => {
   it('Too large filename throws error.', () => {
     const maxLength = 120;
     const largeName = 'a'.repeat(maxLength + 1);
-    const microbitFs = new MicropythonFsHex(uPyHexFile);
+    const microbitFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase = () => {
       microbitFs.write(largeName, 'content');
       microbitFs.getIntelHex();
     };
 
-    expect(failCase).toThrow(Error);
+    expect(failCase).toThrow('too long');
   });
 });
 
@@ -460,22 +644,44 @@ describe('Test hex generation.', () => {
   });
 
   it('getIntelHex called with constructor hex string.', () => {
-    const microbitFs = new MicropythonFsHex(uPyHexFile);
-    microbitFs.write('a.txt', 'content');
+    const testInstance = (microbitFs: MicropythonFsHex, boardId?: number) => {
+      microbitFs.write('a.txt', 'content');
 
-    const returnedIntelHex = microbitFs.getIntelHex();
+      const returnedIntelHex = microbitFs.getIntelHex(boardId);
 
-    expect(generateHexWithFilesSpy.mock.calls.length).toEqual(1);
+      expect(generateHexWithFilesSpy.mock.calls.length).toEqual(1);
+    };
+
+    testInstance(new MicropythonFsHex(uPy1HexFile));
+    generateHexWithFilesSpy.mockReset();
+    const multipleHexInstance = new MicropythonFsHex([
+      { hex: uPy1HexFile, boardId: 0x9900 },
+      { hex: uPy2HexFile, boardId: 0x9903 },
+    ]);
+    testInstance(multipleHexInstance, 0x9900);
+    generateHexWithFilesSpy.mockReset();
+    testInstance(multipleHexInstance, 0x9903);
   });
 
   it('getIntelHexBytes called with constructor hex string.', () => {
-    const microbitFs = new MicropythonFsHex(uPyHexFile);
-    microbitFs.write('a.txt', 'content');
+    const testInstance = (microbitFs: MicropythonFsHex, boardId?: number) => {
+      microbitFs.write('a.txt', 'content');
 
-    const returnedIntelHex = microbitFs.getIntelHexBytes();
+      const returnedIntelHex = microbitFs.getIntelHexBytes(boardId);
 
-    expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
-    expect(addIntelHexFilesSpy.mock.calls[0][2]).toBeTruthy();
+      expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
+      expect(addIntelHexFilesSpy.mock.calls[0][2]).toBeTruthy();
+    };
+
+    testInstance(new MicropythonFsHex(uPy1HexFile));
+    addIntelHexFilesSpy.mockReset();
+    const multipleHexInstance = new MicropythonFsHex([
+      { hex: uPy1HexFile, boardId: 0x9900 },
+      { hex: uPy2HexFile, boardId: 0x9903 },
+    ]);
+    testInstance(multipleHexInstance, 0x9900);
+    addIntelHexFilesSpy.mockReset();
+    testInstance(multipleHexInstance, 0x9903);
   });
 });
 
@@ -516,7 +722,7 @@ describe('Test importing files from hex.', () => {
   });
 
   const createHexStrWithFiles = (): string => {
-    const fullUpyFsMemMap = MemoryMap.fromHex(uPyHexFile);
+    const fullUpyFsMemMap = MemoryMap.fromHex(uPy1HexFile);
     const filesMap = MemoryMap.fromHex(extraFilesHex);
     filesMap.forEach((value: Uint8Array, index: number) => {
       fullUpyFsMemMap.set(index, value);
@@ -526,7 +732,7 @@ describe('Test importing files from hex.', () => {
   const hexStrWithFiles: string = createHexStrWithFiles();
 
   it('Correctly read files from a hex.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const fileList = micropythonFs.importFilesFromIntelHex(hexStrWithFiles);
 
@@ -537,15 +743,15 @@ describe('Test importing files from hex.', () => {
   });
 
   it('Throws and error if there are no files to import.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
-    const failCase = () => micropythonFs.importFilesFromIntelHex(uPyHexFile);
+    const failCase = () => micropythonFs.importFilesFromIntelHex(uPy1HexFile);
 
     expect(failCase).toThrow('Hex does not have any files to import');
   });
 
   it('Disabled overwrite flag throws an error when file exists.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
     const originalFileContent = 'Original file content.';
     micropythonFs.write('a.py', originalFileContent);
 
@@ -560,7 +766,7 @@ describe('Test importing files from hex.', () => {
   });
 
   it('Enabled overwrite flag replaces the file.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
     const originalFileContent = 'Original file content.';
     micropythonFs.write('a.py', originalFileContent);
 
@@ -571,7 +777,7 @@ describe('Test importing files from hex.', () => {
   });
 
   it('By default it throws an error if a filename already exists.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
     micropythonFs.write('a.py', 'some content');
 
     const failCase = () => {
@@ -582,15 +788,19 @@ describe('Test importing files from hex.', () => {
   });
 
   it('Constructor hex file with files to import throws an error.', () => {
-    const failCase = () => new MicropythonFsHex(hexStrWithFiles);
+    expect(() => new MicropythonFsHex(hexStrWithFiles)).toThrow(
+      'There are files in the MicropythonFsHex constructor hex file input'
+    );
 
-    expect(failCase).toThrow(
+    expect(
+      () => new MicropythonFsHex([{ hex: hexStrWithFiles, boardId: 0x9903 }])
+    ).toThrow(
       'There are files in the MicropythonFsHex constructor hex file input'
     );
   });
 
   it('Enabling formatFirst flag erases the previous files.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
     micropythonFs.write('old_file.py', 'Some content.');
 
     const fileList = micropythonFs.importFilesFromIntelHex(hexStrWithFiles, {
@@ -606,11 +816,11 @@ describe('Test importing files from hex.', () => {
   });
 
   it('Enabling formatFirst flag only formats if there are files to import.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
     micropythonFs.write('old_file.py', 'Some content.');
 
     try {
-      const fileList = micropythonFs.importFilesFromIntelHex(uPyHexFile, {
+      const fileList = micropythonFs.importFilesFromIntelHex(uPy1HexFile, {
         overwrite: false,
         formatFirst: true,
       });
@@ -623,7 +833,7 @@ describe('Test importing files from hex.', () => {
   });
 
   it('Disabling formatFirst flag, and by default, keeps old files.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
     micropythonFs.write('old_file.py', 'Some content.');
 
     const fileList1 = micropythonFs.importFilesFromIntelHex(hexStrWithFiles, {
@@ -645,16 +855,18 @@ describe('Test importing files from hex.', () => {
 
 describe('Test MicroPython hex filesystem size.', () => {
   it('Get how much available fs space there is in a MicroPython hex file.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile);
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const totalSize = micropythonFs.getStorageSize();
 
-    // Calculated by hand from the uPyHexFile v1.0.1 release.
-    expect(totalSize).toEqual(27 * 1024);
+    // Calculated by hand from the uPy1HexFile v1.0.1 release.
+    expect(totalSize).toEqual(uPy1FsSize);
   });
 
   it('Get available fs space when manually set in constructor.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile, { maxFsSize: 1024 });
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile, {
+      maxFsSize: 1024,
+    });
 
     const totalSize = micropythonFs.getStorageSize();
 
@@ -662,7 +874,7 @@ describe('Test MicroPython hex filesystem size.', () => {
   });
 
   it('Get available fs space when both hex and constructor value are provided.', () => {
-    const micropythonFs = new MicropythonFsHex(uPyHexFile, {
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile, {
       maxFsSize: 1024,
     });
 
@@ -677,12 +889,12 @@ import { addIntelHexAppendedScript } from '../appended-script';
 
 describe('NOT A REAL UNIT TEST! Used for generating a test hex file.', () => {
   it('Create output4.hex with 2 modules used in main.py.', () => {
-    const uPyHexFileAppended = addIntelHexAppendedScript(
-      uPyHexFile,
+    const uPy1HexFileAppended = addIntelHexAppendedScript(
+      uPy1HexFile,
       'from microbit import *\n' + 'display.scroll("Appended code")\n'
     );
 
-    const microbitFs = new MicropythonFsHex(uPyHexFileAppended);
+    const microbitFs = new MicropythonFsHex(uPy1HexFileAppended);
     microbitFs.write('first_name.py', 'name = "Hello"');
     microbitFs.write('surname.py', 'name = "World"');
     // This file takes a single chunk

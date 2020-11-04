@@ -1,5 +1,5 @@
 /**
- *  Manage files in a MicroPython hex file.
+ * Filesystem management for MicroPython hex files.
  *
  * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
  * SPDX-License-Identifier: MIT
@@ -15,33 +15,76 @@ import {
 } from './micropython-fs-builder';
 import { SimpleFile } from './simple-file';
 
+interface MpFsBuilderCacheWithId extends MpFsBuilderCache {
+  boardId: number;
+}
+
+export interface IntelHexWithId {
+  hex: string;
+  boardId: number;
+}
+
+/**
+ * Manage filesystem files in one or multiple MicroPython hex files.
+ *
+ * @public
+ */
 export class MicropythonFsHex implements FsInterface {
-  private _uPyFsBuilderCache: MpFsBuilderCache;
+  private _uPyFsBuilderCache: MpFsBuilderCacheWithId[] = [];
   private _files: { [id: string]: SimpleFile } = {};
   private _storageSize: number = 0;
 
   /**
    * File System manager constructor.
-   * At the moment it needs a MicroPython hex string without a files included.
    *
-   * @param intelHex - MicroPython Intel Hex string.
+   * At the moment it needs a MicroPython hex string without files included.
+   * Multiple MicroPython images can be provided to generate a Universal Hex.
+   *
+   * @param intelHex - MicroPython Intel Hex string or an array of Intel Hex
+   *    strings with their respective board IDs.
    */
   constructor(
-    intelHex: string,
+    intelHex: string | IntelHexWithId[],
     { maxFsSize = 0 }: { maxFsSize?: number } = {}
   ) {
-    if (!intelHex) {
-      throw new Error('Invalid MicroPython hex invalid.');
-    }
-    this._uPyFsBuilderCache = createMpFsBuilderCache(intelHex);
-    this.setStorageSize(maxFsSize || this._uPyFsBuilderCache.fsSize);
-    // Check if there are files in the input hex
-    const hexFiles = getIntelHexFiles(this._uPyFsBuilderCache.originalMemMap);
-    if (Object.keys(hexFiles).length) {
-      throw new Error(
-        'There are files in the MicropythonFsHex constructor hex file input.'
-      );
-    }
+    const hexWithIdArray: IntelHexWithId[] = Array.isArray(intelHex)
+      ? intelHex
+      : [
+          {
+            hex: intelHex,
+            boardId: 0x0000,
+          },
+        ];
+
+    // Generate and store the MicroPython Builder caches
+    let minFsSize = Infinity;
+    hexWithIdArray.forEach((hexWithId) => {
+      if (!hexWithId.hex) {
+        throw new Error('Invalid MicroPython hex.');
+      }
+      const builderCache = createMpFsBuilderCache(hexWithId.hex);
+      const thisBuilderCache: MpFsBuilderCacheWithId = {
+        originalIntelHex: builderCache.originalIntelHex,
+        originalMemMap: builderCache.originalMemMap,
+        uPyEndAddress: builderCache.uPyEndAddress,
+        uPyIntelHex: builderCache.uPyIntelHex,
+        fsSize: builderCache.fsSize,
+        boardId: hexWithId.boardId,
+      };
+      this._uPyFsBuilderCache.push(thisBuilderCache);
+      minFsSize = Math.min(minFsSize, thisBuilderCache.fsSize);
+    });
+    this.setStorageSize(maxFsSize || minFsSize);
+
+    // Check if there are files in any of the input hex
+    this._uPyFsBuilderCache.forEach((builderCache) => {
+      const hexFiles = getIntelHexFiles(builderCache.originalMemMap);
+      if (Object.keys(hexFiles).length) {
+        throw new Error(
+          'There are files in the MicropythonFsHex constructor hex file input.'
+        );
+      }
+    });
   }
 
   /**
@@ -190,7 +233,12 @@ export class MicropythonFsHex implements FsInterface {
    * @param {number} size - Size in bytes for the filesystem.
    */
   setStorageSize(size: number): void {
-    if (size > this._uPyFsBuilderCache.fsSize) {
+    let minFsSize = Infinity;
+    this._uPyFsBuilderCache.forEach((builderCache) => {
+      minFsSize = Math.min(minFsSize, builderCache.fsSize);
+    });
+
+    if (size > minFsSize) {
       throw new Error(
         'Storage size limit provided is larger than size available in the MicroPython hex.'
       );
@@ -212,23 +260,17 @@ export class MicropythonFsHex implements FsInterface {
    * @returns The total number of bytes currently used by files in the file system.
    */
   getStorageUsed(): number {
-    let total: number = 0;
-    Object.values(this._files).forEach(
-      (value) => (total += this.size(value.filename))
+    return Object.values(this._files).reduce(
+      (accumulator, current) => accumulator + this.size(current.filename),
+      0
     );
-    return total;
   }
 
   /**
    * @returns The remaining storage of the file system in bytes.
    */
   getStorageRemaining(): number {
-    let total: number = 0;
-    const capacity: number = this.getStorageSize();
-    Object.values(this._files).forEach(
-      (value) => (total += this.size(value.filename))
-    );
-    return capacity - total;
+    return this.getStorageSize() - this.getStorageUsed();
   }
 
   /**
@@ -259,7 +301,6 @@ export class MicropythonFsHex implements FsInterface {
     }
 
     if (formatFirst) {
-      delete this._files;
       this._files = {};
     }
     const existingFiles: string[] = [];
@@ -278,8 +319,8 @@ export class MicropythonFsHex implements FsInterface {
   }
 
   /**
-   * Generate a new copy of the MicroPython Intel Hex with the filesystem
-   * included.
+   * Generate a new copy of the MicroPython Intel Hex with the files in the
+   * filesystem included.
    *
    * @throws {Error} When a file doesn't have any data.
    * @throws {Error} When there are issues calculating file system boundaries.
@@ -287,7 +328,7 @@ export class MicropythonFsHex implements FsInterface {
    *
    * @returns A new string with MicroPython and the filesystem included.
    */
-  getIntelHex(): string {
+  getIntelHex(boardId?: number): string {
     if (this.getStorageRemaining() < 0) {
       throw new Error('There is no storage space left.');
     }
@@ -295,7 +336,24 @@ export class MicropythonFsHex implements FsInterface {
     Object.values(this._files).forEach((file) => {
       files[file.filename] = file.getBytes();
     });
-    return generateHexWithFiles(this._uPyFsBuilderCache, files);
+
+    if (boardId === undefined) {
+      if (this._uPyFsBuilderCache.length === 1) {
+        return generateHexWithFiles(this._uPyFsBuilderCache[0], files);
+      } else {
+        throw new Error(
+          'The Board ID must be specified if there are multiple MicroPythons.'
+        );
+      }
+    }
+
+    for (const builderCache of this._uPyFsBuilderCache) {
+      if (builderCache.boardId === boardId) {
+        return generateHexWithFiles(builderCache, files);
+      }
+    }
+    // If we reach this point we could not find the board ID
+    throw new Error('Board ID requested not found.');
   }
 
   /**
@@ -307,7 +365,7 @@ export class MicropythonFsHex implements FsInterface {
    *
    * @returns A Uint8Array with MicroPython and the filesystem included.
    */
-  getIntelHexBytes(): Uint8Array {
+  getIntelHexBytes(boardId?: number): Uint8Array {
     if (this.getStorageRemaining() < 0) {
       throw new Error('There is no storage space left.');
     }
@@ -315,10 +373,30 @@ export class MicropythonFsHex implements FsInterface {
     Object.values(this._files).forEach((file) => {
       files[file.filename] = file.getBytes();
     });
-    return addIntelHexFiles(
-      this._uPyFsBuilderCache.originalMemMap,
-      files,
-      true
-    ) as Uint8Array;
+
+    if (boardId === undefined) {
+      if (this._uPyFsBuilderCache.length === 1) {
+        return addIntelHexFiles(
+          this._uPyFsBuilderCache[0].originalMemMap,
+          files,
+          true
+        ) as Uint8Array;
+      } else {
+        throw new Error(
+          'The Board ID must be specified if there are multiple MicroPythons.'
+        );
+      }
+    }
+    for (const builderCache of this._uPyFsBuilderCache) {
+      if (builderCache.boardId === boardId) {
+        return addIntelHexFiles(
+          builderCache.originalMemMap,
+          files,
+          true
+        ) as Uint8Array;
+      }
+    }
+    // If we reach this point we could not find the board ID
+    throw new Error('Board ID requested not found.');
   }
 }
