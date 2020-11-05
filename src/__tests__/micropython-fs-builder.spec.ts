@@ -21,8 +21,14 @@ import {
   getMemMapFsSize,
 } from '../micropython-fs-builder';
 
-const uPyHexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
-const uPyHexMap = MemoryMap.fromHex(uPyHexFile);
+const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
+const uPy1HexMap = MemoryMap.fromHex(uPy1HexFile);
+const uPy1FsSize = 27 * 1024;
+const uPy1FsStart = 0x38c00;
+const uPy2HexFile = fs.readFileSync('./src/__tests__/upy-v2-beta.hex', 'utf8');
+const uPy2HexMap = MemoryMap.fromHex(uPy2HexFile);
+const uPy2FsSize = 20 * 1024;
+const uPy2FsStart = 0x6d000;
 const makecodeHexFile = fs.readFileSync('./src/__tests__/makecode.hex', 'utf8');
 const randContent = strToBytes('Some random content.');
 
@@ -170,27 +176,43 @@ describe('Writing files to the filesystem.', () => {
     },
   ];
 
-  it('Add files to hex, return a string.', () => {
-    const fwWithFsOther = addIntelHexFiles(uPyHexFile, {
+  it('Add files to hex, return a string (uPy1)', () => {
+    const fwWithFsOther = addIntelHexFiles(uPy1HexFile, {
       [files[0].fileName]: strToBytes(files[0].fileStr),
       [files[1].fileName]: strToBytes(files[1].fileStr),
     });
-    // fs.writeFileSync('./ignore/output2.hex', fwWithFsOther);
 
-    // Address calculated starting at the top of the MicroPython v1.0.1 fs
     const opMap = MemoryMap.fromHex(fwWithFsOther);
-    const startFs = 0x38c00;
-    const file0data = opMap.slice(startFs, files[0].fsSize).get(startFs);
+    const file0data = opMap
+      .slice(uPy1FsStart, files[0].fsSize)
+      .get(uPy1FsStart);
     const file1data = opMap
-      .slice(startFs + files[0].fsSize, files[1].fsSize)
-      .get(startFs + files[0].fsSize);
+      .slice(uPy1FsStart + files[0].fsSize, files[1].fsSize)
+      .get(uPy1FsStart + files[0].fsSize);
     expect(file0data).toEqual(files[0].bytes());
     expect(file1data).toEqual(files[1].bytes());
   });
 
-  it('Add files to hex, return a byte array', () => {
+  it('Add files to hex, return a string (uPy2)', () => {
+    const fwWithFsOther = addIntelHexFiles(uPy2HexFile, {
+      [files[0].fileName]: strToBytes(files[0].fileStr),
+      [files[1].fileName]: strToBytes(files[1].fileStr),
+    });
+
+    const opMap = MemoryMap.fromHex(fwWithFsOther);
+    const file0data = opMap
+      .slice(uPy2FsStart, files[0].fsSize)
+      .get(uPy2FsStart);
+    const file1data = opMap
+      .slice(uPy2FsStart + files[0].fsSize, files[1].fsSize)
+      .get(uPy2FsStart + files[0].fsSize);
+    expect(file0data).toEqual(files[0].bytes());
+    expect(file1data).toEqual(files[1].bytes());
+  });
+
+  it('Add files to hex, return a byte array (uPy1)', () => {
     const fwWithFsBytes = addIntelHexFiles(
-      uPyHexFile,
+      uPy1HexFile,
       {
         [files[0].fileName]: strToBytes(files[0].fileStr),
         [files[1].fileName]: strToBytes(files[1].fileStr),
@@ -198,10 +220,11 @@ describe('Writing files to the filesystem.', () => {
       true
     );
 
-    // Address calculated starting at the top of the MicroPython v1.0.1 fs
-    const startFs = 0x38c00;
-    const file0data = fwWithFsBytes.slice(startFs, startFs + files[0].fsSize);
-    const file1start = startFs + files[0].fsSize;
+    const file0data = fwWithFsBytes.slice(
+      uPy1FsStart,
+      uPy1FsStart + files[0].fsSize
+    );
+    const file1start = uPy1FsStart + files[0].fsSize;
     const file1data = fwWithFsBytes.slice(
       file1start,
       file1start + files[1].fsSize
@@ -210,7 +233,30 @@ describe('Writing files to the filesystem.', () => {
     expect(file1data).toEqual(files[1].bytes());
   });
 
-  it('Input to addIntelHexFiles() as a Intel Hex string and Memory Map generate compatible data', () => {
+  it('Add files to hex, return a byte array (uPy2)', () => {
+    const fwWithFsBytes = addIntelHexFiles(
+      uPy2HexFile,
+      {
+        [files[0].fileName]: strToBytes(files[0].fileStr),
+        [files[1].fileName]: strToBytes(files[1].fileStr),
+      },
+      true
+    );
+
+    const file0data = fwWithFsBytes.slice(
+      uPy2FsStart,
+      uPy2FsStart + files[0].fsSize
+    );
+    const file1start = uPy2FsStart + files[0].fsSize;
+    const file1data = fwWithFsBytes.slice(
+      file1start,
+      file1start + files[1].fsSize
+    );
+    expect(file0data).toEqual(files[0].bytes());
+    expect(file1data).toEqual(files[1].bytes());
+  });
+
+  it('Input to addIntelHexFiles() as a Intel Hex string and Memory Map generate compatible data (uPy1)', () => {
     const fsFiles = {
       [files[0].fileName]: strToBytes(files[0].fileStr),
       [files[1].fileName]: strToBytes(files[1].fileStr),
@@ -219,10 +265,13 @@ describe('Writing files to the filesystem.', () => {
       fsFiles['file_' + i + '.txt'] = strToBytes("Content doesn't matter " + i);
     }
 
-    const hexFromIntelHex = addIntelHexFiles(uPyHexFile, fsFiles) as string;
-    const hexFromMemoryMap = addIntelHexFiles(uPyHexMap, fsFiles) as string;
+    const hexFromIntelHexV1 = addIntelHexFiles(uPy1HexFile, fsFiles) as string;
+    const hexFromMemoryMapV1 = addIntelHexFiles(uPy1HexMap, fsFiles) as string;
+    const hexFromIntelHexV2 = addIntelHexFiles(uPy2HexFile, fsFiles) as string;
+    const hexFromMemoryMapV2 = addIntelHexFiles(uPy2HexMap, fsFiles) as string;
 
-    expect(hexFromIntelHex).toEqual(hexFromMemoryMap);
+    expect(hexFromIntelHexV1).toEqual(hexFromMemoryMapV1);
+    expect(hexFromIntelHexV2).toEqual(hexFromMemoryMapV2);
   });
 
   it('Both addIntelHexFiles() and generateHexWithFiles() generate compatible data', () => {
@@ -233,9 +282,9 @@ describe('Writing files to the filesystem.', () => {
     for (let i = 0; i < 32; i++) {
       fsFiles['file_' + i + '.txt'] = strToBytes("Content doesn't matter " + i);
     }
-    const cache = createMpFsBuilderCache(uPyHexFile);
+    const cache = createMpFsBuilderCache(uPy1HexFile);
 
-    const hexFromIntelHex = addIntelHexFiles(uPyHexFile, fsFiles) as string;
+    const hexFromIntelHex = addIntelHexFiles(uPy1HexFile, fsFiles) as string;
     const hexFromCache = generateHexWithFiles(cache, fsFiles);
 
     // The generateHexWithFiles() function caches the MicroPython data in an
@@ -272,7 +321,7 @@ describe('Writing files to the filesystem.', () => {
       ':108C700065666768696A6B6C6D6E6F2222220A02F4\n' +
       ':108C800001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2\n' +
       ':00000001FF',
-    fileAddress: 0x38c00,
+    fileAddress: uPy1FsStart,
     fsSize: 144,
     bytes() {
       return MemoryMap.fromHex(this.hex).get(this.fileAddress);
@@ -297,7 +346,7 @@ describe('Writing files to the filesystem.', () => {
       ':108C60006F707172737475767778797A0A6162635E\n' +
       ':108C70006465666768696A6B6C6D2222220AFFFF71\n' +
       ':00000001FF',
-    fileAddress: 0x38c00,
+    fileAddress: uPy1FsStart,
     fsSize: 128,
     bytes() {
       return MemoryMap.fromHex(this.hex).get(this.fileAddress);
@@ -323,7 +372,7 @@ describe('Writing files to the filesystem.', () => {
       ':108C7000696A6B6C6D6E6F7071727374222222025E\n' +
       ':108C8000010AFFFFFFFFFFFFFFFFFFFFFFFFFFFFE7\n' +
       ':00000001FF',
-    fileAddress: 0x38c00,
+    fileAddress: uPy1FsStart,
     fsSize: 144,
     bytes() {
       return MemoryMap.fromHex(this.hex).get(this.fileAddress);
@@ -331,7 +380,7 @@ describe('Writing files to the filesystem.', () => {
   };
 
   it('Can generate a full chunk that also consumes the next one.', () => {
-    const fwWithFsOther = addIntelHexFiles(uPyHexMap, {
+    const fwWithFsOther = addIntelHexFiles(uPy1HexMap, {
       [fullChunkPlus.fileName]: strToBytes(fullChunkPlus.fileStr),
     });
 
@@ -343,7 +392,7 @@ describe('Writing files to the filesystem.', () => {
   });
 
   it('Correctly generate an almost full chunk (not using last byte).', () => {
-    const fwWithFsOther = addIntelHexFiles(uPyHexMap, {
+    const fwWithFsOther = addIntelHexFiles(uPy1HexMap, {
       [fullChunkMinus.fileName]: strToBytes(fullChunkMinus.fileStr),
     });
 
@@ -355,7 +404,7 @@ describe('Writing files to the filesystem.', () => {
   });
 
   it('Correctly generate just over a full chunk.', () => {
-    const fwWithFsOther = addIntelHexFiles(uPyHexMap, {
+    const fwWithFsOther = addIntelHexFiles(uPy1HexMap, {
       [twoChunks.fileName]: strToBytes(twoChunks.fileStr),
     });
 
@@ -367,30 +416,42 @@ describe('Writing files to the filesystem.', () => {
   });
 
   it('Empty file name throws an error.', () => {
-    const failCase = () => addIntelHexFiles(uPyHexMap, { '': randContent });
+    expect(() => addIntelHexFiles(uPy1HexMap, { '': randContent })).toThrow(
+      'File has to have a file name'
+    );
 
-    expect(failCase).toThrow('File has to have a file name');
+    expect(() => addIntelHexFiles(uPy2HexMap, { '': randContent })).toThrow(
+      'File has to have a file name'
+    );
   });
 
   it('Empty file data throw an error.', () => {
-    const failCase = () =>
-      addIntelHexFiles(uPyHexMap, { 'my_file.txt': new Uint8Array(0) });
+    expect(() =>
+      addIntelHexFiles(uPy1HexMap, { 'my_file.txt': new Uint8Array(0) })
+    ).toThrow('has to contain data');
 
-    expect(failCase).toThrow('has to contain data');
+    expect(() =>
+      addIntelHexFiles(uPy2HexMap, { 'my_file.txt': new Uint8Array(0) })
+    ).toThrow('has to contain data');
   });
 
   it('Large file that does not fit throws error.', () => {
-    const failCase = () => {
-      addIntelHexFiles(uPyHexMap, {
+    expect(() => {
+      addIntelHexFiles(uPy1HexMap, {
         'my_file.txt': new Uint8Array(50 * 1024).fill(0x55),
       });
-    };
-    expect(failCase).toThrow('Not enough space');
+    }).toThrow('Not enough space');
+
+    expect(() => {
+      addIntelHexFiles(uPy2HexMap, {
+        'my_file.txt': new Uint8Array(50 * 1024).fill(0x55),
+      });
+    }).toThrow('Not enough space');
   });
 
   it('Add files until no more fit.', () => {
     // The MicroPython hex has about 29 KBs
-    let hexWithFs = uPyHexFile;
+    let hexWithFs = uPy1HexFile;
     // Use 4 KB blocks per file (each chunk is 128 B)
     const fakeBigFileData = new Uint8Array(4000).fill(0x55);
     const fakeSingleChunkData = new Uint8Array([0x55, 0x55]);
@@ -417,17 +478,21 @@ describe('Writing files to the filesystem.', () => {
   });
 
   it('Add a group of files that do not fit.', () => {
-    // The MicroPython hex has about 29 KBs
-    // Use 4 KB blocks per file (each chunk is 128 B)
-    const fakeBigFileData = new Uint8Array(4000).fill(0x55);
-    const tooManyBigFiles: { [filename: string]: Uint8Array } = {};
-    for (let i = 0; i < 8; i++) {
-      tooManyBigFiles['file_' + i + '.txt'] = fakeBigFileData;
-    }
+    const test = (memMap: MemoryMap, fsSize: number) => {
+      // Use 4 KB blocks per file (each 128 Byte chunk has 126 bytes data)
+      const fakeBigFileData = new Uint8Array(4000).fill(0x55);
+      const tooManyBigFiles: { [filename: string]: Uint8Array } = {};
+      for (let i = 0; i < fsSize / 4096 + 1; i++) {
+        tooManyBigFiles['file_' + i + '.txt'] = fakeBigFileData;
+      }
 
-    const addingAllFiles = () => addIntelHexFiles(uPyHexMap, tooManyBigFiles);
+      const addingAllFiles = () => addIntelHexFiles(memMap, tooManyBigFiles);
 
-    expect(addingAllFiles).toThrow('Not enough space');
+      expect(addingAllFiles).toThrow('space');
+    };
+
+    test(uPy1HexMap, uPy1FsSize);
+    test(uPy2HexMap, uPy2FsSize);
   });
 
   it('Max filename length works.', () => {
@@ -435,7 +500,7 @@ describe('Writing files to the filesystem.', () => {
     const largeName = 'a'.repeat(maxLength);
 
     const workingCase = () =>
-      addIntelHexFiles(uPyHexMap, { [largeName]: randContent });
+      addIntelHexFiles(uPy1HexMap, { [largeName]: randContent });
 
     expect(workingCase).not.toThrow(Error);
   });
@@ -445,7 +510,7 @@ describe('Writing files to the filesystem.', () => {
     const largeName = 'a'.repeat(maxLength + 1);
 
     const failCase = () =>
-      addIntelHexFiles(uPyHexMap, { [largeName]: randContent });
+      addIntelHexFiles(uPy1HexMap, { [largeName]: randContent });
 
     expect(failCase).toThrow('File name');
   });
@@ -633,7 +698,7 @@ describe('Reading files from the filesystem.', () => {
         hexMap.set(index, value);
       });
     };
-    const fullUpyFsMemMap = uPyHexMap.clone();
+    const fullUpyFsMemMap = uPy1HexMap.clone();
     addHexToMap(fullUpyFsMemMap, afirstHex);
     addHexToMap(fullUpyFsMemMap, alastHex);
     addHexToMap(fullUpyFsMemMap, mainHex);
@@ -673,7 +738,7 @@ describe('Reading files from the filesystem.', () => {
     // In the one_chunk_plus.py example the data inside the file would take
     // exactly 128 Bytes, or one chunk. However, MicroPython also "takes" or
     // "links" the next chunk and doesn't put any data into it.
-    const fullUpyFsMemMap = uPyHexMap.clone();
+    const fullUpyFsMemMap = uPy1HexMap.clone();
     const oneChunkPlusMemMap = MemoryMap.fromHex(oneChunkPlusHex);
     oneChunkPlusMemMap.forEach((value: Uint8Array, index: number) => {
       fullUpyFsMemMap.set(index, value);
@@ -711,7 +776,7 @@ describe('Reading files from the filesystem.', () => {
   it('Can read a file that occupies almost a full chunk.', () => {
     // In contrast to the one_chunk_plus.py example, this one fills the chunk
     // minus 1 Byte (The second 0xFF at the end is the chunk tail).
-    const fullUpyFsMemMap = uPyHexMap.clone();
+    const fullUpyFsMemMap = uPy1HexMap.clone();
     const oneChunkMinusMemMap = MemoryMap.fromHex(oneChunkMinusHex);
     oneChunkMinusMemMap.forEach((value: Uint8Array, index: number) => {
       fullUpyFsMemMap.set(index, value);
@@ -743,7 +808,7 @@ describe('Reading files from the filesystem.', () => {
   it('Duplicate file names throws an error.', () => {
     // In contrast to the one_chunk_plus.py example, this one fills the chunk
     // minus 1 Byte (The second 0xFF at the end is the chunk tail).
-    const fullUpyFsMemMap = uPyHexMap.clone();
+    const fullUpyFsMemMap = uPy1HexMap.clone();
     const oneFileCopyMemMap = MemoryMap.fromHex(oneFileCopyHex);
     oneFileCopyMemMap.forEach((value: Uint8Array, index: number) => {
       fullUpyFsMemMap.set(index, value);
@@ -759,9 +824,8 @@ describe('Reading files from the filesystem.', () => {
   });
 
   it('Reading files from empty MicroPython hex returns empty list.', () => {
-    const foundFiles = getIntelHexFiles(uPyHexMap);
-
-    expect(foundFiles).toEqual({});
+    expect(getIntelHexFiles(uPy1HexMap)).toEqual({});
+    expect(getIntelHexFiles(uPy2HexMap)).toEqual({});
   });
 
   it('Reading files from non-MicroPython hex fails.', () => {
@@ -778,10 +842,8 @@ describe('Reading files from the filesystem.', () => {
 
 describe('Calculate sizes.', () => {
   it('Get how much available fs space there is in a MicroPython hex file.', () => {
-    const totalSize = getMemMapFsSize(uPyHexMap);
-
-    // Calculated by hand from the uPyHexFile v1.0.1 release.
-    expect(totalSize).toEqual(27 * 1024);
+    expect(getMemMapFsSize(uPy1HexMap)).toEqual(uPy1FsSize);
+    expect(getMemMapFsSize(uPy2HexMap)).toEqual(uPy2FsSize);
   });
 
   it('Calculate the space occupied for a file in the fs.', () => {
