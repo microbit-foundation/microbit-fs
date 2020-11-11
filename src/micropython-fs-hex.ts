@@ -4,6 +4,8 @@
  * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
  * SPDX-License-Identifier: MIT
  */
+import * as microbitUh from '@microbit/microbit-universal-hex';
+
 import { FsInterface } from './fs-interface';
 import {
   MpFsBuilderCache,
@@ -39,6 +41,9 @@ export class MicropythonFsHex implements FsInterface {
    *
    * At the moment it needs a MicroPython hex string without files included.
    * Multiple MicroPython images can be provided to generate a Universal Hex.
+   *
+   * @throws {Error} When any of the input iHex contains filesystem files.
+   * @throws {Error} When any of the input iHex is not a valid MicroPython hex.
    *
    * @param intelHex - MicroPython Intel Hex string or an array of Intel Hex
    *    strings with their respective board IDs.
@@ -325,6 +330,12 @@ export class MicropythonFsHex implements FsInterface {
    * @throws {Error} When a file doesn't have any data.
    * @throws {Error} When there are issues calculating file system boundaries.
    * @throws {Error} When there is no space left for a file.
+   * @throws {Error} When the board ID is not found.
+   * @throws {Error} When there are multiple MicroPython hexes and board ID is
+   *    not provided.
+   *
+   * @param boardId - When multiple MicroPython hex files are provided select
+   *    one via this argument.
    *
    * @returns A new string with MicroPython and the filesystem included.
    */
@@ -362,6 +373,12 @@ export class MicropythonFsHex implements FsInterface {
    * @throws {Error} When a file doesn't have any data.
    * @throws {Error} When there are issues calculating file system boundaries.
    * @throws {Error} When there is no space left for a file.
+   * @throws {Error} When the board ID is not found.
+   * @throws {Error} When there are multiple MicroPython hexes and board ID is
+   *    not provided.
+   *
+   * @param boardId - When multiple MicroPython hex files are provided select
+   *    one via this argument.
    *
    * @returns A Uint8Array with MicroPython and the filesystem included.
    */
@@ -398,5 +415,34 @@ export class MicropythonFsHex implements FsInterface {
     }
     // If we reach this point we could not find the board ID
     throw new Error('Board ID requested not found.');
+  }
+
+  /**
+   * Generate a new copy of a MicroPython Universal Hex with the files in the
+   * filesystem included.
+   *
+   * @throws {Error} When a file doesn't have any data.
+   * @throws {Error} When there are issues calculating file system boundaries.
+   * @throws {Error} When there is no space left for a file.
+   * @throws {Error} When this method is called without having multiple
+   *    MicroPython hexes.
+   *
+   * @returns A new Universal Hex string with MicroPython and filesystem.
+   */
+  getUniversalHex(): string {
+    if (this._uPyFsBuilderCache.length === 1) {
+      throw new Error(
+        'MicropythonFsHex constructor must have more than one MicroPython ' +
+          'Intel Hex to generate a Universal Hex.'
+      );
+    }
+    const iHexWithIds: IntelHexWithId[] = [];
+    this._uPyFsBuilderCache.forEach((builderCache) => {
+      iHexWithIds.push({
+        hex: this.getIntelHex(builderCache.boardId),
+        boardId: builderCache.boardId,
+      });
+    });
+    return microbitUh.createUniversalHex(iHexWithIds);
   }
 }

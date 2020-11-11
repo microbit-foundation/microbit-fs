@@ -5,13 +5,10 @@
 import * as fs from 'fs';
 
 import MemoryMap from 'nrf-intel-hex';
+import * as microbitUh from '@microbit/microbit-universal-hex';
 
 import * as fsBuilder from '../micropython-fs-builder';
 import { MicropythonFsHex } from '../micropython-fs-hex';
-
-// Mock Spies
-const addIntelHexFilesSpy = jest.spyOn(fsBuilder, 'addIntelHexFiles');
-const generateHexWithFilesSpy = jest.spyOn(fsBuilder, 'generateHexWithFiles');
 
 // MicroPython hex file for testing
 const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -637,13 +634,21 @@ describe('Test other.', () => {
   });
 });
 
-describe('Test hex generation.', () => {
+describe('Test Intel Hex generation.', () => {
+  const generateHexWithFilesSpy = jest.spyOn(fsBuilder, 'generateHexWithFiles');
+  const addIntelHexFilesSpy = jest.spyOn(fsBuilder, 'addIntelHexFiles');
+
   beforeEach(() => {
     addIntelHexFilesSpy.mockReset();
     generateHexWithFilesSpy.mockReset();
   });
 
-  it('getIntelHex called with constructor hex string.', () => {
+  afterAll(() => {
+    generateHexWithFilesSpy.mockRestore();
+    addIntelHexFilesSpy.mockRestore();
+  });
+
+  it('getIntelHex calls correct hex generation function.', () => {
     const testInstance = (microbitFs: MicropythonFsHex, boardId?: number) => {
       microbitFs.write('a.txt', 'content');
 
@@ -663,7 +668,7 @@ describe('Test hex generation.', () => {
     testInstance(multipleHexInstance, 0x9903);
   });
 
-  it('getIntelHexBytes called with constructor hex string.', () => {
+  it('getIntelHexBytes calls correct hex generation function.', () => {
     const testInstance = (microbitFs: MicropythonFsHex, boardId?: number) => {
       microbitFs.write('a.txt', 'content');
 
@@ -682,6 +687,80 @@ describe('Test hex generation.', () => {
     testInstance(multipleHexInstance, 0x9900);
     addIntelHexFilesSpy.mockReset();
     testInstance(multipleHexInstance, 0x9903);
+  });
+
+  it('Incorrect board ID throws error.', () => {
+    const microbitFs1 = new MicropythonFsHex(uPy1HexFile);
+    const microbitFs2 = new MicropythonFsHex([
+      { hex: uPy1HexFile, boardId: 0x9900 },
+      { hex: uPy2HexFile, boardId: 0x9903 },
+    ]);
+
+    const failCase1 = () => microbitFs1.getIntelHex(0x9000);
+    const failCaseBytes1 = () => microbitFs1.getIntelHexBytes(0x9000);
+    const failCase2 = () => microbitFs2.getIntelHex(0x9000);
+    const failCaseBytes2 = () => microbitFs2.getIntelHexBytes(0x9000);
+
+    expect(failCase1).toThrow('Board ID requested not found');
+    expect(failCaseBytes1).toThrow('Board ID requested not found');
+    expect(failCase2).toThrow('Board ID requested not found');
+    expect(failCaseBytes2).toThrow('Board ID requested not found');
+  });
+
+  it('Missing board ID throws error when there are multiple MicroPythons.', () => {
+    const microbitFs = new MicropythonFsHex([
+      { hex: uPy1HexFile, boardId: 0x9900 },
+      { hex: uPy2HexFile, boardId: 0x9903 },
+    ]);
+
+    const failCase = () => microbitFs.getIntelHex();
+    const failCaseBytes = () => microbitFs.getIntelHexBytes();
+
+    expect(failCase).toThrow('Board ID must be specified');
+    expect(failCaseBytes).toThrow('Board ID must be specified');
+  });
+});
+
+describe('Test Universal Hex generation.', () => {
+  const createUniversalHexSpy = jest.spyOn(microbitUh, 'createUniversalHex');
+
+  beforeEach(() => {
+    createUniversalHexSpy.mockReset();
+  });
+
+  afterAll(() => {
+    createUniversalHexSpy.mockRestore();
+  });
+
+  it('Universal Hex library called with correct arguments', () => {
+    const micropythonFs = new MicropythonFsHex([
+      { hex: uPy1HexFile, boardId: 0x9900 },
+      { hex: uPy1HexFile, boardId: 0x9901 },
+      { hex: uPy2HexFile, boardId: 0x9903 },
+      { hex: uPy2HexFile, boardId: 0x9904 },
+    ]);
+
+    const iHexV1 = micropythonFs.getIntelHex(0x9900);
+    const iHexV2 = micropythonFs.getIntelHex(0x9903);
+    const universalHex = micropythonFs.getUniversalHex();
+
+    expect(createUniversalHexSpy.mock.calls.length).toEqual(1);
+    expect(createUniversalHexSpy.mock.calls[0][0][0].boardId).toBe(0x9900);
+    expect(createUniversalHexSpy.mock.calls[0][0][0].hex).toBe(iHexV1);
+    expect(createUniversalHexSpy.mock.calls[0][0][1].boardId).toBe(0x9901);
+    expect(createUniversalHexSpy.mock.calls[0][0][1].hex).toBe(iHexV1);
+    expect(createUniversalHexSpy.mock.calls[0][0][2].boardId).toBe(0x9903);
+    expect(createUniversalHexSpy.mock.calls[0][0][2].hex).toBe(iHexV2);
+    expect(createUniversalHexSpy.mock.calls[0][0][3].boardId).toBe(0x9904);
+    expect(createUniversalHexSpy.mock.calls[0][0][3].hex).toBe(iHexV2);
+  });
+
+  it('Error if single MicroPython hex provided', () => {
+    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
+
+    const failFunc = () => micropythonFs.getUniversalHex();
+
+    expect(failFunc).toThrow('more than one MicroPython Intel Hex');
   });
 });
 
@@ -716,9 +795,17 @@ describe('Test importing files from hex.', () => {
     'a.py': "a = 'Just a file'\n",
   };
 
+  const generateHexWithFilesSpy = jest.spyOn(fsBuilder, 'generateHexWithFiles');
+  const addIntelHexFilesSpy = jest.spyOn(fsBuilder, 'addIntelHexFiles');
+
   beforeEach(() => {
     addIntelHexFilesSpy.mockReset();
     generateHexWithFilesSpy.mockReset();
+  });
+
+  afterAll(() => {
+    generateHexWithFilesSpy.mockRestore();
+    addIntelHexFilesSpy.mockRestore();
   });
 
   const createHexStrWithFiles = (): string => {
@@ -859,7 +946,6 @@ describe('Test MicroPython hex filesystem size.', () => {
 
     const totalSize = micropythonFs.getStorageSize();
 
-    // Calculated by hand from the uPy1HexFile v1.0.1 release.
     expect(totalSize).toEqual(uPy1FsSize);
   });
 
@@ -881,6 +967,42 @@ describe('Test MicroPython hex filesystem size.', () => {
     const totalSize = micropythonFs.getStorageSize();
 
     expect(totalSize).toEqual(1024);
+  });
+});
+
+describe('End-to-end loop around.', () => {
+  it('Create some files, export hex, and import in a new instance', () => {
+    const microbitFs = new MicropythonFsHex(uPy1HexFile);
+    microbitFs.write('a.txt', 'This is some content');
+    microbitFs.write('main.py', 'print("This is my code")');
+
+    const iHexWithFiles = microbitFs.getIntelHex();
+    const microbitFsImported = new MicropythonFsHex([
+      { hex: uPy1HexFile, boardId: 0x9900 },
+      { hex: uPy2HexFile, boardId: 0x9903 },
+    ]);
+    const importedFiles = microbitFsImported.importFilesFromIntelHex(
+      iHexWithFiles
+    );
+
+    expect(microbitFs.ls()).toEqual(importedFiles);
+    expect(microbitFs.ls()).toEqual(['a.txt', 'main.py']);
+    expect(microbitFsImported.ls()).toEqual(microbitFs.ls());
+
+    expect(microbitFs.read('a.txt')).toEqual('This is some content');
+    expect(microbitFsImported.read('a.txt')).toEqual(microbitFs.read('a.txt'));
+
+    expect(microbitFsImported.readBytes('a.txt')).toEqual(
+      microbitFs.readBytes('a.txt')
+    );
+
+    expect(microbitFsImported.size('a.txt')).toEqual(microbitFs.size('a.txt'));
+
+    expect(microbitFsImported.getStorageUsed()).toEqual(
+      microbitFs.getStorageUsed()
+    );
+
+    expect(microbitFsImported.getIntelHex(0x9900)).toEqual(iHexWithFiles);
   });
 });
 
