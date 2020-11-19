@@ -39,3 +39,18 @@ export const concatUint8Array = (first: Uint8Array, second: Uint8Array) => {
   combined.set(second, first.length);
   return combined;
 };
+
+/**
+ * Compares two Uint8Array.
+ *
+ * @param first - The first array to compare.
+ * @param second - The second array to compare.
+ * @returns Boolean indicating if they are equal.
+ */
+export const areUint8ArraysEqual = (first: Uint8Array, second: Uint8Array) => {
+  if (first.length !== second.length) return false;
+  for (let i = 0; i < first.length; i++) {
+    if (first[i] !== second[i]) return false;
+  }
+  return true;
+};
