@@ -136,4 +136,15 @@ describe('areUint8ArraysEqual', () => {
     expect(result1).toBeFalsy();
     expect(result2).toBeFalsy();
   });
+
+  it('compares different arrays', () => {
+    const first: Uint8Array = new Uint8Array([1, 2, 3]);
+    const second: Uint8Array = new Uint8Array([4, 5, 6]);
+
+    const result1 = areUint8ArraysEqual(first, second);
+    const result2 = areUint8ArraysEqual(second, first);
+
+    expect(result1).toBeFalsy();
+    expect(result2).toBeFalsy();
+  });
 });
