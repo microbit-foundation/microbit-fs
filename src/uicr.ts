@@ -10,17 +10,21 @@
 import MemoryMap from 'nrf-intel-hex';
 
 import * as hexMapUtil from './hex-map-utils';
+import { DeviceMemInfo } from './device-mem-info';
+import { DeviceVersion } from './hex-mem-info';
 
 const DEVICE_INFO = [
   {
-    deviceVersion: 1,
+    deviceVersion: DeviceVersion.one,
     magicHeader: 0x17eeb07c,
-    flashSize: 0x40000,
+    flashSize: 256 * 1024,
+    fsEnd: 256 * 1024,
   },
   {
-    deviceVersion: 2,
+    deviceVersion: DeviceVersion.two,
     magicHeader: 0x47eeb07c,
-    flashSize: 0x80000,
+    flashSize: 512 * 1024,
+    fsEnd: 0x73000,
   },
 ];
 
@@ -56,18 +60,9 @@ enum MicropythonUicrAddress {
 }
 
 /** MicroPython data stored in the UICR Customer area. */
-interface MicropythonUicrData {
-  flashPageSize: number;
-  flashSize: number;
-  runtimeStartPage: number;
-  runtimeStartAddress: number;
-  runtimeEndUsed: number;
-  runtimeEndAddress: number;
+interface MicropythonUicrData extends DeviceMemInfo {
   uicrStartAddress: number;
   uicrEndAddress: number;
-  versionAddress: number;
-  version: string;
-  deviceVersion: number;
 }
 
 /**
@@ -128,6 +123,22 @@ function getFlashSize(intelHexMap: MemoryMap): number {
     }
   }
   throw new Error('Cannot find flash size, unknown UICR Magic value');
+}
+
+/**
+ * Reads the UICR data from an Intel Hex map and retrieves the fs end address.
+ *
+ * @param intelHexMap - Memory map of the Intel Hex data.
+ * @returns The micro:bit filesystem end address.
+ */
+function getFsEndAddress(intelHexMap: MemoryMap): number {
+  const readMagicHeader = getMagicValue(intelHexMap);
+  for (const device of DEVICE_INFO) {
+    if (device.magicHeader === readMagicHeader) {
+      return device.fsEnd;
+    }
+  }
+  throw new Error('Cannot find fs end address, unknown UICR Magic value');
 }
 
 /**
@@ -197,22 +208,27 @@ function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
   const flashPageSize: number = getPageSize(uicrMap);
   const flashSize: number = getFlashSize(uicrMap);
   const startPage: number = getStartPage(uicrMap);
+  const flashStartAddress: number = startPage * flashPageSize;
+  const flashEndAddress: number = flashStartAddress + flashSize;
   const pagesUsed: number = getPagesUsed(uicrMap);
+  const runtimeEndAddress: number = pagesUsed * flashPageSize;
   const versionAddress: number = getVersionLocation(uicrMap);
-  const version: string = hexMapUtil.getString(intelHexMap, versionAddress);
+  const uPyVersion: string = hexMapUtil.getString(intelHexMap, versionAddress);
   const deviceVersion: number = getDeviceVersion(uicrMap);
+  const fsEndAddress: number = getFsEndAddress(uicrMap);
 
   return {
     flashPageSize,
     flashSize,
-    runtimeStartPage: startPage,
-    runtimeStartAddress: startPage * flashPageSize,
-    runtimeEndUsed: pagesUsed,
-    runtimeEndAddress: pagesUsed * flashPageSize,
+    flashStartAddress,
+    flashEndAddress,
+    runtimeStartAddress: flashStartAddress,
+    runtimeEndAddress,
+    fsStartAddress: runtimeEndAddress,
+    fsEndAddress,
     uicrStartAddress: MicropythonUicrAddress.MagicValue,
     uicrEndAddress: MicropythonUicrAddress.End,
-    versionAddress,
-    version,
+    uPyVersion,
     deviceVersion,
   };
 }

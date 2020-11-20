@@ -25,7 +25,10 @@ const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
 const uPy1HexMap = MemoryMap.fromHex(uPy1HexFile);
 const uPy1FsSize = 27 * 1024;
 const uPy1FsStart = 0x38c00;
-const uPy2HexFile = fs.readFileSync('./src/__tests__/upy-v2-beta.hex', 'utf8');
+const uPy2HexFile = fs.readFileSync(
+  './src/__tests__/upy-v2-beta-uicr.hex',
+  'utf8'
+);
 const uPy2HexMap = MemoryMap.fromHex(uPy2HexFile);
 const uPy2FsSize = 20 * 1024;
 const uPy2FsStart = 0x6d000;

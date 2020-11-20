@@ -13,7 +13,10 @@ import { MicropythonFsHex } from '../micropython-fs-hex';
 // MicroPython hex file for testing
 const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
 const uPy1FsSize = 27 * 1024;
-const uPy2HexFile = fs.readFileSync('./src/__tests__/upy-v2-beta.hex', 'utf8');
+const uPy2HexFile = fs.readFileSync(
+  './src/__tests__/upy-v2-beta-uicr.hex',
+  'utf8'
+);
 const uPy2FsSize = 20 * 1024;
 
 describe('Test the class constructor', () => {

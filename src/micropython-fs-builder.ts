@@ -35,7 +35,7 @@ import MemoryMap from 'nrf-intel-hex';
 
 import { bytesToStr, concatUint8Array, strToBytes } from './common';
 import { AppendedBlock, isAppendedScriptPresent } from './micropython-appended';
-import { getHexMapUicrData } from './uicr';
+import { getHexMapDeviceMemInfo, DeviceVersion } from './hex-mem-info';
 
 /** Object to contain cached data for quicker Intel Hex string generation */
 interface MpFsBuilderCache {
@@ -87,14 +87,14 @@ const MAX_NUMBER_OF_CHUNKS = 256 - 4;
  */
 function createMpFsBuilderCache(originalIntelHex: string): MpFsBuilderCache {
   const originalMemMap = MemoryMap.fromHex(originalIntelHex);
-  const uicrData = getHexMapUicrData(originalMemMap);
+  const deviceMem = getHexMapDeviceMemInfo(originalMemMap);
   // slice() returns a new MemoryMap with only the MicroPython data, so it will
   // not include the UICR. The End Of File record is removed because this string
   // will be concatenated with the filesystem data any thing else in the MemMap
   const uPyIntelHex = originalMemMap
     .slice(
-      uicrData.runtimeStartAddress,
-      uicrData.runtimeEndAddress - uicrData.runtimeStartAddress
+      deviceMem.runtimeStartAddress,
+      deviceMem.runtimeEndAddress - deviceMem.runtimeStartAddress
     )
     .asHexString()
     .replace(':00000001FF', '');
@@ -102,7 +102,7 @@ function createMpFsBuilderCache(originalIntelHex: string): MpFsBuilderCache {
     originalIntelHex,
     originalMemMap,
     uPyIntelHex,
-    uPyEndAddress: uicrData.runtimeEndAddress,
+    uPyEndAddress: deviceMem.runtimeEndAddress,
     fsSize: getMemMapFsSize(originalMemMap),
   };
 }
@@ -139,24 +139,18 @@ function getFreeChunks(intelHexMap: MemoryMap): number[] {
  * @returns Filesystem start address
  */
 function getStartAddress(intelHexMap: MemoryMap): number {
-  const uicrData = getHexMapUicrData(intelHexMap);
+  const deviceMem = getHexMapDeviceMemInfo(intelHexMap);
   // Calculate the maximum flash space the filesystem can possible take
-  let fsMaxSize = CHUNK_LEN * MAX_NUMBER_OF_CHUNKS;
-  // We need to add the persistent data which is one page aligned after fs data
-  fsMaxSize += uicrData.flashPageSize - (fsMaxSize % uicrData.flashPageSize);
-  if (uicrData.deviceVersion === 1) {
-    // TODO: v2 has persistent page inside the fs flash area instead
-    fsMaxSize += uicrData.flashPageSize;
-  }
+  const fsMaxSize = CHUNK_LEN * MAX_NUMBER_OF_CHUNKS;
+  // The persistent data page is the last page of the filesystem space
+  // no need to add it in calculations
 
-  const runtimeEndAddress = uicrData.runtimeEndAddress;
-
-  // Fs is placed at the end of flash, the space available from the MicroPython
-  // end to the end of flash might be larger than the fs max possible size
-  const fsMaxSizeStartAddress = getEndAddress(intelHexMap) - fsMaxSize;
-  const startAddress = Math.max(runtimeEndAddress, fsMaxSizeStartAddress);
+  // There might more free space than the filesystem needs, in that case
+  // we move the start address down
+  const startAddressForMaxFs = getEndAddress(intelHexMap) - fsMaxSize;
+  const startAddress = Math.max(deviceMem.fsStartAddress, startAddressForMaxFs);
   // Ensure the start address is aligned with the page size
-  if (startAddress % uicrData.flashPageSize) {
+  if (startAddress % deviceMem.flashPageSize) {
     throw new Error(
       'File system start address from UICR does not align with flash page size.'
     );
@@ -175,18 +169,16 @@ function getStartAddress(intelHexMap: MemoryMap): number {
  * @returns End address for the filesystem.
  */
 function getEndAddress(intelHexMap: MemoryMap): number {
-  const uicrData = getHexMapUicrData(intelHexMap);
-  let endAddress = isAppendedScriptPresent(intelHexMap)
-    ? AppendedBlock.StartAdd
-    : uicrData.flashSize;
-  if (uicrData.deviceVersion === 1) {
+  const deviceMem = getHexMapDeviceMemInfo(intelHexMap);
+  let endAddress = deviceMem.fsEndAddress;
+  // TODO: Maybe we should move this inside the UICR module to calculate
+  // the real fs area in that step
+  if (deviceMem.deviceVersion === DeviceVersion.one) {
+    if (isAppendedScriptPresent(intelHexMap)) {
+      endAddress = AppendedBlock.StartAdd;
+    }
     // In v1 the magnetometer calibration data takes one flash page
-    endAddress -= uicrData.flashPageSize;
-  } else if (uicrData.deviceVersion === 2) {
-    // TODO: For v2 52 KBs are used for bootloader and other pages (0x73000)
-    endAddress -= 52 * 1024;
-  } else {
-    throw new Error('Unknown device flash map');
+    endAddress -= deviceMem.flashPageSize;
   }
   return endAddress;
 }
@@ -198,8 +190,8 @@ function getEndAddress(intelHexMap: MemoryMap): number {
  * @returns Memory address where the last filesystem page starts.
  */
 function getLastPageAddress(intelHexMap: MemoryMap): number {
-  const uicrData = getHexMapUicrData(intelHexMap);
-  return getEndAddress(intelHexMap) - uicrData.flashPageSize;
+  const deviceMem = getHexMapDeviceMemInfo(intelHexMap);
+  return getEndAddress(intelHexMap) - deviceMem.flashPageSize;
 }
 
 /**
@@ -431,12 +423,12 @@ function addIntelHexFiles(
   } else {
     intelHexMap = intelHex.clone();
   }
-  const uicrData = getHexMapUicrData(intelHexMap);
+  const deviceMem = getHexMapDeviceMemInfo(intelHexMap);
   Object.keys(files).forEach((filename) => {
     addMemMapFile(intelHexMap, filename, files[filename]);
   });
   return returnBytes
-    ? intelHexMap.slicePad(0, uicrData.flashSize)
+    ? intelHexMap.slicePad(0, deviceMem.flashSize)
     : intelHexMap.asHexString() + '\n';
 }
 
@@ -585,11 +577,11 @@ function getIntelHexFiles(
  * @returns Size of the filesystem in bytes.
  */
 function getMemMapFsSize(intelHexMap: MemoryMap): number {
-  const uicrData = getHexMapUicrData(intelHexMap);
+  const deviceMem = getHexMapDeviceMemInfo(intelHexMap);
   const startAddress = getStartAddress(intelHexMap);
   const endAddress = getEndAddress(intelHexMap);
   // One extra page is used as persistent page
-  return endAddress - startAddress - uicrData.flashPageSize;
+  return endAddress - startAddress - deviceMem.flashPageSize;
 }
 
 export {
