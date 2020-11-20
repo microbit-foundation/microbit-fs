@@ -16,13 +16,19 @@ import {
   getIntelHexFiles,
 } from './micropython-fs-builder';
 import { SimpleFile } from './simple-file';
+import { areUint8ArraysEqual } from './common';
 
 interface MpFsBuilderCacheWithId extends MpFsBuilderCache {
   boardId: number;
 }
 
+/**
+ * Simple interface to pair an Intel Hex string with the board ID it represents.
+ */
 export interface IntelHexWithId {
+  /** Intel Hex string */
   hex: string;
+  /** Board ID to identify the Intel Hex and encode inside the Universal Hex */
   boardId: number;
 }
 
@@ -302,7 +308,7 @@ export class MicropythonFsHex implements FsInterface {
   ): string[] {
     const files = getIntelHexFiles(intelHex);
     if (!Object.keys(files).length) {
-      throw new Error('Hex does not have any files to import');
+      throw new Error('Intel Hex does not have any files to import');
     }
 
     if (formatFirst) {
@@ -321,6 +327,121 @@ export class MicropythonFsHex implements FsInterface {
       throw new Error(`Files "${existingFiles}" from hex already exists.`);
     }
     return Object.keys(files);
+  }
+
+  /**
+   * Read the files included in a MicroPython Universal Hex string and add them
+   * to this instance.
+   *
+   * @throws {Error} When there are no files to import from one of the hex.
+   * @throws {Error} When the files in the individual hex are different.
+   * @throws {Error} When there is a problem reading files from one of the hex.
+   * @throws {Error} When a filename already exists in this instance (all other
+   *     files are still imported).
+   *
+   * @param universalHex - MicroPython Universal Hex string with files.
+   * @param overwrite - Flag to overwrite existing files in this instance.
+   * @param formatFirst - Erase all the previous files before importing. It only
+   *     erases the files after there are no error during hex file parsing.
+   * @returns A filename list of added files.
+   */
+  importFilesFromUniversalHex(
+    universalHex: string,
+    {
+      overwrite = false,
+      formatFirst = false,
+    }: { overwrite?: boolean; formatFirst?: boolean } = {}
+  ): string[] {
+    if (!microbitUh.isUniversalHex(universalHex)) {
+      throw new Error('Universal Hex provided is invalid.');
+    }
+
+    interface FileObj {
+      [filename: string]: Uint8Array;
+    }
+
+    const hexWithIds = microbitUh.separateUniversalHex(universalHex);
+    const allFileGroups: FileObj[] = [];
+    hexWithIds.forEach((hexWithId: IntelHexWithId) => {
+      const fileGroup = getIntelHexFiles(hexWithId.hex);
+      if (!Object.keys(fileGroup).length) {
+        throw new Error(
+          `Hex with ID ${hexWithId.boardId} from Universal Hex does not have any files to import`
+        );
+      }
+      allFileGroups.push(fileGroup);
+    });
+
+    // Ensure all hexes have the same files
+    allFileGroups.forEach((fileGroup: FileObj) => {
+      // Create new array without this current group
+      const compareFileGroups = allFileGroups.filter((v) => v !== fileGroup);
+      // Check that all files in this group are in all the others
+      for (const [fileName, fileContent] of Object.entries(fileGroup)) {
+        compareFileGroups.forEach((compareGroup: FileObj) => {
+          if (
+            !compareGroup.hasOwnProperty(fileName) ||
+            !areUint8ArraysEqual(compareGroup[fileName], fileContent)
+          ) {
+            throw new Error(
+              'Mismatch in the different Hexes inside the Universal Hex'
+            );
+          }
+        });
+      }
+    });
+
+    // If we reached this point all file groups are the same and we can use any
+    const files = allFileGroups[0];
+    if (formatFirst) {
+      this._files = {};
+    }
+    const existingFiles: string[] = [];
+    Object.keys(files).forEach((filename) => {
+      if (!overwrite && this.exists(filename)) {
+        existingFiles.push(filename);
+      } else {
+        this.write(filename, files[filename]);
+      }
+    });
+    // Only throw the error at the end so that all other files are imported
+    if (existingFiles.length) {
+      throw new Error(`Files "${existingFiles}" from hex already exists.`);
+    }
+    return Object.keys(files);
+  }
+
+  /**
+   * Read the files included in a MicroPython Universal or Intel Hex string and
+   * add them to this instance.
+   *
+   * @throws {Error} When there are no files to import from the hex.
+   * @throws {Error} When in the Universal Hex the files of the individual hexes
+   *    are different.
+   * @throws {Error} When there is a problem reading files from one of the hex.
+   * @throws {Error} When a filename already exists in this instance (all other
+   *     files are still imported).
+   *
+   * @param hexStr - MicroPython Intel or Universal Hex string with files.
+   * @param overwrite - Flag to overwrite existing files in this instance.
+   * @param formatFirst - Erase all the previous files before importing. It only
+   *     erases the files after there are no error during hex file parsing.
+   * @returns A filename list of added files.
+   */
+  importFilesFromHex(
+    hexStr: string,
+    {
+      overwrite = false,
+      formatFirst = false,
+    }: { overwrite?: boolean; formatFirst?: boolean } = {}
+  ) {
+    const options = {
+      overwrite,
+      formatFirst,
+    };
+    return microbitUh.isUniversalHex(hexStr)
+      ? this.importFilesFromUniversalHex(hexStr, options)
+      : this.importFilesFromIntelHex(hexStr, options);
   }
 
   /**

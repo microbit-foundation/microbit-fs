@@ -764,7 +764,7 @@ describe('Test Universal Hex generation.', () => {
   });
 });
 
-describe('Test importing files from hex.', () => {
+describe('Test importing files from Intel Hex.', () => {
   // These were created using a micro:bit running MicroPython v1.0.1.
   const extraFilesHex =
     ':020000040003F7\n' +
@@ -819,59 +819,89 @@ describe('Test importing files from hex.', () => {
   const hexStrWithFiles: string = createHexStrWithFiles();
 
   it('Correctly read files from a hex.', () => {
-    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsIh = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsH = new MicropythonFsHex(uPy1HexFile);
 
-    const fileList = micropythonFs.importFilesFromIntelHex(hexStrWithFiles);
+    const fileListIh = micropythonFsIh.importFilesFromIntelHex(hexStrWithFiles);
+    const fileListH = micropythonFsH.importFilesFromHex(hexStrWithFiles);
 
     Object.keys(extraFiles).forEach((filename) => {
-      expect(fileList).toContain(filename);
-      expect(micropythonFs.read(filename)).toEqual(extraFiles[filename]);
+      expect(fileListIh).toContain(filename);
+      expect(micropythonFsIh.read(filename)).toEqual(extraFiles[filename]);
+      expect(fileListH).toContain(filename);
+      expect(micropythonFsH.read(filename)).toEqual(extraFiles[filename]);
     });
   });
 
   it('Throws and error if there are no files to import.', () => {
-    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsIh = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsH = new MicropythonFsHex(uPy1HexFile);
 
-    const failCase = () => micropythonFs.importFilesFromIntelHex(uPy1HexFile);
+    const failCaseIh = () =>
+      micropythonFsIh.importFilesFromIntelHex(uPy1HexFile);
+    const failCaseH = () => micropythonFsH.importFilesFromIntelHex(uPy1HexFile);
 
-    expect(failCase).toThrow('Hex does not have any files to import');
+    expect(failCaseIh).toThrow('Hex does not have any files to import');
+    expect(failCaseH).toThrow('Hex does not have any files to import');
   });
 
   it('Disabled overwrite flag throws an error when file exists.', () => {
-    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsIh = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsH = new MicropythonFsHex(uPy1HexFile);
     const originalFileContent = 'Original file content.';
-    micropythonFs.write('a.py', originalFileContent);
+    micropythonFsIh.write('a.py', originalFileContent);
+    micropythonFsH.write('a.py', originalFileContent);
 
-    const failCase = () => {
-      micropythonFs.importFilesFromIntelHex(hexStrWithFiles, {
+    const failCaseIh = () => {
+      micropythonFsIh.importFilesFromIntelHex(hexStrWithFiles, {
+        overwrite: false,
+      });
+    };
+    const failCaseH = () => {
+      micropythonFsH.importFilesFromIntelHex(hexStrWithFiles, {
         overwrite: false,
       });
     };
 
-    expect(failCase).toThrow(Error);
-    expect(micropythonFs.read('a.py')).toEqual(originalFileContent);
+    expect(failCaseIh).toThrow(Error);
+    expect(micropythonFsIh.read('a.py')).toEqual(originalFileContent);
+    expect(failCaseH).toThrow(Error);
+    expect(micropythonFsIh.read('a.py')).toEqual(originalFileContent);
   });
 
   it('Enabled overwrite flag replaces the file.', () => {
-    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsIh = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsH = new MicropythonFsHex(uPy1HexFile);
     const originalFileContent = 'Original file content.';
-    micropythonFs.write('a.py', originalFileContent);
+    micropythonFsIh.write('a.py', originalFileContent);
+    micropythonFsH.write('a.py', originalFileContent);
 
-    micropythonFs.importFilesFromIntelHex(hexStrWithFiles, { overwrite: true });
+    micropythonFsIh.importFilesFromIntelHex(hexStrWithFiles, {
+      overwrite: true,
+    });
+    micropythonFsH.importFilesFromIntelHex(hexStrWithFiles, {
+      overwrite: true,
+    });
 
-    expect(micropythonFs.read('a.py')).not.toEqual(originalFileContent);
-    expect(micropythonFs.read('a.py')).toEqual(extraFiles['a.py']);
+    expect(micropythonFsIh.read('a.py')).not.toEqual(originalFileContent);
+    expect(micropythonFsIh.read('a.py')).toEqual(extraFiles['a.py']);
+    expect(micropythonFsH.read('a.py')).not.toEqual(originalFileContent);
+    expect(micropythonFsH.read('a.py')).toEqual(extraFiles['a.py']);
   });
 
   it('By default it throws an error if a filename already exists.', () => {
-    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
-    micropythonFs.write('a.py', 'some content');
+    const micropythonFsIh = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsH = new MicropythonFsHex(uPy1HexFile);
+    micropythonFsIh.write('a.py', 'some content');
+    micropythonFsH.write('a.py', 'some content');
 
-    const failCase = () => {
-      micropythonFs.importFilesFromIntelHex(hexStrWithFiles);
-    };
+    const failCaseIh = () =>
+      micropythonFsIh.importFilesFromIntelHex(hexStrWithFiles);
+    const failCaseH = () =>
+      micropythonFsH.importFilesFromIntelHex(hexStrWithFiles);
 
-    expect(failCase).toThrow(Error);
+    expect(failCaseIh).toThrow(Error);
+    expect(failCaseH).toThrow(Error);
   });
 
   it('Constructor hex file with files to import throws an error.', () => {
@@ -887,27 +917,49 @@ describe('Test importing files from hex.', () => {
   });
 
   it('Enabling formatFirst flag erases the previous files.', () => {
-    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
-    micropythonFs.write('old_file.py', 'Some content.');
+    const micropythonFsIh = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsH = new MicropythonFsHex(uPy1HexFile);
+    micropythonFsIh.write('old_file.py', 'Some content.');
+    micropythonFsH.write('old_file.py', 'Some content.');
 
-    const fileList = micropythonFs.importFilesFromIntelHex(hexStrWithFiles, {
+    const fileListIh = micropythonFsIh.importFilesFromIntelHex(
+      hexStrWithFiles,
+      {
+        overwrite: false,
+        formatFirst: true,
+      }
+    );
+    const fileListH = micropythonFsH.importFilesFromIntelHex(hexStrWithFiles, {
       overwrite: false,
       formatFirst: true,
     });
 
     Object.keys(extraFiles).forEach((filename) => {
-      expect(fileList).toContain(filename);
-      expect(micropythonFs.read(filename)).toEqual(extraFiles[filename]);
+      expect(fileListIh).toContain(filename);
+      expect(micropythonFsIh.read(filename)).toEqual(extraFiles[filename]);
+      expect(fileListH).toContain(filename);
+      expect(micropythonFsH.read(filename)).toEqual(extraFiles[filename]);
     });
-    expect(micropythonFs.ls()).not.toContain('old_file.py');
+    expect(micropythonFsIh.ls()).not.toContain('old_file.py');
+    expect(micropythonFsH.ls()).not.toContain('old_file.py');
   });
 
   it('Enabling formatFirst flag only formats if there are files to import.', () => {
-    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
-    micropythonFs.write('old_file.py', 'Some content.');
+    const micropythonFsIh = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsH = new MicropythonFsHex(uPy1HexFile);
+    micropythonFsIh.write('old_file.py', 'Some content.');
+    micropythonFsH.write('old_file.py', 'Some content.');
 
     try {
-      const fileList = micropythonFs.importFilesFromIntelHex(uPy1HexFile, {
+      const fileListIh = micropythonFsIh.importFilesFromIntelHex(uPy1HexFile, {
+        overwrite: false,
+        formatFirst: true,
+      });
+    } catch (e) {
+      // Not having files to import should raise an error
+    }
+    try {
+      const fileListH = micropythonFsH.importFilesFromIntelHex(uPy1HexFile, {
         overwrite: false,
         formatFirst: true,
       });
@@ -915,28 +967,49 @@ describe('Test importing files from hex.', () => {
       // Not having files to import should raise an error
     }
 
-    expect(micropythonFs.ls()).toContain('old_file.py');
-    expect(micropythonFs.read('old_file.py')).toContain('Some content.');
+    expect(micropythonFsIh.ls()).toContain('old_file.py');
+    expect(micropythonFsIh.read('old_file.py')).toContain('Some content.');
+    expect(micropythonFsH.ls()).toContain('old_file.py');
+    expect(micropythonFsH.read('old_file.py')).toContain('Some content.');
   });
 
   it('Disabling formatFirst flag, and by default, keeps old files.', () => {
-    const micropythonFs = new MicropythonFsHex(uPy1HexFile);
-    micropythonFs.write('old_file.py', 'Some content.');
+    const micropythonFsIh = new MicropythonFsHex(uPy1HexFile);
+    const micropythonFsH = new MicropythonFsHex(uPy1HexFile);
+    micropythonFsIh.write('old_file.py', 'Some content.');
+    micropythonFsH.write('old_file.py', 'Some content.');
 
-    const fileList1 = micropythonFs.importFilesFromIntelHex(hexStrWithFiles, {
+    const fileList1Ih = micropythonFsIh.importFilesFromIntelHex(
+      hexStrWithFiles,
+      {
+        overwrite: false,
+      }
+    );
+    const fileList2Ih = micropythonFsIh.importFilesFromIntelHex(
+      hexStrWithFiles,
+      {
+        overwrite: true,
+        formatFirst: false,
+      }
+    );
+    const fileList1H = micropythonFsH.importFilesFromIntelHex(hexStrWithFiles, {
       overwrite: false,
     });
-    const fileList2 = micropythonFs.importFilesFromIntelHex(hexStrWithFiles, {
+    const fileList2H = micropythonFsH.importFilesFromIntelHex(hexStrWithFiles, {
       overwrite: true,
       formatFirst: false,
     });
 
     Object.keys(extraFiles).forEach((filename) => {
-      expect(fileList1).toContain(filename);
-      expect(fileList2).toContain(filename);
-      expect(micropythonFs.read(filename)).toEqual(extraFiles[filename]);
+      expect(fileList1Ih).toContain(filename);
+      expect(fileList2Ih).toContain(filename);
+      expect(micropythonFsIh.read(filename)).toEqual(extraFiles[filename]);
+      expect(fileList1H).toContain(filename);
+      expect(fileList2H).toContain(filename);
+      expect(micropythonFsH.read(filename)).toEqual(extraFiles[filename]);
     });
-    expect(micropythonFs.ls()).toContain('old_file.py');
+    expect(micropythonFsIh.ls()).toContain('old_file.py');
+    expect(micropythonFsH.ls()).toContain('old_file.py');
   });
 });
 
