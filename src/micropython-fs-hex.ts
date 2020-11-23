@@ -18,6 +18,10 @@ import {
 import { SimpleFile } from './simple-file';
 import { areUint8ArraysEqual } from './common';
 
+/**
+ * Extends the interface from microbit-fs-building to include the board ID that
+ * corresponds to each of the cached objects.
+ */
 interface MpFsBuilderCacheWithId extends MpFsBuilderCache {
   boardId: number;
 }
@@ -30,6 +34,14 @@ export interface IntelHexWithId {
   hex: string;
   /** Board ID to identify the Intel Hex and encode inside the Universal Hex */
   boardId: number;
+}
+
+/**
+ * Options for importing Hex files into a MicropythonFsHex instance.
+ */
+export interface ImportOptions {
+  overwrite?: boolean;
+  formatFirst?: boolean;
 }
 
 /**
@@ -301,10 +313,7 @@ export class MicropythonFsHex implements FsInterface {
    */
   importFilesFromIntelHex(
     intelHex: string,
-    {
-      overwrite = false,
-      formatFirst = false,
-    }: { overwrite?: boolean; formatFirst?: boolean } = {}
+    { overwrite = false, formatFirst = false }: ImportOptions = {}
   ): string[] {
     const files = getIntelHexFiles(intelHex);
     if (!Object.keys(files).length) {
@@ -347,10 +356,7 @@ export class MicropythonFsHex implements FsInterface {
    */
   importFilesFromUniversalHex(
     universalHex: string,
-    {
-      overwrite = false,
-      formatFirst = false,
-    }: { overwrite?: boolean; formatFirst?: boolean } = {}
+    { overwrite = false, formatFirst = false }: ImportOptions = {}
   ): string[] {
     if (!microbitUh.isUniversalHex(universalHex)) {
       throw new Error('Universal Hex provided is invalid.');
@@ -428,17 +434,7 @@ export class MicropythonFsHex implements FsInterface {
    *     erases the files after there are no error during hex file parsing.
    * @returns A filename list of added files.
    */
-  importFilesFromHex(
-    hexStr: string,
-    {
-      overwrite = false,
-      formatFirst = false,
-    }: { overwrite?: boolean; formatFirst?: boolean } = {}
-  ) {
-    const options = {
-      overwrite,
-      formatFirst,
-    };
+  importFilesFromHex(hexStr: string, options: ImportOptions = {}) {
     return microbitUh.isUniversalHex(hexStr)
       ? this.importFilesFromUniversalHex(hexStr, options)
       : this.importFilesFromIntelHex(hexStr, options);
