@@ -9,7 +9,24 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { bytesToStr } from './common';
+import * as hexMapUtil from './hex-map-utils';
+import { DeviceMemInfo } from './device-mem-info';
+import { DeviceVersion } from './hex-mem-info';
+
+const DEVICE_INFO = [
+  {
+    deviceVersion: DeviceVersion.one,
+    magicHeader: 0x17eeb07c,
+    flashSize: 256 * 1024,
+    fsEnd: 256 * 1024,
+  },
+  {
+    deviceVersion: DeviceVersion.two,
+    magicHeader: 0x47eeb07c,
+    flashSize: 512 * 1024,
+    fsEnd: 0x73000,
+  },
+];
 
 const UICR_START: number = 0x10001000;
 const UICR_CUSTOMER_OFFSET: number = 0x80;
@@ -17,7 +34,6 @@ const UICR_CUSTOMER_UPY_OFFSET: number = 0x40;
 const UICR_UPY_START: number =
   UICR_START + UICR_CUSTOMER_OFFSET + UICR_CUSTOMER_UPY_OFFSET;
 
-const UPY_MAGIC_HEADER: number[] = [0x17eeb07c];
 const UPY_DELIMITER: number = 0xffffffff;
 const UPY_REGIONS_TERMINATOR: number = 0x00000000;
 
@@ -44,72 +60,9 @@ enum MicropythonUicrAddress {
 }
 
 /** MicroPython data stored in the UICR Customer area. */
-interface MicropythonUicrData {
-  flashPageSize: number;
-  flashSize: number;
-  runtimeStartPage: number;
-  runtimeStartAddress: number;
-  runtimeEndUsed: number;
-  runtimeEndAddress: number;
+interface MicropythonUicrData extends DeviceMemInfo {
   uicrStartAddress: number;
   uicrEndAddress: number;
-  versionAddress: number;
-  version: string;
-}
-
-/**
- * Reads a 32 bit little endian number from an Intel Hex memory map.
- *
- * @param intelHexMap - Memory map of the Intel Hex data.
- * @param address - Start address of the 32 bit number.
- * @returns Number with the unsigned integer representation of those 4 bytes.
- */
-function getUint32FromIntelHexMap(
-  intelHexMap: MemoryMap,
-  address: number
-): number {
-  const uint32Data: Uint8Array = intelHexMap.slicePad(address, 4, 0xff);
-  // Typed arrays use the native endianness, force little endian with DataView
-  return new DataView(uint32Data.buffer).getUint32(0, true /* little endian */);
-}
-
-/**
- * Reads a 16 bit little endian number from an Intel Hex memory map.
- *
- * @param intelHexMap - Memory map of the Intel Hex data.
- * @param address - Start address of the 16 bit number.
- * @returns Number with the unsigned integer representation of those 2 bytes.
- */
-function getUint16FromIntelHexMap(
-  intelHexMap: MemoryMap,
-  address: number
-): number {
-  const uint16Data: Uint8Array = intelHexMap.slicePad(address, 2, 0xff);
-  // Typed arrays use the native endianness, force little endian with DataView
-  return new DataView(uint16Data.buffer).getUint16(0, true /* little endian */);
-}
-
-/**
- * Decodes a UTF-8 null terminated string stored in the Intel Hex data at
- * the indicated address.
- *
- * @param intelHexMap - Memory map of the Intel Hex data.
- * @param address - Start address for the string.
- * @returns String read from the Intel Hex data.
- */
-function getStringFromIntelHexMap(
-  intelHexMap: MemoryMap,
-  address: number
-): string {
-  const memBlock = intelHexMap.slice(address).get(address);
-  let iStrEnd = 0;
-  while (iStrEnd < memBlock.length && memBlock[iStrEnd] !== 0) iStrEnd++;
-  if (iStrEnd === memBlock.length) {
-    // Could not find a null character to indicate the end of the string
-    return '';
-  }
-  const stringBytes = memBlock.slice(0, iStrEnd);
-  return bytesToStr(stringBytes);
 }
 
 /**
@@ -121,7 +74,12 @@ function getStringFromIntelHexMap(
  */
 function confirmMagicValue(intelHexMap: MemoryMap): boolean {
   const readMagicHeader = getMagicValue(intelHexMap);
-  return UPY_MAGIC_HEADER.includes(readMagicHeader);
+  for (const device of DEVICE_INFO) {
+    if (device.magicHeader === readMagicHeader) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -132,10 +90,23 @@ function confirmMagicValue(intelHexMap: MemoryMap): boolean {
  * @returns The Magic Value from UICR.
  */
 function getMagicValue(intelHexMap: MemoryMap): number {
-  return getUint32FromIntelHexMap(
-    intelHexMap,
-    MicropythonUicrAddress.MagicValue
-  );
+  return hexMapUtil.getUint32(intelHexMap, MicropythonUicrAddress.MagicValue);
+}
+
+/**
+ * Reads the UICR data from an Intel Hex map and detects the device version.
+ *
+ * @param intelHexMap - Memory map of the Intel Hex data.
+ * @returns The micro:bit board version.
+ */
+function getDeviceVersion(intelHexMap: MemoryMap): number {
+  const readMagicHeader = getMagicValue(intelHexMap);
+  for (const device of DEVICE_INFO) {
+    if (device.magicHeader === readMagicHeader) {
+      return device.deviceVersion;
+    }
+  }
+  throw new Error('Cannot find device version, unknown UICR Magic value');
 }
 
 /**
@@ -145,8 +116,29 @@ function getMagicValue(intelHexMap: MemoryMap): number {
  * @returns The micro:bit flash size.
  */
 function getFlashSize(intelHexMap: MemoryMap): number {
-  // This is the micro:bit flash size
-  return 0x40000;
+  const readMagicHeader = getMagicValue(intelHexMap);
+  for (const device of DEVICE_INFO) {
+    if (device.magicHeader === readMagicHeader) {
+      return device.flashSize;
+    }
+  }
+  throw new Error('Cannot find flash size, unknown UICR Magic value');
+}
+
+/**
+ * Reads the UICR data from an Intel Hex map and retrieves the fs end address.
+ *
+ * @param intelHexMap - Memory map of the Intel Hex data.
+ * @returns The micro:bit filesystem end address.
+ */
+function getFsEndAddress(intelHexMap: MemoryMap): number {
+  const readMagicHeader = getMagicValue(intelHexMap);
+  for (const device of DEVICE_INFO) {
+    if (device.magicHeader === readMagicHeader) {
+      return device.fsEnd;
+    }
+  }
+  throw new Error('Cannot find fs end address, unknown UICR Magic value');
 }
 
 /**
@@ -156,7 +148,7 @@ function getFlashSize(intelHexMap: MemoryMap): number {
  * @returns The size of each flash page size.
  */
 function getPageSize(intelHexMap: MemoryMap): number {
-  const pageSize: number = getUint32FromIntelHexMap(
+  const pageSize: number = hexMapUtil.getUint32(
     intelHexMap,
     MicropythonUicrAddress.PageSize
   );
@@ -171,10 +163,7 @@ function getPageSize(intelHexMap: MemoryMap): number {
  * @returns The start page number of the MicroPython runtime.
  */
 function getStartPage(intelHexMap: MemoryMap): number {
-  return getUint16FromIntelHexMap(
-    intelHexMap,
-    MicropythonUicrAddress.StartPage
-  );
+  return hexMapUtil.getUint16(intelHexMap, MicropythonUicrAddress.StartPage);
 }
 
 /**
@@ -185,10 +174,7 @@ function getStartPage(intelHexMap: MemoryMap): number {
  * @returns The number of pages used by the MicroPython runtime.
  */
 function getPagesUsed(intelHexMap: MemoryMap): number {
-  return getUint16FromIntelHexMap(
-    intelHexMap,
-    MicropythonUicrAddress.PagesUsed
-  );
+  return hexMapUtil.getUint16(intelHexMap, MicropythonUicrAddress.PagesUsed);
 }
 
 /**
@@ -200,7 +186,7 @@ function getPagesUsed(intelHexMap: MemoryMap): number {
  * is stored.
  */
 function getVersionLocation(intelHexMap: MemoryMap): number {
-  return getUint32FromIntelHexMap(
+  return hexMapUtil.getUint32(
     intelHexMap,
     MicropythonUicrAddress.VersionLocation
   );
@@ -222,21 +208,28 @@ function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
   const flashPageSize: number = getPageSize(uicrMap);
   const flashSize: number = getFlashSize(uicrMap);
   const startPage: number = getStartPage(uicrMap);
+  const flashStartAddress: number = startPage * flashPageSize;
+  const flashEndAddress: number = flashStartAddress + flashSize;
   const pagesUsed: number = getPagesUsed(uicrMap);
+  const runtimeEndAddress: number = pagesUsed * flashPageSize;
   const versionAddress: number = getVersionLocation(uicrMap);
-  const version: string = getStringFromIntelHexMap(intelHexMap, versionAddress);
+  const uPyVersion: string = hexMapUtil.getString(intelHexMap, versionAddress);
+  const deviceVersion: number = getDeviceVersion(uicrMap);
+  const fsEndAddress: number = getFsEndAddress(uicrMap);
 
   return {
     flashPageSize,
     flashSize,
-    runtimeStartPage: startPage,
-    runtimeStartAddress: startPage * flashPageSize,
-    runtimeEndUsed: pagesUsed,
-    runtimeEndAddress: pagesUsed * flashPageSize,
+    flashStartAddress,
+    flashEndAddress,
+    runtimeStartAddress: flashStartAddress,
+    runtimeEndAddress,
+    fsStartAddress: runtimeEndAddress,
+    fsEndAddress,
     uicrStartAddress: MicropythonUicrAddress.MagicValue,
     uicrEndAddress: MicropythonUicrAddress.End,
-    versionAddress,
-    version,
+    uPyVersion,
+    deviceVersion,
   };
 }
 

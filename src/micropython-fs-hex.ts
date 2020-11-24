@@ -1,9 +1,11 @@
 /**
- *  Manage files in a MicroPython hex file.
+ * Filesystem management for MicroPython hex files.
  *
  * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
  * SPDX-License-Identifier: MIT
  */
+import * as microbitUh from '@microbit/microbit-universal-hex';
+
 import { FsInterface } from './fs-interface';
 import {
   MpFsBuilderCache,
@@ -14,34 +16,98 @@ import {
   getIntelHexFiles,
 } from './micropython-fs-builder';
 import { SimpleFile } from './simple-file';
+import { areUint8ArraysEqual } from './common';
 
+/**
+ * Extends the interface from microbit-fs-building to include the board ID that
+ * corresponds to each of the cached objects.
+ */
+interface MpFsBuilderCacheWithId extends MpFsBuilderCache {
+  boardId: number;
+}
+
+/**
+ * Simple interface to pair an Intel Hex string with the board ID it represents.
+ */
+export interface IntelHexWithId {
+  /** Intel Hex string */
+  hex: string;
+  /** Board ID to identify the Intel Hex and encode inside the Universal Hex */
+  boardId: number;
+}
+
+/**
+ * Options for importing Hex files into a MicropythonFsHex instance.
+ */
+export interface ImportOptions {
+  overwrite?: boolean;
+  formatFirst?: boolean;
+}
+
+/**
+ * Manage filesystem files in one or multiple MicroPython hex files.
+ *
+ * @public
+ */
 export class MicropythonFsHex implements FsInterface {
-  private _uPyFsBuilderCache: MpFsBuilderCache;
+  private _uPyFsBuilderCache: MpFsBuilderCacheWithId[] = [];
   private _files: { [id: string]: SimpleFile } = {};
   private _storageSize: number = 0;
 
   /**
    * File System manager constructor.
-   * At the moment it needs a MicroPython hex string without a files included.
    *
-   * @param intelHex - MicroPython Intel Hex string.
+   * At the moment it needs a MicroPython hex string without files included.
+   * Multiple MicroPython images can be provided to generate a Universal Hex.
+   *
+   * @throws {Error} When any of the input iHex contains filesystem files.
+   * @throws {Error} When any of the input iHex is not a valid MicroPython hex.
+   *
+   * @param intelHex - MicroPython Intel Hex string or an array of Intel Hex
+   *    strings with their respective board IDs.
    */
   constructor(
-    intelHex: string,
+    intelHex: string | IntelHexWithId[],
     { maxFsSize = 0 }: { maxFsSize?: number } = {}
   ) {
-    if (!intelHex) {
-      throw new Error('Invalid MicroPython hex invalid.');
-    }
-    this._uPyFsBuilderCache = createMpFsBuilderCache(intelHex);
-    this.setStorageSize(maxFsSize || this._uPyFsBuilderCache.fsSize);
-    // Check if there are files in the input hex
-    const hexFiles = getIntelHexFiles(this._uPyFsBuilderCache.originalMemMap);
-    if (Object.keys(hexFiles).length) {
-      throw new Error(
-        'There are files in the MicropythonFsHex constructor hex file input.'
-      );
-    }
+    const hexWithIdArray: IntelHexWithId[] = Array.isArray(intelHex)
+      ? intelHex
+      : [
+          {
+            hex: intelHex,
+            boardId: 0x0000,
+          },
+        ];
+
+    // Generate and store the MicroPython Builder caches
+    let minFsSize = Infinity;
+    hexWithIdArray.forEach((hexWithId) => {
+      if (!hexWithId.hex) {
+        throw new Error('Invalid MicroPython hex.');
+      }
+      const builderCache = createMpFsBuilderCache(hexWithId.hex);
+      const thisBuilderCache: MpFsBuilderCacheWithId = {
+        originalIntelHex: builderCache.originalIntelHex,
+        originalMemMap: builderCache.originalMemMap,
+        uPyEndAddress: builderCache.uPyEndAddress,
+        uPyIntelHex: builderCache.uPyIntelHex,
+        fsSize: builderCache.fsSize,
+        boardId: hexWithId.boardId,
+      };
+      this._uPyFsBuilderCache.push(thisBuilderCache);
+      minFsSize = Math.min(minFsSize, thisBuilderCache.fsSize);
+    });
+    this.setStorageSize(maxFsSize || minFsSize);
+
+    // Check if there are files in any of the input hex
+    this._uPyFsBuilderCache.forEach((builderCache) => {
+      const hexFiles = getIntelHexFiles(builderCache.originalMemMap);
+      if (Object.keys(hexFiles).length) {
+        throw new Error(
+          'There are files in the MicropythonFsHex constructor hex file input.'
+        );
+      }
+    });
   }
 
   /**
@@ -190,7 +256,12 @@ export class MicropythonFsHex implements FsInterface {
    * @param {number} size - Size in bytes for the filesystem.
    */
   setStorageSize(size: number): void {
-    if (size > this._uPyFsBuilderCache.fsSize) {
+    let minFsSize = Infinity;
+    this._uPyFsBuilderCache.forEach((builderCache) => {
+      minFsSize = Math.min(minFsSize, builderCache.fsSize);
+    });
+
+    if (size > minFsSize) {
       throw new Error(
         'Storage size limit provided is larger than size available in the MicroPython hex.'
       );
@@ -212,23 +283,17 @@ export class MicropythonFsHex implements FsInterface {
    * @returns The total number of bytes currently used by files in the file system.
    */
   getStorageUsed(): number {
-    let total: number = 0;
-    Object.values(this._files).forEach(
-      (value) => (total += this.size(value.filename))
+    return Object.values(this._files).reduce(
+      (accumulator, current) => accumulator + this.size(current.filename),
+      0
     );
-    return total;
   }
 
   /**
    * @returns The remaining storage of the file system in bytes.
    */
   getStorageRemaining(): number {
-    let total: number = 0;
-    const capacity: number = this.getStorageSize();
-    Object.values(this._files).forEach(
-      (value) => (total += this.size(value.filename))
-    );
-    return capacity - total;
+    return this.getStorageSize() - this.getStorageUsed();
   }
 
   /**
@@ -248,18 +313,14 @@ export class MicropythonFsHex implements FsInterface {
    */
   importFilesFromIntelHex(
     intelHex: string,
-    {
-      overwrite = false,
-      formatFirst = false,
-    }: { overwrite?: boolean; formatFirst?: boolean } = {}
+    { overwrite = false, formatFirst = false }: ImportOptions = {}
   ): string[] {
     const files = getIntelHexFiles(intelHex);
     if (!Object.keys(files).length) {
-      throw new Error('Hex does not have any files to import');
+      throw new Error('Intel Hex does not have any files to import');
     }
 
     if (formatFirst) {
-      delete this._files;
       this._files = {};
     }
     const existingFiles: string[] = [];
@@ -278,16 +339,124 @@ export class MicropythonFsHex implements FsInterface {
   }
 
   /**
-   * Generate a new copy of the MicroPython Intel Hex with the filesystem
-   * included.
+   * Read the files included in a MicroPython Universal Hex string and add them
+   * to this instance.
+   *
+   * @throws {Error} When there are no files to import from one of the hex.
+   * @throws {Error} When the files in the individual hex are different.
+   * @throws {Error} When there is a problem reading files from one of the hex.
+   * @throws {Error} When a filename already exists in this instance (all other
+   *     files are still imported).
+   *
+   * @param universalHex - MicroPython Universal Hex string with files.
+   * @param overwrite - Flag to overwrite existing files in this instance.
+   * @param formatFirst - Erase all the previous files before importing. It only
+   *     erases the files after there are no error during hex file parsing.
+   * @returns A filename list of added files.
+   */
+  importFilesFromUniversalHex(
+    universalHex: string,
+    { overwrite = false, formatFirst = false }: ImportOptions = {}
+  ): string[] {
+    if (!microbitUh.isUniversalHex(universalHex)) {
+      throw new Error('Universal Hex provided is invalid.');
+    }
+
+    interface FileObj {
+      [filename: string]: Uint8Array;
+    }
+
+    const hexWithIds = microbitUh.separateUniversalHex(universalHex);
+    const allFileGroups: FileObj[] = [];
+    hexWithIds.forEach((hexWithId: IntelHexWithId) => {
+      const fileGroup = getIntelHexFiles(hexWithId.hex);
+      if (!Object.keys(fileGroup).length) {
+        throw new Error(
+          `Hex with ID ${hexWithId.boardId} from Universal Hex does not have any files to import`
+        );
+      }
+      allFileGroups.push(fileGroup);
+    });
+
+    // Ensure all hexes have the same files
+    allFileGroups.forEach((fileGroup: FileObj) => {
+      // Create new array without this current group
+      const compareFileGroups = allFileGroups.filter((v) => v !== fileGroup);
+      // Check that all files in this group are in all the others
+      for (const [fileName, fileContent] of Object.entries(fileGroup)) {
+        compareFileGroups.forEach((compareGroup: FileObj) => {
+          if (
+            !compareGroup.hasOwnProperty(fileName) ||
+            !areUint8ArraysEqual(compareGroup[fileName], fileContent)
+          ) {
+            throw new Error(
+              'Mismatch in the different Hexes inside the Universal Hex'
+            );
+          }
+        });
+      }
+    });
+
+    // If we reached this point all file groups are the same and we can use any
+    const files = allFileGroups[0];
+    if (formatFirst) {
+      this._files = {};
+    }
+    const existingFiles: string[] = [];
+    Object.keys(files).forEach((filename) => {
+      if (!overwrite && this.exists(filename)) {
+        existingFiles.push(filename);
+      } else {
+        this.write(filename, files[filename]);
+      }
+    });
+    // Only throw the error at the end so that all other files are imported
+    if (existingFiles.length) {
+      throw new Error(`Files "${existingFiles}" from hex already exists.`);
+    }
+    return Object.keys(files);
+  }
+
+  /**
+   * Read the files included in a MicroPython Universal or Intel Hex string and
+   * add them to this instance.
+   *
+   * @throws {Error} When there are no files to import from the hex.
+   * @throws {Error} When in the Universal Hex the files of the individual hexes
+   *    are different.
+   * @throws {Error} When there is a problem reading files from one of the hex.
+   * @throws {Error} When a filename already exists in this instance (all other
+   *     files are still imported).
+   *
+   * @param hexStr - MicroPython Intel or Universal Hex string with files.
+   * @param overwrite - Flag to overwrite existing files in this instance.
+   * @param formatFirst - Erase all the previous files before importing. It only
+   *     erases the files after there are no error during hex file parsing.
+   * @returns A filename list of added files.
+   */
+  importFilesFromHex(hexStr: string, options: ImportOptions = {}) {
+    return microbitUh.isUniversalHex(hexStr)
+      ? this.importFilesFromUniversalHex(hexStr, options)
+      : this.importFilesFromIntelHex(hexStr, options);
+  }
+
+  /**
+   * Generate a new copy of the MicroPython Intel Hex with the files in the
+   * filesystem included.
    *
    * @throws {Error} When a file doesn't have any data.
    * @throws {Error} When there are issues calculating file system boundaries.
    * @throws {Error} When there is no space left for a file.
+   * @throws {Error} When the board ID is not found.
+   * @throws {Error} When there are multiple MicroPython hexes and board ID is
+   *    not provided.
+   *
+   * @param boardId - When multiple MicroPython hex files are provided select
+   *    one via this argument.
    *
    * @returns A new string with MicroPython and the filesystem included.
    */
-  getIntelHex(): string {
+  getIntelHex(boardId?: number): string {
     if (this.getStorageRemaining() < 0) {
       throw new Error('There is no storage space left.');
     }
@@ -295,7 +464,24 @@ export class MicropythonFsHex implements FsInterface {
     Object.values(this._files).forEach((file) => {
       files[file.filename] = file.getBytes();
     });
-    return generateHexWithFiles(this._uPyFsBuilderCache, files);
+
+    if (boardId === undefined) {
+      if (this._uPyFsBuilderCache.length === 1) {
+        return generateHexWithFiles(this._uPyFsBuilderCache[0], files);
+      } else {
+        throw new Error(
+          'The Board ID must be specified if there are multiple MicroPythons.'
+        );
+      }
+    }
+
+    for (const builderCache of this._uPyFsBuilderCache) {
+      if (builderCache.boardId === boardId) {
+        return generateHexWithFiles(builderCache, files);
+      }
+    }
+    // If we reach this point we could not find the board ID
+    throw new Error('Board ID requested not found.');
   }
 
   /**
@@ -304,10 +490,16 @@ export class MicropythonFsHex implements FsInterface {
    * @throws {Error} When a file doesn't have any data.
    * @throws {Error} When there are issues calculating file system boundaries.
    * @throws {Error} When there is no space left for a file.
+   * @throws {Error} When the board ID is not found.
+   * @throws {Error} When there are multiple MicroPython hexes and board ID is
+   *    not provided.
+   *
+   * @param boardId - When multiple MicroPython hex files are provided select
+   *    one via this argument.
    *
    * @returns A Uint8Array with MicroPython and the filesystem included.
    */
-  getIntelHexBytes(): Uint8Array {
+  getIntelHexBytes(boardId?: number): Uint8Array {
     if (this.getStorageRemaining() < 0) {
       throw new Error('There is no storage space left.');
     }
@@ -315,10 +507,59 @@ export class MicropythonFsHex implements FsInterface {
     Object.values(this._files).forEach((file) => {
       files[file.filename] = file.getBytes();
     });
-    return addIntelHexFiles(
-      this._uPyFsBuilderCache.originalMemMap,
-      files,
-      true
-    ) as Uint8Array;
+
+    if (boardId === undefined) {
+      if (this._uPyFsBuilderCache.length === 1) {
+        return addIntelHexFiles(
+          this._uPyFsBuilderCache[0].originalMemMap,
+          files,
+          true
+        ) as Uint8Array;
+      } else {
+        throw new Error(
+          'The Board ID must be specified if there are multiple MicroPythons.'
+        );
+      }
+    }
+    for (const builderCache of this._uPyFsBuilderCache) {
+      if (builderCache.boardId === boardId) {
+        return addIntelHexFiles(
+          builderCache.originalMemMap,
+          files,
+          true
+        ) as Uint8Array;
+      }
+    }
+    // If we reach this point we could not find the board ID
+    throw new Error('Board ID requested not found.');
+  }
+
+  /**
+   * Generate a new copy of a MicroPython Universal Hex with the files in the
+   * filesystem included.
+   *
+   * @throws {Error} When a file doesn't have any data.
+   * @throws {Error} When there are issues calculating file system boundaries.
+   * @throws {Error} When there is no space left for a file.
+   * @throws {Error} When this method is called without having multiple
+   *    MicroPython hexes.
+   *
+   * @returns A new Universal Hex string with MicroPython and filesystem.
+   */
+  getUniversalHex(): string {
+    if (this._uPyFsBuilderCache.length === 1) {
+      throw new Error(
+        'MicropythonFsHex constructor must have more than one MicroPython ' +
+          'Intel Hex to generate a Universal Hex.'
+      );
+    }
+    const iHexWithIds: IntelHexWithId[] = [];
+    this._uPyFsBuilderCache.forEach((builderCache) => {
+      iHexWithIds.push({
+        hex: this.getIntelHex(builderCache.boardId),
+        boardId: builderCache.boardId,
+      });
+    });
+    return microbitUh.createUniversalHex(iHexWithIds);
   }
 }

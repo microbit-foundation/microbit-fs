@@ -9,7 +9,7 @@ nav_order: 1
 # micro:bit Filesystem
 {: .fs-9 }
 
-<img alt="microbit-fs logo" src="img/microbit-fs-logo.png" style="max-height: 100px; float: left; padding-right: 16px;">
+<img alt="microbit-fs logo" src="img/microbit-fs-logo.png" style="max-height: 125px; float: left; padding-right: 16px;">
 
 Manipulate files in a micro:bit MicroPython Intel Hex file.
 {: .fs-6 .fw-300 }
