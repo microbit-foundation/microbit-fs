@@ -25,7 +25,7 @@ describe('Read MicroPython UICR data.', () => {
       'micro:bit v2.0.99+b260810 on 2020-11-17; ' +
       'MicroPython b260810 on 2020-11-17';
 
-    const result = flashRegions.getIntelHexUicrData(uPyHexFile);
+    const result = flashRegions.getIntelHexFlashRegionsData(uPyHexFile);
 
     expect(result.flashPageSize).toEqual(expectedPageSize);
     expect(result.flashSize).toEqual(expectedFlashSize);

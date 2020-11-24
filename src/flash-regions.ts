@@ -35,24 +35,68 @@
 import MemoryMap from 'nrf-intel-hex';
 
 import { DeviceMemInfo, DeviceVersion } from './device-mem-info';
+import { areUint8ArraysEqual } from './common';
 import * as hexMapUtil from './hex-map-utils';
 
+/** Indicates the data contain in each of the different regions */
+enum RegionId {
+  /** Soft Device is the data blob containing the Nordic Bluetooth stack. */
+  softDevice = 1,
+  /** Contains the MicroPython runtime. */
+  microPython = 2,
+  /** Contains the MicroPython microbit filesystem reserved flash. */
+  fs = 3,
+}
+
+/**
+ * The "hash type" field in a region row indicates how to interpret the "hash
+ * data" field.
+ */
+enum RegionHashType {
+  /** The hash data is empty. */
+  empty = 0,
+  /** The full hash data field is used as a hash of the region in flash */
+  data = 1,
+  /** The 4 LSB bytes of the hash data field are used as a pointer  */
+  pointer = 2,
+}
+
+/**
+ * The data stored in a Region row from the Flash Regions table.
+ */
 interface RegionRow {
-  id: number;
+  /** The Region ID, as described in the RegionId enum. */
+  id: RegionId;
+  /** The flash page where this Region starts. */
   startPage: number;
+  /** Length of the region in bytes. */
   lengthBytes: number;
-  hashType: number;
+  /** Identifies the type of data contained in the Hash Data field. */
+  hashType: RegionHashType;
+  /** Hash Data can be one of the types indicated in the RegionHashType enum. */
   hashData: number;
+  /** When Hash Data is a pointer, this variable holds the pointed string. */
   hashPointerData: string;
 }
 
+/**
+ * The Flash Regions Table ends with a Header containing information about the
+ * table itsel.
+ */
 interface TableHeader {
+  /** The flash page size in log2 format. */
   pageSizeLog2: number;
+  /** The flash page size in bytes. */
   pageSize: number;
+  /** The number of regions described in the table. */
   regionCount: number;
+  /** The length in bytes of the table, excluding this header. */
   tableLength: number;
+  /** The Flash Regions Table format version. */
   version: number;
+  /** The address of this table header (useful for calculation row offsets). */
   startAddress: number;
+  /** The end address of this table header. */
   endAddress: number;
 }
 
@@ -80,7 +124,7 @@ enum RegionHeaderOffset {
   regionCount = pageSizeLog2 + NUM_REG_LEN_BYTES,
   tableLength = regionCount + TABLE_LEN_LEN_BYTES,
   version = tableLength + VERSION_LEN_BYTES,
-  magic_1 = version + MAGIC_1_LEN_BYTES,
+  magic1 = version + MAGIC_1_LEN_BYTES,
 }
 
 // Magic numbers to identify the Flash Regions Table in flash
@@ -114,44 +158,46 @@ enum RegionRowOffset {
 const REGION_ROW_LEN_BYTES = RegionRowOffset.id;
 
 /**
- * The "hash type" field in a region row indicates how to interpret the "hash
- * data" field.
- */
-enum RegionHashType {
-  /** The hash data is empty. */
-  empty = 0,
-  /** The full hash data field is used as a hash of the region in flash */
-  data = 1,
-  /** The 4 LSB bytes of the hash data field are used as a pointer  */
-  pointer = 2,
-}
-
-/** Indicates the data contain in each of the different regions */
-enum RegionId {
-  softDevice = 1,
-  microPython = 2,
-  fs = 3,
-}
-
-/**
- * .
+ * Iterates through the provided Intel Hex Memory Map and tries to find the
+ * Flash Regions Table header, by looking for the magic values at the end of
+ * each flash page.
  *
- * @param iHexMap - .
- * @returns {TableHeader}
+ * TODO: Indicate here what errors can be thrown.
+ *
+ * @param iHexMap - Intel Hex memory map to scan for the Flash Regions Table.
+ * @param pSize - Flash page size to scan at the end of each page.
+ * @returns The table header data.
  */
-function getTableHeader(iHexMap: MemoryMap): TableHeader {
+function getTableHeader(iHexMap: MemoryMap, pSize: number = 1024): TableHeader {
   let endAddress = 0;
-  for (let i = 4096; i <= 0x80000; i += 4096) {
+  const magic1ToFind = new Uint8Array(
+    new Uint32Array([REGION_HEADER_MAGIC_1]).buffer
+  );
+  const magic2ToFind = new Uint8Array(
+    new Uint32Array([REGION_HEADER_MAGIC_2]).buffer
+  );
+  const mapEntries = iHexMap.paginate(pSize, 0xff).entries();
+  for (let iter = mapEntries.next(); !iter.done; iter = mapEntries.next()) {
+    if (!iter.value) continue;
+    const blockByteArray: Uint8Array = iter.value[1];
+    const subArrayMagic2 = blockByteArray.subarray(-RegionHeaderOffset.magic2);
     if (
-      iHexMap.getUint32(i - RegionHeaderOffset.magic2, true) ===
-        REGION_HEADER_MAGIC_2 &&
-      iHexMap.getUint32(i - RegionHeaderOffset.magic_1, true) ===
-        REGION_HEADER_MAGIC_1
+      areUint8ArraysEqual(subArrayMagic2, magic2ToFind) &&
+      areUint8ArraysEqual(
+        blockByteArray.subarray(
+          -RegionHeaderOffset.magic1,
+          -(RegionHeaderOffset.magic1 - MAGIC_1_LEN_BYTES)
+        ),
+        magic1ToFind
+      )
     ) {
-      endAddress = i;
+      const pageStartAddress: number = iter.value[0];
+      endAddress = pageStartAddress + pSize;
       break;
     }
   }
+  // TODO: Throw an error if table is not found.
+
   const version = hexMapUtil.getUint16(
     iHexMap,
     endAddress - RegionHeaderOffset.version
@@ -169,7 +215,7 @@ function getTableHeader(iHexMap: MemoryMap): TableHeader {
     endAddress - RegionHeaderOffset.pageSizeLog2
   );
   const pageSize = Math.pow(2, pageSizeLog2);
-  const startAddress = endAddress - RegionHeaderOffset.magic_1;
+  const startAddress = endAddress - RegionHeaderOffset.magic1;
 
   return {
     pageSizeLog2,
@@ -183,10 +229,15 @@ function getTableHeader(iHexMap: MemoryMap): TableHeader {
 }
 
 /**
- * .
+ * Parses a Region rows from a Flash Regions Table inside the Intel Hex memory
+ * map, which ends at the provided rowEndAddress.
  *
- * @param iHexMap - .
- * @param rowEndAddress - .
+ * Since the Flash Regions Table is placed at the end of a page, we iterate
+ * from the end to the beginning.
+ *
+ * @param iHexMap - Intel Hex memory map to scan for the Flash Regions Table.
+ * @param rowEndAddress - Address at which the row ends (same as the address
+ *    where the next row or table header starts).
  * @returns The Region info from the row.
  */
 function getRegionRow(iHexMap: MemoryMap, rowEndAddress: number): RegionRow {
@@ -224,15 +275,19 @@ function getRegionRow(iHexMap: MemoryMap, rowEndAddress: number): RegionRow {
 }
 
 /**
- * Reads the UICR data from an Intel Hex map and retrieves the MicroPython data.
+ * Reads the Flash Regions Table data from an Intel Hex map and retrieves the
+ * MicroPython DeviceMemInfo data.
  *
  * @throws {Error} When the Magic Header is not present.
+ * @throws {Error} When the MicroPython or FS regions are not found.
  *
- * @param intelHexMap - Memory map of the Intel Hex data.
- * @returns Object with the decoded UICR MicroPython data.
+ * @param intelHexMap - Memory map of the Intel Hex to scan.
+ * @returns Object with the parsed data from the Flash Regions Table.
  */
-function getHexMapUicrData(iHexMap: MemoryMap): DeviceMemInfo {
-  const tableHeader = getTableHeader(iHexMap);
+function getHexMapFlashRegionsData(iHexMap: MemoryMap): DeviceMemInfo {
+  // TODO: There is currently have some "internal" knowledge here and it's
+  // scanning the flash knowing the page size is 4 KBs
+  const tableHeader = getTableHeader(iHexMap, 4096);
   const regionRows: { [id: string]: RegionRow } = {};
   for (let i = 0; i < tableHeader.regionCount; i++) {
     const rowEndAddress = tableHeader.startAddress - i * REGION_ROW_LEN_BYTES;
@@ -279,16 +334,17 @@ function getHexMapUicrData(iHexMap: MemoryMap): DeviceMemInfo {
 }
 
 /**
- * Reads the UICR data from an Intel Hex string and retrieves the MicroPython
- * data.
+ * Reads the Flash Regions Table data from an Intel Hex map and retrieves the
+ * MicroPython DeviceMemInfo data.
  *
  * @throws {Error} When the Magic Header is not present.
+ * @throws {Error} When the MicroPython or FS regions are not found.
  *
  * @param intelHex - MicroPython Intel Hex string.
- * @returns .
+ * @returns Object with the parsed data from the Flash Regions Table.
  */
-function getIntelHexUicrData(intelHex: string): DeviceMemInfo {
-  return getHexMapUicrData(MemoryMap.fromHex(intelHex));
+function getIntelHexFlashRegionsData(intelHex: string): DeviceMemInfo {
+  return getHexMapFlashRegionsData(MemoryMap.fromHex(intelHex));
 }
 
-export { getHexMapUicrData, getIntelHexUicrData };
+export { getHexMapFlashRegionsData, getIntelHexFlashRegionsData };
