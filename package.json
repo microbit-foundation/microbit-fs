@@ -42,7 +42,8 @@
     "format": "prettier --config prettier.config.js \"**/*.{ts,tsx,js,jsx,css,scss,sass,less}\"",
     "format:fix": "npm run format -- --write",
     "lint": "tslint --project tsconfig.json --format codeFrame",
-    "lint:fix": "npm run lint -- --fix"
+    "lint:fix": "npm run lint -- --fix",
+    "docs": "typedoc --options config/typedoc.json"
   },
   "peerDependencies": {
     "tslib": ">=1.9.0"
@@ -71,11 +72,13 @@
     "rollup-plugin-sourcemaps": "~0.5.0",
     "shx": "^0.3.2",
     "ts-jest": "~25.3.1",
-    "tslib": "~1.11.1",
+    "tslib": "1.14.1",
     "tslint": "~6.1.1",
     "tslint-config-prettier": "~1.18.0",
     "tslint-config-standard": "~9.0.0",
     "tslint-etc": "~1.10.1",
-    "typescript": "~3.8.3"
+    "typedoc": "0.20.14",
+    "typedoc-neo-theme": "1.1.0",
+    "typescript": "3.9.7"
   }
 }
