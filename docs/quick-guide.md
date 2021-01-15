@@ -8,7 +8,14 @@ nav_order: 2
 
 ## ES5 UMD Bundle
 
+Download the UMD bundle from a GitHub release and add it to the page:
+
+```html
+<script src="microbit-fs.umd.min.js"></script>
+```
+
 ### MicroPython Filesystem inside a hex file
+
 Initialise a File System instance with a MicroPython Intel Hex string and start operating on files:
 
 ```js
@@ -98,3 +105,10 @@ console.log('Filesystem End Address:' + deviceMemInfoData.fsEndAddress);
 console.log('MicroPython Version:' + deviceMemInfoData.uPyVersion);
 console.log('Device Version: ' + deviceMemInfoData.deviceVersion);
 ```
+
+## npm package
+
+You can integrate this library in your project using the npm package:
+[https://www.npmjs.com/package/@microbit/microbit-fs](https://www.npmjs.com/package/@microbit/microbit-fs)
+
+For information on how to use this library check the API documentation.
