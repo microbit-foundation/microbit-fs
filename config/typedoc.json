@@ -30,7 +30,13 @@
       "url": null
     }, {
       "label": " micro:bit Tech Site ",
-      "url": "https://tech.microbit.org/"
+      "url": "https://tech.microbit.org"
+    }, {
+      "label": " | ",
+      "url": null
+    }, {
+      "label": " GitHub Repo ",
+      "url": "https://github.com/microbit-foundation/microbit-fs/"
     }
   ],
   "outline": [{

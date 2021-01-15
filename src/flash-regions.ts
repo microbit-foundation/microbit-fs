@@ -25,7 +25,7 @@
  *
  * More information about how this data is added to the MicroPython Intel Hex
  * file can be found in the MicroPython for micro:bit v2 repository:
- *   https://github.com/microbit-foundation/micropython-microbit-v2/blob/40e9bb687eb561cf590d151c6afa35efbcd4fec0/src/addlayouttable.py
+ *   https://github.com/microbit-foundation/micropython-microbit-v2/blob/v2.0.0-beta.3/src/addlayouttable.py
  *
  * @packageDocumentation
  *
