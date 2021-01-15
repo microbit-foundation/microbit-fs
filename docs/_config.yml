@@ -7,6 +7,15 @@ kramdown:
   # Interprets line breaks literally
   hard_wrap: false
 
+# Exclude this file as it will be used for the TypeDoc API docs generator
+exclude:
+  - api-readme.md
+
+# Need to include files with underscore for Typedoc output pages
+include:
+  - '_*_.html'
+  - '_*_.*.html'
+
 # Just The Docs settings
 
 # Enable or disable the site search
@@ -17,3 +26,15 @@ aux_links:
     - 'https://github.com/microbit-foundation/microbit-fs/'
 # Color scheme currently only supports "dark" or nil (default)
 color_scheme: 'light'
+# Create URL anchors for headings
+heading_anchors: true
+# Footer appears at the bottom of every page's main content
+footer_content: '&copy; 2021 Micro:bit Educational Foundation and project contributors. Distributed under the <a href="https://github.com/microbit-foundation/microbit-fs/blob/master/LICENSE.md">MIT open source license</a>.'
+
+# Footer "Edit this page on GitHub" link text
+gh_edit_link: true
+gh_edit_link_text: 'Edit this page on GitHub.'
+gh_edit_repository: 'https://github.com/microbit-foundation/microbit-fs'
+gh_edit_branch: 'master'
+gh_edit_source: docs # the source that your files originate from
+gh_edit_view_mode: 'tree' # "tree" or "edit" if you want the user to jump into the editor immediately

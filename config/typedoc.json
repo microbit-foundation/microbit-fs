@@ -42,7 +42,7 @@
       "Module": "modules/_micropython_appended_"
     },
     "Hex Memory Info": {
-      "Output Data Interface": "interfaces/_hex_mem_info_.devicememinfo",
+      "Output Data Interface": "interfaces/_device_mem_info_.devicememinfo",
       "HexMemInfo module": "modules/_hex_mem_info_",
       "UICR module": "modules/_uicr_",
       "Flash Regions module": "modules/_flash_regions_"
