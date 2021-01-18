@@ -19,6 +19,9 @@
     "path": "https://github.com/microbit-foundation/microbit-fs/tree/v0.9.0/src/",
     "line": "L"
   }],
+  "customStyles": [{
+    "path": "https://microbit-foundation.github.io/microbit-fs/assets/docs-extra.css"
+  }],
   "links": [{
       "label": " | ",
       "url": null
