@@ -8,7 +8,7 @@ import MemoryMap from 'nrf-intel-hex';
 import * as microbitUh from '@microbit/microbit-universal-hex';
 
 import * as fsBuilder from '../micropython-fs-builder';
-import { MicropythonFsHex } from '../micropython-fs-hex';
+import { MicropythonFsHex, microbitBoardId } from '../micropython-fs-hex';
 
 // MicroPython hex file for testing
 const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -36,7 +36,7 @@ describe('Test the class constructor', () => {
       const microbitFs = new MicropythonFsHex([
         {
           hex: uPy1HexFile,
-          boardId: 0x9903,
+          boardId: microbitBoardId.V2,
         },
         {
           hex: '',
@@ -64,7 +64,7 @@ describe('Test the class constructor', () => {
       const microbitFs = new MicropythonFsHex([
         {
           hex: uPy1HexFile,
-          boardId: 0x9903,
+          boardId: microbitBoardId.V2,
         },
         {
           hex: 'notahex',
@@ -128,8 +128,8 @@ describe('Test general read write operations', () => {
     testInstance(new MicropythonFsHex(uPy1HexFile));
     testInstance(
       new MicropythonFsHex([
-        { hex: uPy1HexFile, boardId: 0x9900 },
-        { hex: uPy2HexFile, boardId: 0x9903 },
+        { hex: uPy1HexFile, boardId: microbitBoardId.V1 },
+        { hex: uPy2HexFile, boardId: microbitBoardId.V2 },
       ])
     );
   });

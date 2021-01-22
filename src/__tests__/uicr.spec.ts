@@ -32,7 +32,7 @@ describe('Read MicroPython UICR data.', () => {
     const expectedUPyVersion =
       'micro:bit v1.0.1+b0bf4a9 on 2018-12-13; ' +
       'MicroPython v1.9.2-34-gd64154c73 on 2017-09-01';
-    const expectedDeviceVersion = 1;
+    const expectedDeviceVersion = 'V1';
 
     const result = getIntelHexUicrData(uPy1HexFile);
 
@@ -72,7 +72,7 @@ describe('Read MicroPython UICR data.', () => {
     const expectedUPyVersion =
       'micro:bit v2.0.99+3e09245 on 2020-11-02; ' +
       'MicroPython 3e09245 on 2020-11-02';
-    const expectedDeviceVersion = 2;
+    const expectedDeviceVersion = 'V2';
 
     const result = getIntelHexUicrData(uPy2HexFile);
 

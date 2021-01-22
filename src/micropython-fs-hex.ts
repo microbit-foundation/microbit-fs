@@ -19,11 +19,20 @@ import { SimpleFile } from './simple-file';
 import { areUint8ArraysEqual } from './common';
 
 /**
+ * The Board ID is used to identify the different targets from a Universal Hex.
+ * In this case the target represents a micro:bit version.
+ * For micro:bit V1 (v1.3, v1.3B and v1.5) the `boardId` is `0x9900`, and for
+ * V2 `0x9903`.
+ * This is being re-exported from the @microbit/microbit-universal-hex package.
+ */
+export import microbitBoardId = microbitUh.microbitBoardId;
+
+/**
  * Extends the interface from microbit-fs-building to include the board ID that
  * corresponds to each of the cached objects.
  */
 interface MpFsBuilderCacheWithId extends MpFsBuilderCache {
-  boardId: number;
+  boardId: number | microbitBoardId;
 }
 
 /**
@@ -33,7 +42,7 @@ export interface IntelHexWithId {
   /** Intel Hex string */
   hex: string;
   /** Board ID to identify the Intel Hex and encode inside the Universal Hex */
-  boardId: number;
+  boardId: number | microbitBoardId;
 }
 
 /**
@@ -456,7 +465,7 @@ export class MicropythonFsHex implements FsInterface {
    *
    * @returns A new string with MicroPython and the filesystem included.
    */
-  getIntelHex(boardId?: number): string {
+  getIntelHex(boardId?: number | microbitBoardId): string {
     if (this.getStorageRemaining() < 0) {
       throw new Error('There is no storage space left.');
     }
@@ -499,7 +508,7 @@ export class MicropythonFsHex implements FsInterface {
    *
    * @returns A Uint8Array with MicroPython and the filesystem included.
    */
-  getIntelHexBytes(boardId?: number): Uint8Array {
+  getIntelHexBytes(boardId?: number | microbitBoardId): Uint8Array {
     if (this.getStorageRemaining() < 0) {
       throw new Error('There is no storage space left.');
     }

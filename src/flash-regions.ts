@@ -329,7 +329,7 @@ function getHexMapFlashRegionsData(iHexMap: MemoryMap): DeviceMemInfo {
     fsStartAddress,
     fsEndAddress,
     uPyVersion,
-    deviceVersion: DeviceVersion.two,
+    deviceVersion: DeviceVersion.V2,
   };
 }
 

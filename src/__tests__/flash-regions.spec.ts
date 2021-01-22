@@ -38,6 +38,6 @@ describe('Read MicroPython UICR data.', () => {
     expect(result.fsStartAddress).toEqual(expectedFsStartAddress);
     expect(result.fsEndAddress).toEqual(expectedFsEndAddress);
     expect(result.uPyVersion).toEqual(expectedUpyVersion);
-    expect(result.deviceVersion).toEqual(2);
+    expect(result.deviceVersion).toEqual('V2');
   });
 });

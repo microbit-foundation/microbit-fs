@@ -173,7 +173,7 @@ function getEndAddress(intelHexMap: MemoryMap): number {
   let endAddress = deviceMem.fsEndAddress;
   // TODO: Maybe we should move this inside the UICR module to calculate
   // the real fs area in that step
-  if (deviceMem.deviceVersion === DeviceVersion.one) {
+  if (deviceMem.deviceVersion === DeviceVersion.V1) {
     if (isAppendedScriptPresent(intelHexMap)) {
       endAddress = AppendedBlock.StartAdd;
     }

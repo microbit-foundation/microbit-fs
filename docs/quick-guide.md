@@ -61,8 +61,8 @@ Using multiple MicroPython Intel Hex files to generate a Universal Hex:
 ```js
 // Create a new FileSystem instance passing the MicroPython Intel Hex string
 var micropythonFs = new microbitFs.MicropythonFsHex([
-  { hex: uPy1HexFile, boardId: 0x9900 },
-  { hex: uPy2HexFile, boardId: 0x9903 },
+  { hex: uPy1HexFile, boardId: microbitFs.microbitBoardId.V1 },
+  { hex: uPy2HexFile, boardId: microbitFs.microbitBoardId.V2 },
 ]);;
 
 // Import files from a different MicroPython Intel hex file with filesystem
@@ -70,10 +70,10 @@ var addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFi
 addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFiles, {overwrite: false, formatFirst: false});
 
 // Generate a new Intel hex string or Uint8Array with MicroPython and the files
-var uPy1IntelHexStrWithFs = micropythonFs.getIntelHex(0x9900);
-var uPy1IntelHexBytesWithFs = micropythonFs.getIntelHexBytes(0x9900);
-var uPy2IntelHexStrWithFs = micropythonFs.getIntelHex(0x9903);
-var uPy2IntelHexBytesWithFs = micropythonFs.getIntelHexBytes(0x9903);
+var uPy1IntelHexStrWithFs = micropythonFs.getIntelHex(microbitFs.microbitBoardId.V1);
+var uPy1IntelHexBytesWithFs = micropythonFs.getIntelHexBytes(microbitFs.microbitBoardId.V1);
+var uPy2IntelHexStrWithFs = micropythonFs.getIntelHex(microbitFs.microbitBoardId.V2);
+var uPy2IntelHexBytesWithFs = micropythonFs.getIntelHexBytes(microbitFs.microbitBoardId.V2);
 
 // Generate a new Universal hex string with all MicroPython+files data
 var universalHexStrWithFs = micropythonFs.getUniversalHex();

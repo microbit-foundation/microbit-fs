@@ -15,13 +15,13 @@ import { DeviceVersion } from './hex-mem-info';
 
 const DEVICE_INFO = [
   {
-    deviceVersion: DeviceVersion.one,
+    deviceVersion: DeviceVersion.V1,
     magicHeader: 0x17eeb07c,
     flashSize: 256 * 1024,
     fsEnd: 256 * 1024,
   },
   {
-    deviceVersion: DeviceVersion.two,
+    deviceVersion: DeviceVersion.V2,
     magicHeader: 0x47eeb07c,
     flashSize: 512 * 1024,
     fsEnd: 0x73000,
@@ -99,7 +99,7 @@ function getMagicValue(intelHexMap: MemoryMap): number {
  * @param intelHexMap - Memory map of the Intel Hex data.
  * @returns The micro:bit board version.
  */
-function getDeviceVersion(intelHexMap: MemoryMap): number {
+function getDeviceVersion(intelHexMap: MemoryMap): DeviceVersion {
   const readMagicHeader = getMagicValue(intelHexMap);
   for (const device of DEVICE_INFO) {
     if (device.magicHeader === readMagicHeader) {
@@ -214,7 +214,7 @@ function getHexMapUicrData(intelHexMap: MemoryMap): MicropythonUicrData {
   const runtimeEndAddress: number = pagesUsed * flashPageSize;
   const versionAddress: number = getVersionLocation(uicrMap);
   const uPyVersion: string = hexMapUtil.getString(intelHexMap, versionAddress);
-  const deviceVersion: number = getDeviceVersion(uicrMap);
+  const deviceVersion: DeviceVersion = getDeviceVersion(uicrMap);
   const fsEndAddress: number = getFsEndAddress(uicrMap);
 
   return {
