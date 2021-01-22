@@ -21,7 +21,7 @@ possible through contributions of companies and individuals around the world.
 This project is managed on GitHub, and the best way to contribute is to jump in
 and fix/file issues.
 
-https://github.com/microbit-foundation/microbit-fs
+[https://github.com/microbit-foundation/microbit-fs](https://github.com/microbit-foundation/microbit-fs)
 
 If you're interested in working on any of these items, please file an issue
 and mention @microbit-carlos.
@@ -33,7 +33,8 @@ A link to the Code of Conduct will soon be added here.
 
 ## Bugs
 
-Issue tracker: https://github.com/microbit-foundation/microbit-fs/issues
+Issue tracker:
+[https://github.com/microbit-foundation/microbit-fs/issues](https://github.com/microbit-foundation/microbit-fs/issues)
 
 ## Development Workflow
 

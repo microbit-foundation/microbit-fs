@@ -8,7 +8,9 @@ nav_order: 2
 
 ## ES5 UMD Bundle
 
-Download the UMD bundle from a GitHub release and add it to the page:
+Download the UMD bundle from the
+[latest GitHub release](https://github.com/microbit-foundation/microbit-fs/releases/latest)
+and add it to the page:
 
 ```html
 <script src="microbit-fs.umd.min.js"></script>
