@@ -1,5 +1,5 @@
 /**
- * .
+ * Retrieves the device information stored inside a MicroPython hex file.
  *
  * (c) 2020 Micro:bit Educational Foundation and the microbit-fs contributors.
  * SPDX-License-Identifier: MIT
@@ -10,6 +10,13 @@ import { DeviceMemInfo, DeviceVersion } from './device-mem-info';
 import * as flashRegions from './flash-regions';
 import * as uicr from './uicr';
 
+/**
+ * Attempts to retrieve the device memory data from an MicroPython Intel Hex
+ * memory map.
+ *
+ * @param {MemoryMap} intelHexMap MicroPython Intel Hex memory map to scan.
+ * @returns {DeviceMemInfo} Device data.
+ */
 function getHexMapDeviceMemInfo(intelHexMap: MemoryMap): DeviceMemInfo {
   let errorMsg = '';
   try {
@@ -25,10 +32,10 @@ function getHexMapDeviceMemInfo(intelHexMap: MemoryMap): DeviceMemInfo {
 }
 
 /**
- * .
+ * Attempts to retrieve the device memory data from an MicroPython Intel Hex.
  *
  * @param intelHex - MicroPython Intel Hex string.
- * @returns .
+ * @returns {DeviceMemInfo} Device data.
  */
 function getIntelHexDeviceMemInfo(intelHex: string): DeviceMemInfo {
   return getHexMapDeviceMemInfo(MemoryMap.fromHex(intelHex));

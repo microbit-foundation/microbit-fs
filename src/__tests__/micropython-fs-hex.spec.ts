@@ -1016,6 +1016,21 @@ describe('Test importing files from Intel Hex.', () => {
   });
 });
 
+describe('Test importing files from Universal Hex.', () => {
+  // TODO: These tests
+  // it('Correctly read files from a Universal Hex.', () => {});
+  // it('Throws an error if it is not a Universal hex.', () => {});
+  // it('Throws an error if there are no files to import.', () => {});
+  // it('Throws an error if files in the individual hexes do not match.', () => {});
+  // it('Disabled overwrite flag throws an error when file exists.', () => {});
+  // it('Enabled overwrite flag replaces the file.', () => {});
+  // it('By default it throws an error if a filename already exists.', () => {});
+  // it('Constructor hex file with files to import throws an error.', () => {});
+  // it('Enabling formatFirst flag erases the previous files.', () => {});
+  // it('Enabling formatFirst flag only formats if there are files to import.', () => {});
+  // it('Disabling formatFirst flag, and by default, keeps old files.', () => {});
+});
+
 describe('Test MicroPython hex filesystem size.', () => {
   it('Get how much available fs space there is in a MicroPython hex file.', () => {
     const micropythonFs = new MicropythonFsHex(uPy1HexFile);
@@ -1047,16 +1062,13 @@ describe('Test MicroPython hex filesystem size.', () => {
 });
 
 describe('End-to-end loop around.', () => {
-  it('Create some files, export hex, and import in a new instance', () => {
+  it('Create some files, export Intel hex, and import in a new instance', () => {
     const microbitFs = new MicropythonFsHex(uPy1HexFile);
     microbitFs.write('a.txt', 'This is some content');
     microbitFs.write('main.py', 'print("This is my code")');
-
     const iHexWithFiles = microbitFs.getIntelHex();
-    const microbitFsImported = new MicropythonFsHex([
-      { hex: uPy1HexFile, boardId: 0x9900 },
-      { hex: uPy2HexFile, boardId: 0x9903 },
-    ]);
+
+    const microbitFsImported = new MicropythonFsHex(uPy2HexFile);
     const importedFiles = microbitFsImported.importFilesFromIntelHex(
       iHexWithFiles
     );
@@ -1077,8 +1089,46 @@ describe('End-to-end loop around.', () => {
     expect(microbitFsImported.getStorageUsed()).toEqual(
       microbitFs.getStorageUsed()
     );
+  });
 
-    expect(microbitFsImported.getIntelHex(0x9900)).toEqual(iHexWithFiles);
+  it('Create some files, export Universal hex, and import in a new instance', () => {
+    const microbitFs = new MicropythonFsHex([
+      { hex: uPy1HexFile, boardId: microbitBoardId.V1 },
+      { hex: uPy2HexFile, boardId: microbitBoardId.V2 },
+    ]);
+    microbitFs.write('a.txt', 'This is some content');
+    microbitFs.write('main.py', 'print("This is my code")');
+    const uHexWithFiles = microbitFs.getUniversalHex();
+
+    const microbitFsImported = new MicropythonFsHex([
+      { hex: uPy1HexFile, boardId: microbitBoardId.V1 },
+      { hex: uPy2HexFile, boardId: microbitBoardId.V2 },
+    ]);
+    const importedFiles = microbitFsImported.importFilesFromHex(uHexWithFiles);
+
+    expect(microbitFs.ls()).toEqual(importedFiles);
+    expect(microbitFs.ls()).toEqual(['a.txt', 'main.py']);
+    expect(microbitFsImported.ls()).toEqual(microbitFs.ls());
+
+    expect(microbitFs.read('a.txt')).toEqual('This is some content');
+    expect(microbitFsImported.read('a.txt')).toEqual(microbitFs.read('a.txt'));
+
+    expect(microbitFsImported.readBytes('a.txt')).toEqual(
+      microbitFs.readBytes('a.txt')
+    );
+
+    expect(microbitFsImported.size('a.txt')).toEqual(microbitFs.size('a.txt'));
+
+    expect(microbitFsImported.getStorageUsed()).toEqual(
+      microbitFs.getStorageUsed()
+    );
+
+    expect(microbitFsImported.getIntelHex(microbitBoardId.V1)).toEqual(
+      microbitFs.getIntelHex(microbitBoardId.V1)
+    );
+    expect(microbitFsImported.getIntelHex(microbitBoardId.V2)).toEqual(
+      microbitFs.getIntelHex(microbitBoardId.V2)
+    );
   });
 });
 
