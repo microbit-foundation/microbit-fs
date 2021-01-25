@@ -6,7 +6,7 @@ import * as fs from 'fs';
 
 import * as flashRegions from '../flash-regions';
 
-describe('Read MicroPython UICR data.', () => {
+describe('Read MicroPython flash regions data.', () => {
   const uPyHexFile = fs.readFileSync(
     './src/__tests__/upy-v2-beta-region.hex',
     'utf8'
