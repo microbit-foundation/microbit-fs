@@ -44,7 +44,6 @@ should breaches occur.
 Issue tracker:
 [https://github.com/microbit-foundation/microbit-fs/issues](https://github.com/microbit-foundation/microbit-fs/issues)
 
-
 ## Development Workflow
 
 This project follows a fairly standard node.js process:
