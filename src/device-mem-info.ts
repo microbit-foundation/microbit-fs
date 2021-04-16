@@ -1,3 +1,8 @@
+/*
+ * (c) 2020 Micro:bit Educational Foundation and the microbit-fs contributors.
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
  * This interface represents the data about the device target contained within a
  * MicroPython hex file.
