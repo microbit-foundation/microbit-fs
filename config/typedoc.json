@@ -16,7 +16,7 @@
   "hideGenerator": false,
   "theme": "./node_modules/typedoc-neo-theme/bin/default",
   "source": [{
-    "path": "https://github.com/microbit-foundation/microbit-fs/tree/v0.9.1/src/",
+    "path": "https://github.com/microbit-foundation/microbit-fs/tree/v0.9.2/src/",
     "line": "L"
   }],
   "customStyles": [{
