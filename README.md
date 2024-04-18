@@ -1,6 +1,6 @@
 # micro:bit MicroPython Filesystem
 
-[![CircleCI](https://circleci.com/gh/microbit-foundation/microbit-fs.svg?style=svg)](https://circleci.com/gh/microbit-foundation/microbit-fs)
+[![GitHub Actions](https://github.com/microbit-foundation/microbit-fs/actions/workflows/build.yml/badge.svg)](https://github.com/microbit-foundation/microbit-fs/actions/workflows/build.yml)
 
 A TypeScript library to manipulate the micro:bit MicroPython filesystem.
 
