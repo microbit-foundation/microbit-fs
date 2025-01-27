@@ -1,0 +1,15 @@
+{
+  "name": "micro:bit filesystem library",
+  "navigationLinks": {
+    "micro:bit tech site": "https://tech.microbit.org",
+    "GitHub": "https://github.com/microbit-foundation/microbit-fs"
+  },
+  "entryPoints": ["./src/index.ts"],
+  "out": "./docs/build",
+  "projectDocuments": [
+    // Order as per left nav
+    "./docs/quick-guide.md",
+    "./docs/contributing.md"
+  ],
+  "readme": "./docs/index.md"
+}

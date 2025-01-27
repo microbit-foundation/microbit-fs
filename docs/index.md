@@ -1,24 +1,6 @@
----
-layout: default
-title: Home
-homepage: true
-permalink: /
-nav_order: 1
----
-
 # micro:bit Filesystem
-{: .fs-9 }
 
-<img alt="microbit-fs logo" src="img/microbit-fs-logo.png" style="max-height: 125px; float: left; padding-right: 16px;">
-
-Manipulate files in a micro:bit MicroPython Intel Hex file.
-{: .fs-6 .fw-300 }
-
-[Quick Guide](quick-guide.html){: .btn .btn-primary .mb-4 .mb-md-0 .mr-2 }
-[API](api/){: .btn .btn-purple .mb-4 .mb-md-0 .mr-2 }
-[View it on GitHub](https://github.com/microbit-foundation/microbit-fs/){: .btn .mb-4 .mb-md-0 }
-
----
+<img alt="microbit-fs logo" src="img/microbit-fs-logo.png" style="max-width: 250px">
 
 This is the documentation for the micro:bit Filesystem library.
 
@@ -28,9 +10,9 @@ into a MicroPython hex file, ready to be loaded into a micro:bit.
 The reverse process is also supported, being able to read the files encoded in
 the MicroPython filesystem from a hex file.
 
-As part of the micro:bit V2 release this library can also generate
-[Universal Hex](https://github.com/microbit-foundation/spec-universal-hex) files
-to create a singe hex that can be loaded in any micro:bit board.
+This library can also generate [Universal
+Hex](https://github.com/microbit-foundation/spec-universal-hex) files to create
+a singe hex that can be loaded in any micro:bit board.
 
 ## Navigation
 
@@ -43,3 +25,11 @@ to create a singe hex that can be loaded in any micro:bit board.
 - [MicroPython user docs page for filesystem](https://microbit-micropython.readthedocs.io/en/v1.0.1/filesystem.html)
 - [The micro:bit Tech Site contains general technical information about the
   micro:bit](https://tech.microbit.org)
+
+## License
+
+This documentation, as well as the rest of the source files located in the
+https://github.com/microbit-foundation/microbit-fs repository, is
+released under the MIT open source license.
+
+SPDX-License-Identifier: MIT

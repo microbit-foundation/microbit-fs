@@ -35,7 +35,8 @@
     "build:cjs": "tsc -p tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
     "build": "npm run build:esm && npm run build:cjs",
     "ci": "npm run build && npm run test && npx prettier --check .",
-    "test": "vitest"
+    "test": "vitest",
+    "docs": "typedoc --options typedoc.json"
   },
   "dependencies": {
     "@microbit/microbit-universal-hex": "^0.2.2",
@@ -46,6 +47,7 @@
     "eslint": "^9.19.0",
     "globals": "^15.14.0",
     "prettier": "~2.0.5",
+    "typedoc": "0.27.6",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.21.0",
     "vitest": "^3.0.4"

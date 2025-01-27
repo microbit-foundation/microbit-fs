@@ -19,5 +19,7 @@ dist/
 *.tgz
 package
 
+docs/build/
+
 # This is just for personal use
 ignore/

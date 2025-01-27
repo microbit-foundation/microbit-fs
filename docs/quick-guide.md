@@ -6,17 +6,15 @@ nav_order: 2
 
 # Quick Guide
 
-## ES5 UMD Bundle
+## npm package
 
-Download the UMD bundle from the
-[latest GitHub release](https://github.com/microbit-foundation/microbit-fs/releases/latest)
-and add it to the page:
+You can integrate this library in your project using the [npm package](https://www.npmjs.com/package/@microbit/microbit-fs):
 
-```html
-<script src="microbit-fs.umd.min.js"></script>
+```bash
+$ npm add @microbit/microbit-fs
 ```
 
-### MicroPython Filesystem inside a hex file
+## MicroPython Filesystem inside a hex file
 
 Initialise a File System instance with a MicroPython Intel Hex string and start operating on files:
 
@@ -82,7 +80,7 @@ var universalHexStrWithFs = micropythonFs.getUniversalHex();
 The `MicropythonFsHex` class public interface can be found in the
 `src/fs-interface.ts` file.
 
-### Append and extract Python code from known flash location
+## Append and extract Python code from known flash location
 To add and remove the Python code using the old format:
 
 ```js
@@ -92,7 +90,7 @@ if (microbitFs.isAppendedScriptPresent(finalHexStr)) {
 }
 ```
 
-### Read Device Memory Info data
+## Read Device Memory Info data
 
 ```js
 var deviceMemInfoData = getIntelHexDeviceMemInfo(IntelHexStr);
@@ -107,10 +105,3 @@ console.log('Filesystem End Address:' + deviceMemInfoData.fsEndAddress);
 console.log('MicroPython Version:' + deviceMemInfoData.uPyVersion);
 console.log('Device Version: ' + deviceMemInfoData.deviceVersion);
 ```
-
-## npm package
-
-You can integrate this library in your project using the npm package:
-[https://www.npmjs.com/package/@microbit/microbit-fs](https://www.npmjs.com/package/@microbit/microbit-fs)
-
-For information on how to use this library check the API documentation.
