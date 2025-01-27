@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import MemoryMap from 'nrf-intel-hex';
 import * as microbitUh from '@microbit/microbit-universal-hex';
 
+import { expect, describe, it, vi, beforeEach, afterAll } from 'vitest';
 import * as fsBuilder from '../micropython-fs-builder';
 import { MicropythonFsHex, microbitBoardId } from '../micropython-fs-hex';
 
@@ -24,7 +25,7 @@ describe('Test the class constructor', () => {
     expect(() => new MicropythonFsHex('')).toThrow('Invalid MicroPython hex');
 
     expect(() => {
-      const microbitFs = new MicropythonFsHex([
+      new MicropythonFsHex([
         {
           hex: '',
           boardId: 0,
@@ -33,7 +34,7 @@ describe('Test the class constructor', () => {
     }).toThrow('Invalid MicroPython hex');
 
     expect(() => {
-      const microbitFs = new MicropythonFsHex([
+      new MicropythonFsHex([
         {
           hex: uPy1HexFile,
           boardId: microbitBoardId.V2,
@@ -52,7 +53,7 @@ describe('Test the class constructor', () => {
     );
 
     expect(() => {
-      const microbitFs = new MicropythonFsHex([
+      new MicropythonFsHex([
         {
           hex: 'notahex',
           boardId: 0,
@@ -61,7 +62,7 @@ describe('Test the class constructor', () => {
     }).toThrow('Malformed .hex file, could not parse any registers');
 
     expect(() => {
-      const microbitFs = new MicropythonFsHex([
+      new MicropythonFsHex([
         {
           hex: uPy1HexFile,
           boardId: microbitBoardId.V2,
@@ -76,13 +77,13 @@ describe('Test the class constructor', () => {
 
   it('The maximum filesystem size cannot be larger than space available', () => {
     expect(() => {
-      const microbitFs = new MicropythonFsHex(uPy1HexFile, {
+      new MicropythonFsHex(uPy1HexFile, {
         maxFsSize: 1024 * 1024,
       });
     }).toThrow('larger than size available');
 
     expect(() => {
-      const microbitFs = new MicropythonFsHex(
+      new MicropythonFsHex(
         [
           {
             hex: uPy1HexFile,
@@ -638,8 +639,8 @@ describe('Test other.', () => {
 });
 
 describe('Test Intel Hex generation.', () => {
-  const generateHexWithFilesSpy = jest.spyOn(fsBuilder, 'generateHexWithFiles');
-  const addIntelHexFilesSpy = jest.spyOn(fsBuilder, 'addIntelHexFiles');
+  const generateHexWithFilesSpy = vi.spyOn(fsBuilder, 'generateHexWithFiles');
+  const addIntelHexFilesSpy = vi.spyOn(fsBuilder, 'addIntelHexFiles');
 
   beforeEach(() => {
     addIntelHexFilesSpy.mockReset();
@@ -655,7 +656,7 @@ describe('Test Intel Hex generation.', () => {
     const testInstance = (microbitFs: MicropythonFsHex, boardId?: number) => {
       microbitFs.write('a.txt', 'content');
 
-      const returnedIntelHex = microbitFs.getIntelHex(boardId);
+      microbitFs.getIntelHex(boardId);
 
       expect(generateHexWithFilesSpy.mock.calls.length).toEqual(1);
     };
@@ -675,7 +676,7 @@ describe('Test Intel Hex generation.', () => {
     const testInstance = (microbitFs: MicropythonFsHex, boardId?: number) => {
       microbitFs.write('a.txt', 'content');
 
-      const returnedIntelHex = microbitFs.getIntelHexBytes(boardId);
+      microbitFs.getIntelHexBytes(boardId);
 
       expect(addIntelHexFilesSpy.mock.calls.length).toEqual(1);
       expect(addIntelHexFilesSpy.mock.calls[0][2]).toBeTruthy();
@@ -725,7 +726,7 @@ describe('Test Intel Hex generation.', () => {
 });
 
 describe('Test Universal Hex generation.', () => {
-  const createUniversalHexSpy = jest.spyOn(microbitUh, 'createUniversalHex');
+  const createUniversalHexSpy = vi.spyOn(microbitUh, 'createUniversalHex');
 
   beforeEach(() => {
     createUniversalHexSpy.mockReset();
@@ -745,7 +746,7 @@ describe('Test Universal Hex generation.', () => {
 
     const iHexV1 = micropythonFs.getIntelHex(0x9900);
     const iHexV2 = micropythonFs.getIntelHex(0x9903);
-    const universalHex = micropythonFs.getUniversalHex();
+    micropythonFs.getUniversalHex();
 
     expect(createUniversalHexSpy.mock.calls.length).toEqual(1);
     expect(createUniversalHexSpy.mock.calls[0][0][0].boardId).toBe(0x9900);
@@ -798,8 +799,8 @@ describe('Test importing files from Intel Hex.', () => {
     'a.py': "a = 'Just a file'\n",
   };
 
-  const generateHexWithFilesSpy = jest.spyOn(fsBuilder, 'generateHexWithFiles');
-  const addIntelHexFilesSpy = jest.spyOn(fsBuilder, 'addIntelHexFiles');
+  const generateHexWithFilesSpy = vi.spyOn(fsBuilder, 'generateHexWithFiles');
+  const addIntelHexFilesSpy = vi.spyOn(fsBuilder, 'addIntelHexFiles');
 
   beforeEach(() => {
     addIntelHexFilesSpy.mockReset();
@@ -954,7 +955,7 @@ describe('Test importing files from Intel Hex.', () => {
     micropythonFsH.write('old_file.py', 'Some content.');
 
     try {
-      const fileListIh = micropythonFsIh.importFilesFromIntelHex(uPy1HexFile, {
+      micropythonFsIh.importFilesFromIntelHex(uPy1HexFile, {
         overwrite: false,
         formatFirst: true,
       });
@@ -962,7 +963,7 @@ describe('Test importing files from Intel Hex.', () => {
       // Not having files to import should raise an error
     }
     try {
-      const fileListH = micropythonFsH.importFilesFromIntelHex(uPy1HexFile, {
+      micropythonFsH.importFilesFromIntelHex(uPy1HexFile, {
         overwrite: false,
         formatFirst: true,
       });
@@ -1029,6 +1030,7 @@ describe('Test importing files from Universal Hex.', () => {
   // it('Enabling formatFirst flag erases the previous files.', () => {});
   // it('Enabling formatFirst flag only formats if there are files to import.', () => {});
   // it('Disabling formatFirst flag, and by default, keeps old files.', () => {});
+  it('avoids an error', () => {});
 });
 
 describe('Test MicroPython hex filesystem size.', () => {

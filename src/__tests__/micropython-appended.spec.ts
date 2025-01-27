@@ -4,6 +4,7 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
+import { expect, describe, it } from 'vitest';
 import {
   addIntelHexAppendedScript,
   getIntelHexAppendedScript,
@@ -77,10 +78,7 @@ describe('Inject Python code into Intel Hex string', () => {
   it('Fail to inject Python code too large for flash', () => {
     const failCase = () => {
       const fakeCode: string = new Array(8 * 1024 + 2).join('a');
-      const output: string = addIntelHexAppendedScript(
-        simpleIntelHex,
-        fakeCode
-      );
+      addIntelHexAppendedScript(simpleIntelHex, fakeCode);
     };
     expect(failCase).toThrow(RangeError);
   });

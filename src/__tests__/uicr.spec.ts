@@ -5,6 +5,7 @@
 import * as fs from 'fs';
 
 import { getIntelHexUicrData } from '../uicr';
+import { expect, describe, it } from 'vitest';
 
 describe('Read MicroPython UICR data.', () => {
   const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -28,7 +29,6 @@ describe('Read MicroPython UICR data.', () => {
     const expectedUicrEndAddress = 0x100010dc;
     const expectedFsStartAddress = expectedRuntimeEndAddress;
     const expectedFsEndAddress = expectedFlashEndAddress;
-    const expectedVersionAddress = 0x036d2d;
     const expectedUPyVersion =
       'micro:bit v1.0.1+b0bf4a9 on 2018-12-13; ' +
       'MicroPython v1.9.2-34-gd64154c73 on 2017-09-01';
@@ -62,13 +62,11 @@ describe('Read MicroPython UICR data.', () => {
     const expectedRuntimeStartPage = 0;
     // This is the last address used, but the UICR has been manually created
     // to indicate 104 pages used
-    const MicroPythonLastByteUsed = 0x607e4;
     const expectedRuntimeEndPage = 109;
     const expectedUicrStartAddress = 0x100010c0;
     const expectedUicrEndAddress = 0x100010dc;
     const expectedFsStartAddress = 0x6d000;
     const expectedFsEndAddress = 0x73000;
-    const expectedVersionAddress = 0x05895c;
     const expectedUPyVersion =
       'micro:bit v2.0.99+3e09245 on 2020-11-02; ' +
       'MicroPython 3e09245 on 2020-11-02';
@@ -102,7 +100,7 @@ describe('Read MicroPython UICR data.', () => {
       ':00000001FF\n';
 
     const failCase = () => {
-      const result = getIntelHexUicrData(makeCodeUicr);
+      getIntelHexUicrData(makeCodeUicr);
     };
 
     expect(failCase).toThrow(Error);

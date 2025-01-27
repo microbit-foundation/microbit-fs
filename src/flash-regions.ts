@@ -34,7 +34,7 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { DeviceMemInfo, DeviceVersion } from './device-mem-info';
+import { DeviceMemInfo } from './device-mem-info';
 import { areUint8ArraysEqual } from './common';
 import * as hexMapUtil from './hex-map-utils';
 
@@ -329,7 +329,7 @@ function getHexMapFlashRegionsData(iHexMap: MemoryMap): DeviceMemInfo {
     fsStartAddress,
     fsEndAddress,
     uPyVersion,
-    deviceVersion: DeviceVersion.V2,
+    deviceVersion: 'V2',
   };
 }
 

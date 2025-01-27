@@ -8,6 +8,7 @@ import {
   concatUint8Array,
   areUint8ArraysEqual,
 } from '../common';
+import { expect, describe, it } from 'vitest';
 
 describe('strToBytes', () => {
   it('works with 1 byte characters', () => {

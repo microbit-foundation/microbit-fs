@@ -2,8 +2,6 @@
  * Utilities for retrieving data from MemoryMap instances from the nrf-intel-hex
  * library.
  */
-import MemoryMap from 'nrf-intel-hex';
-
 import { bytesToStr } from './common';
 
 /**

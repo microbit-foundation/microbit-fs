@@ -11,6 +11,7 @@ import * as fs from 'fs';
 
 import MemoryMap from 'nrf-intel-hex';
 
+import { expect, describe, it } from 'vitest';
 import { strToBytes } from '../common';
 import {
   createMpFsBuilderCache,
@@ -795,7 +796,6 @@ describe('Reading files from the filesystem.', () => {
     );
   });
 
-  const duplicateFilename = 'a.py';
   // Uses chunks ??
   const oneFileCopyHex =
     ':020000040003F7\n' +
