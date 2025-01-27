@@ -959,7 +959,7 @@ describe('Test importing files from Intel Hex.', () => {
         overwrite: false,
         formatFirst: true,
       });
-    } catch (e) {
+    } catch {
       // Not having files to import should raise an error
     }
     try {
@@ -967,7 +967,7 @@ describe('Test importing files from Intel Hex.', () => {
         overwrite: false,
         formatFirst: true,
       });
-    } catch (e) {
+    } catch {
       // Not having files to import should raise an error
     }
 

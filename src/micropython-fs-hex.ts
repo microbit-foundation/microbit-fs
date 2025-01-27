@@ -150,6 +150,7 @@ export class MicropythonFsHex implements FsInterface {
     this._files[filename] = new SimpleFile(filename, content);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   append(filename: string, content: string): void {
     if (!filename) {
       throw new Error('Invalid filename.');
