@@ -4,6 +4,8 @@ title: Quick guide
 
 # Quick guide
 
+{@link MicropythonFsHex | MicropythonFsHex class}
+
 ## npm package
 
 You can integrate this library in your project using the [npm package](https://www.npmjs.com/package/@microbit/microbit-fs):
