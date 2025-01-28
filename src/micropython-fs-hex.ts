@@ -6,7 +6,7 @@
  */
 import * as microbitUh from '@microbit/microbit-universal-hex';
 
-import { FsInterface } from './fs-interface';
+import { FsInterface } from './fs-interface.js';
 import {
   MpFsBuilderCache,
   createMpFsBuilderCache,
@@ -14,9 +14,9 @@ import {
   addIntelHexFiles,
   calculateFileSize,
   getIntelHexFiles,
-} from './micropython-fs-builder';
-import { SimpleFile } from './simple-file';
-import { areUint8ArraysEqual } from './common';
+} from './micropython-fs-builder.js';
+import { SimpleFile } from './simple-file.js';
+import { areUint8ArraysEqual } from './common.js';
 
 /**
  * The Board ID is used to identify the different targets from a Universal Hex.

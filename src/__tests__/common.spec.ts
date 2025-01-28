@@ -7,7 +7,7 @@ import {
   strToBytes,
   concatUint8Array,
   areUint8ArraysEqual,
-} from '../common';
+} from '../common.js';
 import { expect, describe, it } from 'vitest';
 
 describe('strToBytes', () => {

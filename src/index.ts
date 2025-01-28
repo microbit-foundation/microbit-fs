@@ -2,6 +2,6 @@
  * @module @microbit/microbit-fs
  */
 
-export * from './micropython-appended';
-export * from './micropython-fs-hex';
-export * from './hex-mem-info';
+export * from './micropython-appended.js';
+export * from './micropython-fs-hex.js';
+export * from './hex-mem-info.js';

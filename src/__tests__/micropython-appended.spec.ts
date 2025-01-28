@@ -9,7 +9,7 @@ import {
   addIntelHexAppendedScript,
   getIntelHexAppendedScript,
   isAppendedScriptPresent,
-} from '../micropython-appended';
+} from '../micropython-appended.js';
 
 const simpleIntelHex: string =
   ':020000040000FA\n' +

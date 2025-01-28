@@ -6,7 +6,7 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { bytesToStr, strToBytes } from './common';
+import { bytesToStr, strToBytes } from './common.js';
 
 /** User script located at specific flash address. */
 enum AppendedBlock {

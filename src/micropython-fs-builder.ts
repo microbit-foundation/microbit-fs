@@ -33,9 +33,12 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { bytesToStr, concatUint8Array, strToBytes } from './common';
-import { AppendedBlock, isAppendedScriptPresent } from './micropython-appended';
-import { getHexMapDeviceMemInfo } from './hex-mem-info';
+import { bytesToStr, concatUint8Array, strToBytes } from './common.js';
+import {
+  AppendedBlock,
+  isAppendedScriptPresent,
+} from './micropython-appended.js';
+import { getHexMapDeviceMemInfo } from './hex-mem-info.js';
 
 /** Object to contain cached data for quicker Intel Hex string generation */
 interface MpFsBuilderCache {

@@ -4,7 +4,7 @@
  * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
  * SPDX-License-Identifier: MIT
  */
-import { bytesToStr, strToBytes } from './common';
+import { bytesToStr, strToBytes } from './common.js';
 
 export class SimpleFile {
   filename: string;

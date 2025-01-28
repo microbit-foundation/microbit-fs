@@ -6,9 +6,9 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { DeviceMemInfo, DeviceVersion } from './device-mem-info';
-import * as flashRegions from './flash-regions';
-import * as uicr from './uicr';
+import { DeviceMemInfo, DeviceVersion } from './device-mem-info.js';
+import * as flashRegions from './flash-regions.js';
+import * as uicr from './uicr.js';
 
 /**
  * Attempts to retrieve the device memory data from an MicroPython Intel Hex

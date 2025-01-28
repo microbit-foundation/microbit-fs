@@ -4,7 +4,7 @@
  */
 import * as fs from 'fs';
 
-import { getIntelHexUicrData } from '../uicr';
+import { getIntelHexUicrData } from '../uicr.js';
 import { expect, describe, it } from 'vitest';
 
 describe('Read MicroPython UICR data.', () => {

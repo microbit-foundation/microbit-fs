@@ -9,9 +9,9 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import * as hexMapUtil from './hex-map-utils';
-import { DeviceMemInfo } from './device-mem-info';
-import { DeviceVersion } from './hex-mem-info';
+import * as hexMapUtil from './hex-map-utils.js';
+import { DeviceMemInfo } from './device-mem-info.js';
+import { DeviceVersion } from './hex-mem-info.js';
 
 const DEVICE_INFO = [
   {

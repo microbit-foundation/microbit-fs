@@ -8,8 +8,8 @@ import MemoryMap from 'nrf-intel-hex';
 import * as microbitUh from '@microbit/microbit-universal-hex';
 
 import { expect, describe, it, vi, beforeEach, afterAll } from 'vitest';
-import * as fsBuilder from '../micropython-fs-builder';
-import { MicropythonFsHex, microbitBoardId } from '../micropython-fs-hex';
+import * as fsBuilder from '../micropython-fs-builder.js';
+import { MicropythonFsHex, microbitBoardId } from '../micropython-fs-hex.js';
 
 // MicroPython hex file for testing
 const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
@@ -1135,7 +1135,7 @@ describe('End-to-end loop around.', () => {
 });
 
 /*
-import { addIntelHexAppendedScript } from '../appended-script';
+import { addIntelHexAppendedScript } from '../appended-script.js';
 
 describe('NOT A REAL UNIT TEST! Used for generating a test hex file.', () => {
   it('Create output4.hex with 2 modules used in main.py.', () => {

@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import MemoryMap from 'nrf-intel-hex';
 
 import { expect, describe, it } from 'vitest';
-import { strToBytes } from '../common';
+import { strToBytes } from '../common.js';
 import {
   createMpFsBuilderCache,
   generateHexWithFiles,
@@ -20,7 +20,7 @@ import {
   calculateFileSize,
   getIntelHexFiles,
   getMemMapFsSize,
-} from '../micropython-fs-builder';
+} from '../micropython-fs-builder.js';
 
 const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
 const uPy1HexMap = MemoryMap.fromHex(uPy1HexFile);

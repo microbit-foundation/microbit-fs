@@ -2,7 +2,7 @@
  * Utilities for retrieving data from MemoryMap instances from the nrf-intel-hex
  * library.
  */
-import { bytesToStr } from './common';
+import { bytesToStr } from './common.js';
 
 /**
  * Reads a 64 bit little endian number from an Intel Hex memory map.

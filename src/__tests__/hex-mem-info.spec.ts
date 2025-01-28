@@ -4,7 +4,7 @@
  */
 import * as fs from 'fs';
 
-import { getIntelHexDeviceMemInfo } from '../hex-mem-info';
+import { getIntelHexDeviceMemInfo } from '../hex-mem-info.js';
 import { expect, describe, it } from 'vitest';
 
 describe('Read MicroPython V1 UICR hex mem info data.', () => {

@@ -34,9 +34,9 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { DeviceMemInfo } from './device-mem-info';
-import { areUint8ArraysEqual } from './common';
-import * as hexMapUtil from './hex-map-utils';
+import { DeviceMemInfo } from './device-mem-info.js';
+import { areUint8ArraysEqual } from './common.js';
+import * as hexMapUtil from './hex-map-utils.js';
 
 /** Indicates the data contain in each of the different regions */
 enum RegionId {
