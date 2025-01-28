@@ -1,12 +1,10 @@
 ---
-layout: page
 title: Contributing
-nav_order: 4
 ---
 
 # Contributing
 
-## How To Contribute
+## How to contribute
 
 Thanks for looking here! We'd love your help. The micro:bit project is only
 possible through contributions of companies and individuals around the world.
@@ -14,7 +12,7 @@ possible through contributions of companies and individuals around the world.
 This project is managed [in this GitHub project](https://github.com/microbit-foundation/microbit-fs), and the best way to contribute
 is to jump in and fix/file issues.
 
-## Code of Conduct
+## Code of conduct
 
 Trust, partnership, simplicity and passion are our core values we live and
 breathe in our daily work life and within our projects. Our open-source
@@ -31,7 +29,7 @@ should breaches occur.
 
 [Issue tracker](https://github.com/microbit-foundation/microbit-fs/issues)
 
-## Development Workflow
+## Development workflow
 
 This project follows a fairly standard node.js process:
 

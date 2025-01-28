@@ -1,10 +1,8 @@
 ---
-layout: default
-title: Quick Guide
-nav_order: 2
+title: Quick guide
 ---
 
-# Quick Guide
+# Quick guide
 
 ## npm package
 
@@ -14,7 +12,7 @@ You can integrate this library in your project using the [npm package](https://w
 $ npm add @microbit/microbit-fs
 ```
 
-## MicroPython Filesystem inside a hex file
+## MicroPython filesystem inside a hex file
 
 Initialise a File System instance with a MicroPython Intel Hex string and start operating on files:
 
@@ -90,7 +88,7 @@ if (microbitFs.isAppendedScriptPresent(finalHexStr)) {
 }
 ```
 
-## Read Device Memory Info data
+## Read device memory info data
 
 ```js
 var deviceMemInfoData = getIntelHexDeviceMemInfo(IntelHexStr);
