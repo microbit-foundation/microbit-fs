@@ -63,7 +63,7 @@ function getIntelHexAppendedScript(intelHex: string): string {
       AppendedBlock.StartAdd,
       AppendedBlock.Length
     );
-    const codeBytes = pyCodeMemMap.get(AppendedBlock.StartAdd);
+    const codeBytes = pyCodeMemMap.get(AppendedBlock.StartAdd)!;
     if (
       codeBytes[AppendedHeader.Byte0] === HEADER_START_BYTE_0 &&
       codeBytes[AppendedHeader.Byte1] === HEADER_START_BYTE_1
