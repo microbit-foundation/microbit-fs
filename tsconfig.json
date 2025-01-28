@@ -8,7 +8,7 @@
     "moduleResolution": "node10",
     "isolatedModules": true,
     "moduleDetection": "force",
-    "outDir": "build/esm",
+    "outDir": "dist/esm",
     "sourceMap": true,
     "declaration": true,
     /* Linting */
