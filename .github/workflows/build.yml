@@ -18,8 +18,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: npm
       - run: npm ci
-      - run: npm run test
-      - run: npm run build
+      - run: npm run ci
       - run: npm publish
         if: github.event_name == 'release' && github.event.action == 'created'
         env:
