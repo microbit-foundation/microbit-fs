@@ -9,7 +9,7 @@ title: Quick guide
 You can integrate this library in your project using the [npm package](https://www.npmjs.com/package/@microbit/microbit-fs):
 
 ```bash
-$ npm add @microbit/microbit-fs
+$ npm install @microbit/microbit-fs
 ```
 
 ## MicroPython filesystem inside a hex file
