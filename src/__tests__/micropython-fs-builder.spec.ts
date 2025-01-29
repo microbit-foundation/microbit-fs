@@ -331,7 +331,7 @@ describe('Writing files to the filesystem.', () => {
       return MemoryMap.fromHex(this.hex).get(this.fileAddress);
     },
   };
-  // Using spae except the last byte should only use a single chunk
+  // Using space except the last byte should only use a single chunk
   const fullChunkMinus = {
     fileName: 'one_chunk_minus.py',
     fileStr:
