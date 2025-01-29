@@ -9,19 +9,19 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import * as hexMapUtil from './hex-map-utils';
-import { DeviceMemInfo } from './device-mem-info';
-import { DeviceVersion } from './hex-mem-info';
+import * as hexMapUtil from './hex-map-utils.js';
+import { DeviceMemInfo } from './device-mem-info.js';
+import { DeviceVersion } from './hex-mem-info.js';
 
 const DEVICE_INFO = [
   {
-    deviceVersion: DeviceVersion.V1,
+    deviceVersion: 'V1' as const,
     magicHeader: 0x17eeb07c,
     flashSize: 256 * 1024,
     fsEnd: 256 * 1024,
   },
   {
-    deviceVersion: DeviceVersion.V2,
+    deviceVersion: 'V2' as const,
     magicHeader: 0x47eeb07c,
     flashSize: 512 * 1024,
     fsEnd: 0x73000,
@@ -33,9 +33,6 @@ const UICR_CUSTOMER_OFFSET: number = 0x80;
 const UICR_CUSTOMER_UPY_OFFSET: number = 0x40;
 const UICR_UPY_START: number =
   UICR_START + UICR_CUSTOMER_OFFSET + UICR_CUSTOMER_UPY_OFFSET;
-
-const UPY_DELIMITER: number = 0xffffffff;
-const UPY_REGIONS_TERMINATOR: number = 0x00000000;
 
 const UPY_MAGIC_LEN: number = 4;
 const UPY_END_MARKER_LEN: number = 4;
@@ -246,4 +243,5 @@ function getIntelHexUicrData(intelHex: string): MicropythonUicrData {
   return getHexMapUicrData(MemoryMap.fromHex(intelHex));
 }
 
-export { MicropythonUicrData, getHexMapUicrData, getIntelHexUicrData };
+export { getHexMapUicrData, getIntelHexUicrData };
+export type { MicropythonUicrData };

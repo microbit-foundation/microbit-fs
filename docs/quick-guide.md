@@ -1,101 +1,122 @@
 ---
-layout: default
-title: Quick Guide
-nav_order: 2
+title: Quick guide
 ---
 
-# Quick Guide
+# Quick guide
 
-## ES5 UMD Bundle
+## npm package
 
-Download the UMD bundle from the
-[latest GitHub release](https://github.com/microbit-foundation/microbit-fs/releases/latest)
-and add it to the page:
+You can integrate this library in your project using the [npm package](https://www.npmjs.com/package/@microbit/microbit-fs):
 
-```html
-<script src="microbit-fs.umd.min.js"></script>
+```bash
+$ npm install @microbit/microbit-fs
 ```
 
-### MicroPython Filesystem inside a hex file
+## MicroPython filesystem inside a hex file
 
-Initialise a File System instance with a MicroPython Intel Hex string and start operating on files:
+### Initialise
+
+Initialise a filesystem with a MicroPython Intel Hex string using {@link MicropythonFsHex | MicropythonFsHex class}.
 
 ```js
+import { MicropythonFsHex } from "@microbit/microbit-fs";
+
 // Create a new FileSystem instance passing the MicroPython Intel Hex string
-var micropythonFs = new microbitFs.MicropythonFsHex(IntelHexStr);
+let micropythonFs = new MicropythonFsHex(intelHexStr);
 // There are some options available in the constructor
-micropythonFs = new microbitFs.MicropythonFsHex(IntelHexStr, { maxFsSize: 20 * 1024});
+micropythonFs = new MicropythonFsHex(intelHexStr, { maxFsSize: 20 * 1024});
+```
+### Import files
 
-// Import files from a different MicroPython hex file with filesystem
-var addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFiles);
-addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFiles, {overwrite: false, formatFirst: false});
+Import files from a different MicroPython hex file with filesystem using {@link MicropythonFsHex.importFilesFromIntelHex | importFilesFromIntelHex}.
+```
+let addedFilenames = micropythonFs.importFilesFromIntelHex(uploadedHexWithUserFiles);
+addedFilenames = micropythonFs.importFilesFromIntelHex(uploadedHexWithUserFiles, {overwrite: false, formatFirst: false});
+```
 
-// File operations
+### File operations
+
+File operations are on the {@link MicropythonFsHex | MicropythonFsHex class}.
+```
 micropythonFs.create('filename.txt', 'Error thrown if file already exists.');
 micropythonFs.write('filename.txt', 'Create or overwrite a file.');
-// Append not yet implemented
 micropythonFs.append('filename.txt', 'Add additional content.');
-var fileContent = micropythonFs.read('filename.txt');
-var fileContentByteArray = micropythonFs.readBytes('filename.txt');
+const fileContent = micropythonFs.read('filename.txt');
+const fileContentByteArray = micropythonFs.readBytes('filename.txt');
 if (micropythonFs.exists('filename.txt')) {
   micropythonFs.remove('filename.txt');
 }
-var fileSizeInBytes = micropythonFs.size('filename.txt');
-var fileList = micropythonFs.ls();
+const fileSizeInBytes = micropythonFs.size('filename.txt');
+const fileList = micropythonFs.ls();
+```
 
+### Filesystem size
+
+{@link MicropythonFsHex} can query storage usage:
+
+```
 // Filesystem size information
-var fsSize = micropythonFs.getStorageSize();
-var fsAvailableSize = micropythonFs.getStorageUsed();
-var fsUsedSize = micropythonFs.getStorageRemaining();
+const fsSize = micropythonFs.getStorageSize();
+const fsAvailableSize = micropythonFs.getStorageUsed();
+const fsUsedSize = micropythonFs.getStorageRemaining();
 
 // You can also provide an artificial storage size
 micropythonFs.setStorageSize(20 * 1024);
 
 // Generate a new hex string or Uint8Array with MicroPython and the files
-var intelHexStrWithFs = micropythonFs.getIntelHex();
-var intelHexBytesWithFs = micropythonFs.getIntelHexBytes();
+const intelHexStrWithFs = micropythonFs.getIntelHex();
+const intelHexBytesWithFs = micropythonFs.getIntelHexBytes();
 ```
 
-Using multiple MicroPython Intel Hex files to generate a Universal Hex:
+## Supporting V1 and V2 micro:bit versions with a Universal Hex
+
+You can create a [Universal
+Hex](https://github.com/microbit-foundation/spec-universal-hex) by passing a hex for each board version to the {@link MicropythonFsHex:constructor | MicropythonFsHex constructor}:
 
 ```js
+import { MicropythonFsHex, microbitBoardId } from "@microbit/microbit-fs";
+
 // Create a new FileSystem instance passing the MicroPython Intel Hex string
-var micropythonFs = new microbitFs.MicropythonFsHex([
-  { hex: uPy1HexFile, boardId: microbitFs.microbitBoardId.V1 },
-  { hex: uPy2HexFile, boardId: microbitFs.microbitBoardId.V2 },
+const micropythonFs = new MicropythonFsHex([
+  { hex: uPy1HexFile, boardId: microbitBoardId.V1 },
+  { hex: uPy2HexFile, boardId: microbitBoardId.V2 },
 ]);;
 
 // Import files from a different MicroPython Intel hex file with filesystem
-var addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFiles);
-addedFilenames = micropythonFs.importFilesFromIntelHex(UploadedHexWithUserFiles, {overwrite: false, formatFirst: false});
+let addedFilenames = micropythonFs.importFilesFromIntelHex(uploadedHexWithUserFiles);
+addedFilenames = micropythonFs.importFilesFromIntelHex(uploadedHexWithUserFiles, {overwrite: false, formatFirst: false});
 
 // Generate a new Intel hex string or Uint8Array with MicroPython and the files
-var uPy1IntelHexStrWithFs = micropythonFs.getIntelHex(microbitFs.microbitBoardId.V1);
-var uPy1IntelHexBytesWithFs = micropythonFs.getIntelHexBytes(microbitFs.microbitBoardId.V1);
-var uPy2IntelHexStrWithFs = micropythonFs.getIntelHex(microbitFs.microbitBoardId.V2);
-var uPy2IntelHexBytesWithFs = micropythonFs.getIntelHexBytes(microbitFs.microbitBoardId.V2);
+const uPy1IntelHexStrWithFs = micropythonFs.getIntelHex(microbitBoardId.V1);
+const uPy1IntelHexBytesWithFs = micropythonFs.getIntelHexBytes(microbitBoardId.V1);
+const uPy2IntelHexStrWithFs = micropythonFs.getIntelHex(microbitBoardId.V2);
+const uPy2IntelHexBytesWithFs = micropythonFs.getIntelHexBytes(microbitBoardId.V2);
 
 // Generate a new Universal hex string with all MicroPython+files data
-var universalHexStrWithFs = micropythonFs.getUniversalHex();
+const universalHexStrWithFs = micropythonFs.getUniversalHex();
 ```
 
-The `MicropythonFsHex` class public interface can be found in the
-`src/fs-interface.ts` file.
+## Append and extract Python code from known flash location
 
-### Append and extract Python code from known flash location
-To add and remove the Python code using the old format:
+To add and remove the Python code use {@link addIntelHexAppendedScript}:
 
 ```js
-var finalHexStr = microbitFs.addIntelHexAppendedScript(originalIntelHexStr, 'print("hello world!")');
-if (microbitFs.isAppendedScriptPresent(finalHexStr)) {
-  var pythonCode = microbitFs.getIntelHexAppendedScript(finalHexStr);
+import { isAppendedScriptPresent, getIntelHexAppendedScript, addIntelHexAppendedScript } from "@microbit/microbit-fs";
+
+const finalHexStr = addIntelHexAppendedScript(originalIntelHexStr, 'print("hello world!")');
+if (isAppendedScriptPresent(finalHexStr)) {
+  const pythonCode = getIntelHexAppendedScript(finalHexStr);
 }
 ```
 
-### Read Device Memory Info data
+## Read device memory information
+
+To read device memory information use {@link getIntelHexDeviceMemInfo}:
 
 ```js
-var deviceMemInfoData = getIntelHexDeviceMemInfo(IntelHexStr);
+import {getIntelHexDeviceMemInfo} from "@microbit/microbit-fs";
+
+const deviceMemInfoData = getIntelHexDeviceMemInfo(intelHexStr);
 console.log('Flash Page Size:' + deviceMemInfoData.flashPageSize);
 console.log('Flash Size:' + deviceMemInfoData.flashSize);
 console.log('Flash Start Address:' + deviceMemInfoData.flashStartAddress);
@@ -107,10 +128,3 @@ console.log('Filesystem End Address:' + deviceMemInfoData.fsEndAddress);
 console.log('MicroPython Version:' + deviceMemInfoData.uPyVersion);
 console.log('Device Version: ' + deviceMemInfoData.deviceVersion);
 ```
-
-## npm package
-
-You can integrate this library in your project using the npm package:
-[https://www.npmjs.com/package/@microbit/microbit-fs](https://www.npmjs.com/package/@microbit/microbit-fs)
-
-For information on how to use this library check the API documentation.

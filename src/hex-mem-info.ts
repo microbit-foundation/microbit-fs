@@ -6,9 +6,9 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { DeviceMemInfo, DeviceVersion } from './device-mem-info';
-import * as flashRegions from './flash-regions';
-import * as uicr from './uicr';
+import { DeviceMemInfo, DeviceVersion } from './device-mem-info.js';
+import * as flashRegions from './flash-regions.js';
+import * as uicr from './uicr.js';
 
 /**
  * Attempts to retrieve the device memory data from an MicroPython Intel Hex
@@ -22,12 +22,12 @@ function getHexMapDeviceMemInfo(intelHexMap: MemoryMap): DeviceMemInfo {
   try {
     return uicr.getHexMapUicrData(intelHexMap);
   } catch (err) {
-    errorMsg += err.message + '\n';
+    errorMsg += (err as Error).message + '\n';
   }
   try {
     return flashRegions.getHexMapFlashRegionsData(intelHexMap);
   } catch (err) {
-    throw new Error(errorMsg + err.message);
+    throw new Error(errorMsg + (err as Error).message);
   }
 }
 
@@ -41,9 +41,6 @@ function getIntelHexDeviceMemInfo(intelHex: string): DeviceMemInfo {
   return getHexMapDeviceMemInfo(MemoryMap.fromHex(intelHex));
 }
 
-export {
-  DeviceMemInfo,
-  DeviceVersion,
-  getHexMapDeviceMemInfo,
-  getIntelHexDeviceMemInfo,
-};
+export type { DeviceMemInfo, DeviceVersion };
+
+export { getHexMapDeviceMemInfo, getIntelHexDeviceMemInfo };

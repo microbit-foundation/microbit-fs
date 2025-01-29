@@ -4,7 +4,6 @@
  * (c) 2019 Micro:bit Educational Foundation and the microbit-fs contributors.
  * SPDX-License-Identifier: MIT
  */
-import { TextDecoderLite, TextEncoderLite } from 'text-encoder-lite';
 
 /**
  * Converts a string into a byte array of characters.
@@ -12,7 +11,7 @@ import { TextDecoderLite, TextEncoderLite } from 'text-encoder-lite';
  * @returns A byte array with the encoded data.
  */
 export function strToBytes(str: string): Uint8Array {
-  const encoder = new TextEncoderLite();
+  const encoder = new TextEncoder();
   return encoder.encode(str);
 }
 
@@ -22,7 +21,7 @@ export function strToBytes(str: string): Uint8Array {
  * @returns String output from the conversion.
  */
 export function bytesToStr(byteArray: Uint8Array): string {
-  const decoder = new TextDecoderLite();
+  const decoder = new TextDecoder();
   return decoder.decode(byteArray);
 }
 

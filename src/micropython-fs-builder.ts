@@ -33,9 +33,12 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { bytesToStr, concatUint8Array, strToBytes } from './common';
-import { AppendedBlock, isAppendedScriptPresent } from './micropython-appended';
-import { getHexMapDeviceMemInfo, DeviceVersion } from './hex-mem-info';
+import { bytesToStr, concatUint8Array, strToBytes } from './common.js';
+import {
+  AppendedBlock,
+  isAppendedScriptPresent,
+} from './micropython-appended.js';
+import { getHexMapDeviceMemInfo } from './hex-mem-info.js';
 
 /** Object to contain cached data for quicker Intel Hex string generation */
 interface MpFsBuilderCache {
@@ -173,7 +176,7 @@ function getEndAddress(intelHexMap: MemoryMap): number {
   let endAddress = deviceMem.fsEndAddress;
   // TODO: Maybe we should move this inside the UICR module to calculate
   // the real fs area in that step
-  if (deviceMem.deviceVersion === DeviceVersion.V1) {
+  if (deviceMem.deviceVersion === 'V1') {
     if (isAppendedScriptPresent(intelHexMap)) {
       endAddress = AppendedBlock.StartAdd;
     }
@@ -584,8 +587,9 @@ function getMemMapFsSize(intelHexMap: MemoryMap): number {
   return endAddress - startAddress - deviceMem.flashPageSize;
 }
 
+export type { MpFsBuilderCache };
+
 export {
-  MpFsBuilderCache,
   createMpFsBuilderCache,
   addIntelHexFiles,
   generateHexWithFiles,

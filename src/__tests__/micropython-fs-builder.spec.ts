@@ -11,7 +11,8 @@ import * as fs from 'fs';
 
 import MemoryMap from 'nrf-intel-hex';
 
-import { strToBytes } from '../common';
+import { expect, describe, it } from 'vitest';
+import { strToBytes } from '../common.js';
 import {
   createMpFsBuilderCache,
   generateHexWithFiles,
@@ -19,7 +20,7 @@ import {
   calculateFileSize,
   getIntelHexFiles,
   getMemMapFsSize,
-} from '../micropython-fs-builder';
+} from '../micropython-fs-builder.js';
 
 const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
 const uPy1HexMap = MemoryMap.fromHex(uPy1HexFile);
@@ -61,7 +62,7 @@ describe('Writing files to the filesystem.', () => {
       fileAddress: 0x3c900,
       fsSize: 128,
       bytes() {
-        return MemoryMap.fromHex(this.hex).get(this.fileAddress);
+        return MemoryMap.fromHex(this.hex).get(this.fileAddress)!;
       },
     },
     {
@@ -174,7 +175,7 @@ describe('Writing files to the filesystem.', () => {
       fileAddress: 0x38c80,
       fsSize: 1264,
       bytes() {
-        return MemoryMap.fromHex(this.hex).get(this.fileAddress);
+        return MemoryMap.fromHex(this.hex).get(this.fileAddress)!;
       },
     },
   ];
@@ -183,7 +184,7 @@ describe('Writing files to the filesystem.', () => {
     const fwWithFsOther = addIntelHexFiles(uPy1HexFile, {
       [files[0].fileName]: strToBytes(files[0].fileStr),
       [files[1].fileName]: strToBytes(files[1].fileStr),
-    });
+    }) as string;
 
     const opMap = MemoryMap.fromHex(fwWithFsOther);
     const file0data = opMap
@@ -200,7 +201,7 @@ describe('Writing files to the filesystem.', () => {
     const fwWithFsOther = addIntelHexFiles(uPy2HexFile, {
       [files[0].fileName]: strToBytes(files[0].fileStr),
       [files[1].fileName]: strToBytes(files[1].fileStr),
-    });
+    }) as string;
 
     const opMap = MemoryMap.fromHex(fwWithFsOther);
     const file0data = opMap
@@ -385,7 +386,7 @@ describe('Writing files to the filesystem.', () => {
   it('Can generate a full chunk that also consumes the next one.', () => {
     const fwWithFsOther = addIntelHexFiles(uPy1HexMap, {
       [fullChunkPlus.fileName]: strToBytes(fullChunkPlus.fileStr),
-    });
+    }) as string;
 
     const opMap = MemoryMap.fromHex(fwWithFsOther);
     const readFileData = opMap
@@ -397,7 +398,7 @@ describe('Writing files to the filesystem.', () => {
   it('Correctly generate an almost full chunk (not using last byte).', () => {
     const fwWithFsOther = addIntelHexFiles(uPy1HexMap, {
       [fullChunkMinus.fileName]: strToBytes(fullChunkMinus.fileStr),
-    });
+    }) as string;
 
     const opMap = MemoryMap.fromHex(fwWithFsOther);
     const readFileData = opMap
@@ -409,7 +410,7 @@ describe('Writing files to the filesystem.', () => {
   it('Correctly generate just over a full chunk.', () => {
     const fwWithFsOther = addIntelHexFiles(uPy1HexMap, {
       [twoChunks.fileName]: strToBytes(twoChunks.fileStr),
-    });
+    }) as string;
 
     const opMap = MemoryMap.fromHex(fwWithFsOther);
     const readFileData = opMap
@@ -795,7 +796,6 @@ describe('Reading files from the filesystem.', () => {
     );
   });
 
-  const duplicateFilename = 'a.py';
   // Uses chunks ??
   const oneFileCopyHex =
     ':020000040003F7\n' +

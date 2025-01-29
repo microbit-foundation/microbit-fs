@@ -36,7 +36,4 @@ export interface DeviceMemInfo {
 /**
  * Represents the micro:bit Version the hex file targets.
  */
-export const enum DeviceVersion {
-  V1 = 'V1',
-  V2 = 'V2',
-}
+export type DeviceVersion = 'V1' | 'V2';

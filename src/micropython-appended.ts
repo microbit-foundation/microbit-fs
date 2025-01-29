@@ -6,7 +6,7 @@
  */
 import MemoryMap from 'nrf-intel-hex';
 
-import { bytesToStr, strToBytes } from './common';
+import { bytesToStr, strToBytes } from './common.js';
 
 /** User script located at specific flash address. */
 enum AppendedBlock {
@@ -63,7 +63,7 @@ function getIntelHexAppendedScript(intelHex: string): string {
       AppendedBlock.StartAdd,
       AppendedBlock.Length
     );
-    const codeBytes = pyCodeMemMap.get(AppendedBlock.StartAdd);
+    const codeBytes = pyCodeMemMap.get(AppendedBlock.StartAdd)!;
     if (
       codeBytes[AppendedHeader.Byte0] === HEADER_START_BYTE_0 &&
       codeBytes[AppendedHeader.Byte1] === HEADER_START_BYTE_1

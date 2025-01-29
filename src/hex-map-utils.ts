@@ -2,9 +2,8 @@
  * Utilities for retrieving data from MemoryMap instances from the nrf-intel-hex
  * library.
  */
+import { bytesToStr } from './common.js';
 import MemoryMap from 'nrf-intel-hex';
-
-import { bytesToStr } from './common';
 
 /**
  * Reads a 64 bit little endian number from an Intel Hex memory map.
@@ -77,7 +76,7 @@ export function getUint8(intelHexMap: MemoryMap, address: number): number {
  * @returns String read from the Intel Hex data.
  */
 export function getString(intelHexMap: MemoryMap, address: number): string {
-  const memBlock = intelHexMap.slice(address).get(address);
+  const memBlock = intelHexMap.slice(address).get(address)!;
   let iStrEnd = 0;
   while (iStrEnd < memBlock.length && memBlock[iStrEnd] !== 0) iStrEnd++;
   if (iStrEnd === memBlock.length) {

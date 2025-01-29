@@ -4,7 +4,8 @@
  */
 import * as fs from 'fs';
 
-import * as flashRegions from '../flash-regions';
+import * as flashRegions from '../flash-regions.js';
+import { expect, describe, it } from 'vitest';
 
 describe('Read MicroPython flash regions data.', () => {
   const uPyHexFile = fs.readFileSync(
