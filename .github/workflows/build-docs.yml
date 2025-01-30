@@ -4,7 +4,7 @@ on:
     types: [created]
   push:
     branches:
-      - master
+      - '**'
     tags:
       - '**'
 jobs:
@@ -24,6 +24,7 @@ jobs:
           path: ./docs/build
 
   deploy:
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
     permissions:
       pages: write
       id-token: write
