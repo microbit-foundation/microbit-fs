@@ -39,6 +39,10 @@
     "test": "vitest",
     "docs": "typedoc --options typedoc.json"
   },
+  "allowScripts": {
+    "esbuild": true,
+    "fsevents": true
+  },
   "dependencies": {
     "@microbit/microbit-universal-hex": "^0.2.2",
     "nrf-intel-hex": "^1.4.0"
