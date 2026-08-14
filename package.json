@@ -39,12 +39,17 @@
     "test": "vitest",
     "docs": "typedoc --options typedoc.json"
   },
+  "allowScripts": {
+    "esbuild": true,
+    "fsevents": true
+  },
   "dependencies": {
     "@microbit/microbit-universal-hex": "^0.2.2",
     "nrf-intel-hex": "^1.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
+    "@types/node": "^24.0.0",
     "eslint": "^9.19.0",
     "globals": "^15.14.0",
     "prettier": "~2.0.5",

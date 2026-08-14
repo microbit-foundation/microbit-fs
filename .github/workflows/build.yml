@@ -11,15 +11,16 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: '20.x'
+          node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
           cache: npm
+      - run: npm install -g npm@11 --registry=https://registry.npmjs.org
       - run: npm ci
       - run: npm run ci
-      - run: npm publish
+      - run: npm publish --allow-directory=all
         if: github.event_name == 'release' && github.event.action == 'created'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
