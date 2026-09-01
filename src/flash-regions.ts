@@ -242,7 +242,7 @@ function getTableHeader(iHexMap: MemoryMap, pSize: number = 1024): TableHeader {
  */
 function getRegionRow(iHexMap: MemoryMap, rowEndAddress: number): RegionRow {
   const id = hexMapUtil.getUint8(iHexMap, rowEndAddress - RegionRowOffset.id);
-  const hashType = hexMapUtil.getUint8(
+  const hashType: RegionHashType = hexMapUtil.getUint8(
     iHexMap,
     rowEndAddress - RegionRowOffset.hashType
   );
@@ -295,12 +295,12 @@ function getHexMapFlashRegionsData(iHexMap: MemoryMap): DeviceMemInfo {
     regionRows[regionRow.id] = regionRow;
   }
 
-  if (!regionRows.hasOwnProperty(RegionId.microPython)) {
+  if (!Object.prototype.hasOwnProperty.call(regionRows, RegionId.microPython)) {
     throw new Error(
       'Could not find a MicroPython region in the regions table.'
     );
   }
-  if (!regionRows.hasOwnProperty(RegionId.fs)) {
+  if (!Object.prototype.hasOwnProperty.call(regionRows, RegionId.fs)) {
     throw new Error(
       'Could not find a File System region in the regions table.'
     );
@@ -308,12 +308,9 @@ function getHexMapFlashRegionsData(iHexMap: MemoryMap): DeviceMemInfo {
   // Have to manually set the start at address 0 even if regions don't cover it
   const runtimeStartAddress = 0;
 
-  let runtimeEndAddress =
-    regionRows[RegionId.microPython].startPage * tableHeader.pageSize +
-    regionRows[RegionId.microPython].lengthBytes;
   // The table is placed at the end of the last page used by MicroPython and we
   // need to include it
-  runtimeEndAddress = tableHeader.endAddress;
+  const runtimeEndAddress = tableHeader.endAddress;
   const uPyVersion = regionRows[RegionId.microPython].hashPointerData;
   const fsStartAddress =
     regionRows[RegionId.fs].startPage * tableHeader.pageSize;

@@ -202,9 +202,9 @@ describe('Test create method.', () => {
   it('Throw error with invalid file name.', () => {
     const testInstance = (micropythonFs: MicropythonFsHex) => {
       const failCase1 = () => micropythonFs.create('', 'content');
-      // @ts-ignore
+      // @ts-expect-error deliberately invalid argument
       const failCase2 = () => micropythonFs.create(null, 'content');
-      // @ts-ignore
+      // @ts-expect-error deliberately invalid argument
       const failCase3 = () => micropythonFs.create(undefined, 'content');
 
       expect(failCase1).toThrow(Error);
@@ -224,9 +224,9 @@ describe('Test create method.', () => {
   it('Throw error with invalid file content.', () => {
     const testInstance = (micropythonFs: MicropythonFsHex) => {
       const failCase1 = () => micropythonFs.create('file.txt', '');
-      // @ts-ignore
+      // @ts-expect-error deliberately invalid argument
       const failCase2 = () => micropythonFs.create('file.txt', null);
-      // @ts-ignore
+      // @ts-expect-error deliberately invalid argument
       const failCase3 = () => micropythonFs.create('file.txt', undefined);
 
       expect(failCase1).toThrow(Error);
@@ -403,9 +403,9 @@ describe('Test write method.', () => {
     const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.write('', 'content');
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase2 = () => micropythonFs.write(null, 'content');
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase3 = () => micropythonFs.write(undefined, 'content');
 
     expect(failCase1).toThrow('not provided a valid filename');
@@ -417,9 +417,9 @@ describe('Test write method.', () => {
     const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.write('file.txt', '');
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase2 = () => micropythonFs.write('file.txt', null);
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase3 = () => micropythonFs.write('file.txt', undefined);
 
     expect(failCase1).toThrow('does not have valid content');
@@ -433,9 +433,9 @@ describe('Test append method.', () => {
     const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.append('', 'more content');
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase2 = () => micropythonFs.append(null, 'more content');
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase3 = () => micropythonFs.append(undefined, 'more content');
 
     expect(failCase1).toThrow('Invalid filename');
@@ -466,9 +466,9 @@ describe('Test read method.', () => {
     const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.read('');
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase2 = () => micropythonFs.read(null);
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase3 = () => micropythonFs.read(undefined);
 
     expect(failCase1).toThrow('Invalid filename');
@@ -490,9 +490,9 @@ describe('Test readBytes method.', () => {
     const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.readBytes('');
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase2 = () => micropythonFs.readBytes(null);
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase3 = () => micropythonFs.readBytes(undefined);
 
     expect(failCase1).toThrow('Invalid filename');
@@ -528,9 +528,9 @@ describe('Test remove method.', () => {
     const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.remove('');
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase2 = () => micropythonFs.remove(null);
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase3 = () => micropythonFs.remove(undefined);
 
     expect(failCase1).toThrow('Invalid filename');
@@ -566,9 +566,9 @@ describe('Tests exists method.', () => {
     const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const test1 = micropythonFs.exists('');
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const test2 = micropythonFs.exists(null);
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const test3 = micropythonFs.exists(undefined);
 
     expect(test1).toBe(false);
@@ -604,9 +604,9 @@ describe('Test size method.', () => {
     const micropythonFs = new MicropythonFsHex(uPy1HexFile);
 
     const failCase1 = () => micropythonFs.size('');
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase2 = () => micropythonFs.size(null);
-    // @ts-ignore
+    // @ts-expect-error deliberately invalid argument
     const failCase3 = () => micropythonFs.size(undefined);
 
     expect(failCase1).toThrow('Invalid filename');

@@ -225,7 +225,7 @@ export class MicropythonFsHex implements FsInterface {
    * @returns True if it exists, false otherwise.
    */
   exists(filename: string): boolean {
-    return this._files.hasOwnProperty(filename);
+    return Object.prototype.hasOwnProperty.call(this._files, filename);
   }
 
   /**
@@ -343,7 +343,9 @@ export class MicropythonFsHex implements FsInterface {
     });
     // Only throw the error at the end so that all other files are imported
     if (existingFiles.length) {
-      throw new Error(`Files "${existingFiles}" from hex already exists.`);
+      throw new Error(
+        `Files "${existingFiles.join(',')}" from hex already exists.`
+      );
     }
     return Object.keys(files);
   }
@@ -396,7 +398,7 @@ export class MicropythonFsHex implements FsInterface {
       for (const [fileName, fileContent] of Object.entries(fileGroup)) {
         compareFileGroups.forEach((compareGroup: FileObj) => {
           if (
-            !compareGroup.hasOwnProperty(fileName) ||
+            !Object.prototype.hasOwnProperty.call(compareGroup, fileName) ||
             !areUint8ArraysEqual(compareGroup[fileName], fileContent)
           ) {
             throw new Error(
@@ -422,7 +424,9 @@ export class MicropythonFsHex implements FsInterface {
     });
     // Only throw the error at the end so that all other files are imported
     if (existingFiles.length) {
-      throw new Error(`Files "${existingFiles}" from hex already exists.`);
+      throw new Error(
+        `Files "${existingFiles.join(',')}" from hex already exists.`
+      );
     }
     return Object.keys(files);
   }

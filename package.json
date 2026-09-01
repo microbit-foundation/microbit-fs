@@ -34,7 +34,7 @@
     "build:esm": "tsc -p tsconfig.json && echo '{\"type\": \"module\"}' > dist/esm/package.json",
     "build:cjs": "tsc -p tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
     "build": "npm run build:esm && npm run build:cjs",
-    "lint": "eslint",
+    "lint": "eslint . --max-warnings 0",
     "ci": "npm run build && npm run test && npm run lint && prettier --check .",
     "test": "vitest",
     "docs": "typedoc --options typedoc.json"
@@ -48,14 +48,12 @@
     "nrf-intel-hex": "^1.4.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.19.0",
+    "@microbit/eslint-config": "^0.2.1",
     "@types/node": "^24.0.0",
-    "eslint": "^9.19.0",
-    "globals": "^15.14.0",
+    "eslint": "^10.0.0",
     "prettier": "~2.0.5",
     "typedoc": "0.27.6",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.21.0",
     "vitest": "^4.1.11"
   }
 }
