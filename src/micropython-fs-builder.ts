@@ -124,7 +124,11 @@ function getFreeChunks(intelHexMap: MemoryMap): number[] {
   let chunkAddr = startAddress;
   let chunkIndex = 1;
   while (chunkAddr < endAddress) {
-    const marker = intelHexMap.slicePad(chunkAddr, 1, ChunkMarker.Unused)[0];
+    const marker: ChunkMarker = intelHexMap.slicePad(
+      chunkAddr,
+      1,
+      ChunkMarker.Unused
+    )[0];
     if (marker === ChunkMarker.Unused || marker === ChunkMarker.Freed) {
       freeChunks.push(chunkIndex);
     }
@@ -500,7 +504,7 @@ function getIntelHexFiles(
   let chunkIndex = 1;
   while (chunkAddr < endAddress) {
     const chunk = hexMap.slicePad(chunkAddr, CHUNK_LEN, ChunkMarker.Unused);
-    const marker = chunk[0];
+    const marker: ChunkMarker = chunk[0];
     if (
       marker !== ChunkMarker.Unused &&
       marker !== ChunkMarker.Freed &&
@@ -524,7 +528,7 @@ function getIntelHexFiles(
     // 1st byte is the marker, 2nd is the offset, 3rd is the filename length
     let chunkDataStart = 3 + filenameLen;
     const filename = bytesToStr(startChunk.slice(3, chunkDataStart));
-    if (files.hasOwnProperty(filename)) {
+    if (Object.prototype.hasOwnProperty.call(files, filename)) {
       throw new Error(`Found multiple files named: ${filename}.`);
     }
     files[filename] = new Uint8Array(0);
@@ -534,7 +538,7 @@ function getIntelHexFiles(
     // an infinite loop. No file should traverse more chunks than available.
     let iterations = Object.keys(usedChunks).length + 1;
     while (iterations--) {
-      const nextIndex = currentChunk[ChunkFormatIndex.Tail];
+      const nextIndex: ChunkMarker = currentChunk[ChunkFormatIndex.Tail];
       if (nextIndex === ChunkMarker.Unused) {
         // The current chunk is the last
         files[filename] = concatUint8Array(

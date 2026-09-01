@@ -113,7 +113,8 @@ function createAppendedBlock(dataBytes: Uint8Array): Uint8Array {
 function addIntelHexAppendedScript(intelHex: string, pyCode: string): string {
   const codeBytes: Uint8Array = strToBytes(pyCode);
   const blockBytes: Uint8Array = createAppendedBlock(codeBytes);
-  if (blockBytes.length > AppendedBlock.Length) {
+  const blockCapacity: number = AppendedBlock.Length;
+  if (blockBytes.length > blockCapacity) {
     throw new RangeError('Too long');
   }
   // Convert to Intel Hex format

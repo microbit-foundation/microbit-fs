@@ -27,7 +27,7 @@ function getHexMapDeviceMemInfo(intelHexMap: MemoryMap): DeviceMemInfo {
   try {
     return flashRegions.getHexMapFlashRegionsData(intelHexMap);
   } catch (err) {
-    throw new Error(errorMsg + (err as Error).message);
+    throw new Error(errorMsg + (err as Error).message, { cause: err });
   }
 }
 
