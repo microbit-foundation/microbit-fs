@@ -5,6 +5,10 @@ on:
   push:
     branches:
       - '**'
+env:
+  # renovate: datasource=npm depName=npm
+  NPM_VERSION: '11'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,12 +19,34 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24.x'
-          registry-url: 'https://registry.npmjs.org'
           cache: npm
-      - run: npm install -g npm@11 --registry=https://registry.npmjs.org
+      - run: npm install -g npm@${{ env.NPM_VERSION }} --registry=https://registry.npmjs.org
       - run: npm ci
       - run: npm run ci
-      - run: npm publish --allow-directory=all
-        if: github.event_name == 'release' && github.event.action == 'created'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm pack
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: github.event_name == 'release'
+        with:
+          name: npm-tarball
+          path: '*.tgz'
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    environment: npm-publish
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: npm-tarball
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.x'
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm install -g npm@${{ env.NPM_VERSION }} --registry=https://registry.npmjs.org
+      - run: npm stage publish --allow-file=all ./*.tgz
