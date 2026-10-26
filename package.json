@@ -44,7 +44,7 @@
     "fsevents": true
   },
   "dependencies": {
-    "@microbit/microbit-universal-hex": "^0.2.2",
+    "@microbit/microbit-universal-hex": "^0.3.0",
     "nrf-intel-hex": "^1.4.0"
   },
   "devDependencies": {
