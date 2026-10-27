@@ -24,6 +24,10 @@
     }
   },
   "sideEffects": false,
+  "files": [
+    "dist",
+    "!dist/*/__tests__"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/microbit-foundation/microbit-fs"
