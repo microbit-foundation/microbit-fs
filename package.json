@@ -50,7 +50,7 @@
     "fsevents": true
   },
   "dependencies": {
-    "@microbit/microbit-universal-hex": "^0.3.0",
+    "@microbit/microbit-universal-hex": "^0.3.1",
     "nrf-intel-hex": "^1.4.0"
   },
   "devDependencies": {
@@ -58,7 +58,7 @@
     "@types/node": "^24.0.0",
     "eslint": "^10.0.0",
     "prettier": "~2.0.5",
-    "typedoc": "0.28.20",
+    "typedoc": "^0.28.20",
     "typescript": "^5.7.3",
     "vitest": "^4.1.11"
   }
