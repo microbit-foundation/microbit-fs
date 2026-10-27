@@ -11,6 +11,18 @@ import { expect, describe, it, vi, beforeEach, afterAll } from 'vitest';
 import * as fsBuilder from '../micropython-fs-builder.js';
 import { MicropythonFsHex, microbitBoardId } from '../micropython-fs-hex.js';
 
+// ESM namespaces of external packages can't be spied on, so wrap the real
+// implementation instead.
+vi.mock('@microbit/microbit-universal-hex', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('@microbit/microbit-universal-hex')
+  >();
+  return {
+    ...actual,
+    createUniversalHex: vi.fn(actual.createUniversalHex),
+  };
+});
+
 // MicroPython hex file for testing
 const uPy1HexFile = fs.readFileSync('./src/__tests__/upy-v1.0.1.hex', 'utf8');
 const uPy1FsSize = 27 * 1024;
@@ -726,14 +738,10 @@ describe('Test Intel Hex generation.', () => {
 });
 
 describe('Test Universal Hex generation.', () => {
-  const createUniversalHexSpy = vi.spyOn(microbitUh, 'createUniversalHex');
+  const createUniversalHexSpy = vi.mocked(microbitUh.createUniversalHex);
 
   beforeEach(() => {
-    createUniversalHexSpy.mockReset();
-  });
-
-  afterAll(() => {
-    createUniversalHexSpy.mockRestore();
+    createUniversalHexSpy.mockClear();
   });
 
   it('Universal Hex library called with correct arguments', () => {
