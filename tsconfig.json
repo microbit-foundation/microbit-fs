@@ -11,6 +11,7 @@
     "outDir": "dist/esm",
     "sourceMap": true,
     "declaration": true,
+    "declarationMap": true,
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
